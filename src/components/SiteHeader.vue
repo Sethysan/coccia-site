@@ -18,8 +18,9 @@ import { RouterLink } from 'vue-router'
   position: sticky;
   top: 0;
   z-index: 1000;
-  background: rgb(164, 154, 154);
+  background:#a42e03;
   padding: 1rem;
+  box-shadow: 0 40px 80px rgb(0, 0, 0);
 }
 
 .nav {
@@ -29,13 +30,14 @@ import { RouterLink } from 'vue-router'
 }
 
 .nav a {
+  font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
   text-decoration: none;
   font-weight: bold;
-  color: #333;
+  color: #ed962c;
   transition: color 0.3s ease;
 }
 
 .nav a:hover {
-  color: #b22222;
+  color: black;
 }
 </style>

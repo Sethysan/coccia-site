@@ -14,4 +14,9 @@ import { RouterView } from 'vue-router'
 .content {
   padding-top: 90px;
 }
+
+div {
+  font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
+}
+
 </style>
