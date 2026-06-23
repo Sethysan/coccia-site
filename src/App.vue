@@ -1,14 +1,21 @@
 <template>
-  <main class="page">
-    <section class="hero">
-      <h1>Coccia House</h1>
-      <p class="tagline">Pizza, pasta, and family tradition in Wooster, Ohio.</p>
-      <p class="info">Open today • 330-262-7136</p>
-    </section>
+  <SiteHeader />
+
+  <main class="content">
+    <RouterView />
   </main>
 </template>
 
+<script>
+import SiteHeader from './components/SiteHeader.vue'
+</script>
+
 <style scoped>
+
+.content {
+  padding-top: 90px;
+}
+
 .page {
   min-height: 100vh;
   font-family: Arial, sans-serif;
