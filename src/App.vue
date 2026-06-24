@@ -14,8 +14,8 @@ import { RouterView } from 'vue-router'
 .content {
   padding-top: 90px;
   min-height: 75vh;
-  background-image: url('./assets/pizza.jpg');
-  background-size: contain;
+  background-image: url('./assets/pizza.png');
+  background-size: cover;
   background-color: #111;
   background-position: center;
   background-repeat: no-repeat;
