@@ -79,19 +79,19 @@ function scrollToSection(id) {
 }
 
 .menu-page {
-  min-height: 100vh;
+  min-height: 90vh;
   /* background-image: url("../assets/menu/story.jpg"); */
   background-size: cover;
   background-position: center;
   background-attachment: fixed;
-  padding: 110px 1rem 2rem;
+  /* padding: 110px 1rem 2rem; */
 }
 
 .menu-panel {
   flex: 1;
   overflow-y: auto;
   max-width: 900px;
-  width: 100%;
+  width: 70%;
 }
 
 .menu-nav {
