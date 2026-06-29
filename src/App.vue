@@ -11,6 +11,14 @@
 import Hours from './components/Hours.vue'
 import SiteHeader from './components/SiteHeader.vue'
 import { RouterView } from 'vue-router'
+import { useTimeStore } from '@/stores/timeStore'
+import { onMounted } from 'vue'
+
+const timeStore = useTimeStore()
+
+onMounted(() => {
+  timeStore.startClock()
+})
 </script>
 
 <style scoped >

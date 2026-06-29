@@ -1,66 +1,120 @@
 <template>
+
+  <!-- =======================================================
+       HOURS HEADER
+
+       Loop through each day in the restaurant's weekly schedule
+       and display its current status.
+
+       Each card asks the composable:
+       - Should I be highlighted?
+       - Am I currently open?
+       - Which CSS class should I receive?
+
+       The component itself contains almost no business logic.
+       ======================================================= -->
+
   <header class="header">
-      <div v-for="day in hours":key="day.day" class="day-card" :class="getDayClass(day)"> 
-        <strong>{{ day.name }} </strong>
-        <span v-if="isOpenNow(day)"class="open-now"  >
-          OPEN NOW
-        </span>
-        <span>  {{ day.hours }}</span>
-      </div>
+
+    <div
+      v-for="day in hours"
+      :key="day.day"
+      class="day-card"
+      :class="getDayClass(day)"
+    >
+
+      <!-- Name of the day -->
+      <strong>{{ day.name }}</strong>
+
+      <!--
+        Display "OPEN NOW" only when the composable determines
+        that this is today's card AND the restaurant is currently open.
+      -->
+      <span
+        v-if="isOpenNow(day)"
+        class="open-now"
+      >
+        OPEN NOW
+      </span>
+
+      <!-- Display the restaurant hours for this day -->
+      <span>{{ day.hours }}</span>
+
+    </div>
+
   </header>
+
 </template>
 
 <script setup>
+
+/* ==========================================================
+   IMPORTS
+
+   hours
+     Static restaurant schedule stored in /data.
+
+   useRestaurantHours()
+     Contains all business logic for determining today's
+     status, open/closed state, and CSS classes.
+
+   This keeps this component focused on DISPLAY ONLY.
+   ========================================================== */
+
 import { hours } from '@/data/hours'
-import dayjs from 'dayjs'
-const currentDay = dayjs().day()      // 0-6
-const currentHour = dayjs().hour()    // 0-23
-const currentMinute = dayjs().minute()  //0-59
+import { useRestaurantHours } from '@/composables/useRestaurantHours'
 
+/*
+  Extract only the helper functions this component needs.
 
-function isOpenNow(day) {  //Are we currently open? for display purposes
-  if (day.closed) return false
-  if (day.day !== currentDay) return false
+  The composable handles all of the decision making.
+  The component simply asks questions like:
 
-  return currentHour >= day.open && currentHour < day.close
-}
+      isOpenNow(day)
 
-function getDayClass(day) {  //defining how to classify each day for display purposes
+      getDayClass(day)
 
-  // Not today
-  if (day.day !== currentDay) {
-    return "normal"
-  }
+  without knowing HOW those answers are calculated.
+*/
+const { isOpenNow, getDayClass } = useRestaurantHours()
 
-  // Today, but closed all day
-  if (day.closed) {
-    return "closed"
-  }
-
-  // Today, currently open
-  if (currentHour >= day.open && currentHour < day.close) {
-    return "open"
-  }
-
-  // Today, before opening or after closing
-  return "closed"
-}
 </script>
 
 <style scoped>
 
-.header { 
-    display: flex;
-    justify-content: space-around;
-    align-items: center;
-    padding: .5rem 1rem;
+/* ==========================================================
+   LAYOUT
+   ========================================================== */
+
+/* Container holding all seven day cards */
+
+.header {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  padding: .5rem 1rem;
 }
 
+/* Individual day card */
+
 .day-card {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
+
+
+/* ==========================================================
+   OPEN NOW INDICATOR
+   ========================================================== */
+
+/*
+  The blinking indicator draws attention to today's status.
+
+  Eventually this will likely become part of the larger
+  restaurant status system (Open Now, Opening Soon,
+  Closing Soon, Closed, etc.)
+*/
 
 .open-now {
   color: limegreen;
@@ -68,18 +122,31 @@ function getDayClass(day) {  //defining how to classify each day for display pur
   animation: blink 1s infinite;
 }
 
+
+/* ==========================================================
+   ANIMATIONS
+   ========================================================== */
+
+/*
+  Fade the text instead of making it disappear completely.
+  This tends to be easier on the eyes while still attracting
+  attention.
+*/
+
 @keyframes blink {
+
   0% {
     opacity: 1;
   }
 
   50% {
-    opacity: 0.25;
+    opacity: .25;
   }
 
   100% {
     opacity: 1;
   }
+
 }
 
 </style>
