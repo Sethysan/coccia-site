@@ -104,7 +104,8 @@ const { isOpenNow, getDayClass } = useRestaurantHours()
   align-items: center;
   border-style: double;
   padding: 5px;
-  
+  background-color: rgba(219, 233, 245, 0.788);
+  z-index: 1001;
 }
 
 
