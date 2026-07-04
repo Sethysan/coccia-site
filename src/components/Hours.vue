@@ -90,6 +90,7 @@ const { isOpenNow, getDayClass } = useRestaurantHours()
 
 .header {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-around;
   align-items: center;
   padding: .5rem 1rem;
@@ -101,7 +102,11 @@ const { isOpenNow, getDayClass } = useRestaurantHours()
   display: flex;
   flex-direction: column;
   align-items: center;
+  border-style: double;
+  padding: 5px;
+  
 }
+
 
 
 /* ==========================================================
