@@ -33,7 +33,6 @@
 </template>
 
 <script setup>
-import story from '@/assets/menu/story.jpg'
 import pizza from '@/assets/menu/pizza-pasta.jpg'
 import favorites from '@/assets/menu/house-favorites.jpg'
 import starters from '@/assets/menu/starters-salads.jpg'
