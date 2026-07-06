@@ -1,3 +1,5 @@
+
+export const cocciaStory = `
 The Coccia House Story
 
 In the fall of 1958, after the death of her husband, Domenica "Minnie" Coccia, along with her daughter Jeannette & son-in-law Joseph Calabria, opened a pizzeria/restaurant at 764 Pittsburgh Avenue in Wooster, Ohio. Opening night yielded a rousing $17.00 in sales. The years have taught us many lessons, some things to try and some things to never try again!
@@ -14,4 +16,4 @@ From our family to yours...
 Buon Appetito!
 
 from The Calabrias, our extended family
-& the entire staff of Coccia House.
+& the entire staff of Coccia House.`
