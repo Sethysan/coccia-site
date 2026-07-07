@@ -1,4 +1,3 @@
-
 <template>
   <header class="header">
     <div class="viewButtons">
@@ -19,14 +18,17 @@
         aria-label="View weekly restaurant hours" @click="showAllHours = !showAllHours">
         <Hours :show-all="false" />
 
-        <span class="hours-arrow" :class="{ expanded: showAllHours }" >
+        <span class="hours-arrow" :class="{ expanded: showAllHours }">
           ▼
         </span>
       </button>
 
-      <div v-show="showAllHours" class="weekly-hours-dropdown">
-        <Hours :show-all="true" />
-      </div>
+      <Transition name="hours-dropdown">
+        <div v-show="showAllHours" class="weekly-hours-dropdown">
+          <Hours :show-all="true" />
+        </div>
+      </Transition>
+
     </section>
   </header>
 </template>
@@ -75,25 +77,50 @@ const showAllHours = ref(false)
   flex-wrap: wrap;
   justify-content: space-evenly;
   align-items: center;
-  margin-left: 2rem;
 }
 
 .nav a {
+  position: relative;
   font-family: 'Grand Hotel', cursive;
-  font-size: 2rem;
+  font-size: 2.5rem;
   text-decoration: none;
   font-weight: 350;
   color: white;
   background-color: transparent;
   padding: 0.65rem 1.6rem;
   border-radius: 4px;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  transition:
+    background-color 0.3s ease,
+    transform 0.3s ease;
+}
+
+.nav a::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: 0.35rem;
+  ;
+  width: 0;
+  height: 2px;
+  background-color: white;
+  border-radius: 999px;
+  opacity: 0;
+  transform: translateX(-50%);
+  transition:
+    width 0.3s ease,
+    opacity 0.3s ease;
+}
+
+.nav a:hover::before {
+  width: 65%;
+  opacity: 1;
 }
 
 .nav a:hover {
   transform: translateY(-2px);
 }
- /* ==========================================================
+
+/* ==========================================================
    HOURS MENU
    ========================================================== */
 
@@ -134,8 +161,7 @@ const showAllHours = ref(false)
   transition: transform 0.25s ease;
 }
 
-.hours-arrow.expanded
-{
+.hours-arrow.expanded {
   transform: rotate(180deg);
 }
 
@@ -150,12 +176,59 @@ const showAllHours = ref(false)
   left: 0;
   z-index: 1100;
   width: max-content;
-  min-width: 245px;
   padding: 0.75rem 1rem;
   background-color: white;
   color: #111;
   border: 1px solid rgba(0, 0, 0, 0.2);
   border-radius: 5px;
-  box-shadow: 0 4px 12px rgb(0 0 0 / 25%);
+  box-shadow: 0 30px 30px rgb(0 0 0 / 40%);
+  transform-origin: top left;
+}
+
+/* ==========================================================
+   DROPDOWN ENTER AND LEAVE TRANSITIONS
+   ========================================================== */
+
+/*
+  These are the resting states while the dropdown is visible
+  and while it finishes entering.
+*/
+
+.hours-dropdown-enter-active,
+.hours-dropdown-leave-active {
+  transition:
+    opacity 0.2s ease-in-out,
+    transform 0.35s ease;
+}
+
+
+/*
+  Before entering and after leaving, the dropdown is:
+  - transparent
+  - slightly raised
+  - slightly compressed vertically
+*/
+
+.hours-dropdown-enter-from,
+.hours-dropdown-leave-to {
+  opacity: 0;
+
+  transform:
+    translateY(-0.95rem)
+    scaleY(0.32);
+}
+
+
+/*
+  While visible, it returns to its normal position and size.
+*/
+
+.hours-dropdown-enter-to,
+.hours-dropdown-leave-from {
+  opacity: 1;
+
+  transform:
+    translateY(0)
+    scaleY(1);
 }
 </style>
