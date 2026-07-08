@@ -1,7 +1,7 @@
 <template>
   <div>
     <h1 class="news
-    ">DINING ROOM NOW OPEN!!</h1>
+    ">NOW OPEN FOR DINING IN!!</h1>
   </div>
   <div>
   <h1>Authentic Italian Cuisine</h1>

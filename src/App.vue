@@ -25,7 +25,7 @@ onMounted(() => {
 .content {
   padding-top: 2rem;
   min-height: 75vh;
-  background-image: url('./assets/hero-pizza.jpg');
+  background-image: linear-gradient(rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.55)), url('./assets/hero-pizza.jpg');
   background-size: cover;
   background-color: #111;
   background-position: center ;

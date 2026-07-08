@@ -96,7 +96,7 @@ const { isOpenNow, getDayClass } = useRestaurantHours()
   justify-content: space-around;
   align-items: center;
   padding: .5rem 1rem;
-  background-image: radial-gradient(rgba(163, 153, 112, 0.602), rgba(255, 98, 0, 0.625), #a42e03);
+  background-image: radial-gradient(rgba(101, 95, 72, 0.602), rgba(68, 39, 21, 0.625), #0b0a0a);
 }
 
 /* Individual day card */

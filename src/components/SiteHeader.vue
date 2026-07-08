@@ -21,22 +21,17 @@ import { RouterLink } from 'vue-router'
   position: sticky;
   top: 0;
   z-index: 1000;
-
   display: flex;
   align-items: center;
   justify-content: space-between;
-
   min-height: 90px;
   padding: 0.75rem 1.5rem;
-
   background-image:
-    linear-gradient(rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.55)),
-    url('@/assets/dinner.png');
-
+  linear-gradient(rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.55)),
+  url('@/assets/dinner.png');
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-
   box-shadow: 0 8px 24px rgb(0, 0, 0, 0.35);
 }
 
@@ -48,11 +43,10 @@ import { RouterLink } from 'vue-router'
 
 .nav {
   flex: 1;
-
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-evenly;
   align-items: center;
-
   margin-left: 2rem;
 }
 
