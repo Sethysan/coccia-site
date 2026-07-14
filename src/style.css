@@ -2,6 +2,7 @@
   font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
   color: #2b1812;
   background: #f7f1e8;
+  scroll-behavior: smooth;
 }
 
 body {
@@ -15,3 +16,4 @@ body {
 a {
   color: inherit;
 }
+ 

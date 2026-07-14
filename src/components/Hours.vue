@@ -1,129 +1,165 @@
 <template>
-
-  <!-- =======================================================
-       HOURS HEADER
-
-       Loop through each day in the restaurant's weekly schedule
-       and display its current status.
-
-       Each card asks the composable:
-       - Should I be highlighted?
-       - Am I currently open?
-       - Which CSS class should I receive?
-
-       The component itself contains almost no business logic.
-       ======================================================= -->
-
-  <header class="header">
-
+  <div
+    class="hours-display"
+    :class="{ expanded: showAll }"
+  >
     <div
-      v-for="day in hours"
+      v-for="day in displayedHours"
       :key="day.day"
-      class="day-card"
+      class="day-row"
       :class="getDayClass(day)"
     >
+      <strong class="day-name">
+        {{ showAll ? `${day.name}:` : day.name }}
+      </strong>
 
-      <!-- Name of the day -->
-      <strong>{{ day.name }}</strong>
-
-      <!--
-        Display "OPEN NOW" only when the composable determines
-        that this is today's card AND the restaurant is currently open.
-      -->
       <span
-        v-if="isOpenNow(day)"
+        v-if="!showAll && isOpenNow(day)"
         class="open-now"
       >
         OPEN NOW
       </span>
 
-      <!-- Display the restaurant hours for this day -->
-      <span>{{ day.hours }}</span>
-
+      <span class="day-hours">
+        {{ day.hours }}
+      </span>
     </div>
-
-  </header>
-
+  </div>
 </template>
 
 <script setup>
-
-/* ==========================================================
-   IMPORTS
-
-   hours
-     Static restaurant schedule stored in /data.
-
-   useRestaurantHours()
-     Contains all business logic for determining today's
-     status, open/closed state, and CSS classes.
-
-   This keeps this component focused on DISPLAY ONLY.
-   ========================================================== */
+import { computed } from 'vue'
 
 import { hours } from '@/data/hours'
+import { useTimeStore } from '@/stores/timeStore'
 import { useRestaurantHours } from '@/composables/useRestaurantHours'
 
-/*
-  Extract only the helper functions this component needs.
 
-  The composable handles all of the decision making.
-  The component simply asks questions like:
+// -----------------------------------------------------------------------------
+// Component options
+// -----------------------------------------------------------------------------
 
-      isOpenNow(day)
+const props = defineProps({
+  showAll: {
+    type: Boolean,
+    default: false
+  }
+})
 
-      getDayClass(day)
 
-  without knowing HOW those answers are calculated.
-*/
-const { isOpenNow, getDayClass } = useRestaurantHours()
+// -----------------------------------------------------------------------------
+// Restaurant helpers
+// -----------------------------------------------------------------------------
 
+const {
+  isOpenNow,
+  getDayClass
+} = useRestaurantHours()
+
+const timeStore = useTimeStore()
+
+
+// -----------------------------------------------------------------------------
+// Put today first, followed by the remaining days in calendar order
+//
+// Example when today is Friday:
+//
+// Friday
+// Saturday
+// Sunday
+// Monday
+// Tuesday
+// Wednesday
+// Thursday
+// -----------------------------------------------------------------------------
+
+const orderedHours = computed(() => {
+  const currentDayNumber = timeStore.currentTime.day()
+
+  const currentDayIndex = hours.findIndex(day => {
+    return day.day === currentDayNumber
+  })
+
+  if (currentDayIndex === -1) {
+    return hours
+  }
+
+  return [
+    ...hours.slice(currentDayIndex),
+    ...hours.slice(0, currentDayIndex)
+  ]
+})
+
+
+// -----------------------------------------------------------------------------
+// Choose the compact or complete schedule
+// -----------------------------------------------------------------------------
+
+const displayedHours = computed(() => {
+  if (props.showAll) {
+    return orderedHours.value
+  }
+
+  return orderedHours.value.slice(0, 1)
+})
 </script>
 
 <style scoped>
-
 /* ==========================================================
-   LAYOUT
+   HOURS DISPLAY
    ========================================================== */
 
-/* Container holding all seven day cards */
-
-.header {
-  display: flex;
-  flex-wrap: wrap;
-  position: sticky;
-  top: 0;
-  justify-content: space-around;
-  align-items: center;
-  padding: .5rem 1rem;
-  background-image: radial-gradient(rgba(101, 95, 72, 0.602), rgba(68, 39, 21, 0.625), #0b0a0a);
+.hours-display {
+  font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
 }
 
-/* Individual day card */
 
-.day-card {
+/* Compact current-day display */
+
+.hours-display:not(.expanded) .day-row {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  padding: 5px;
-  background-color: rgba(160, 163, 165, 0.788);
-  border-radius: 6px;
-  z-index: 1001;
+  align-items: flex-start;
 }
 
 
+/* Weekly dropdown list */
+
+.hours-display.expanded {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
 
 /* ==========================================================
-   OPEN NOW INDICATOR
+   INDIVIDUAL DAY
    ========================================================== */
 
-/*
-  The blinking indicator draws attention to today's status.
+.day-row {
+  white-space: nowrap;
+}
 
-  Eventually this will likely become part of the larger
-  restaurant status system (Open Now, Opening Soon,
-  Closing Soon, Closed, etc.)
-*/
+.hours-display.expanded .day-row {
+  display: grid;
+  grid-template-columns: 6.5rem auto;
+  align-items: baseline;
+
+  padding: 0.1rem 0;
+}
+
+.day-name {
+  font-weight: 700;
+}
+
+.day-hours {
+  white-space: nowrap;
+}
+
+
+/* ==========================================================
+   OPEN NOW
+   ========================================================== */
 
 .open-now {
   color: limegreen;
@@ -133,29 +169,20 @@ const { isOpenNow, getDayClass } = useRestaurantHours()
 
 
 /* ==========================================================
-   ANIMATIONS
+   ANIMATION
    ========================================================== */
 
-/*
-  Fade the text instead of making it disappear completely.
-  This tends to be easier on the eyes while still attracting
-  attention.
-*/
-
 @keyframes blink {
-
   0% {
     opacity: 1;
   }
 
   50% {
-    opacity: .25;
+    opacity: 0.25;
   }
 
   100% {
     opacity: 1;
   }
-
 }
-
 </style>
