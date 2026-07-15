@@ -5,6 +5,12 @@
   scroll-behavior: smooth;
 }
 
+:root{
+  --default-color: #fffaf1;
+  --default-dark: #fffaf1be;
+  --bronze-color: #8a6a32;
+}
+
 body {
   margin: 0;
 }

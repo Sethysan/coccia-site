@@ -2,7 +2,7 @@
   <header class="header">
     <div class="viewButtons">
       <RouterLink to="/" class="logo-link">
-        <img src="@/assets/hero-logo.jpg" alt="Coccia House logo" class="logo" />
+        <img src="@/assets/coccia-logo.png" alt="Coccia House logo" class="logo" />
       </RouterLink>
 
       <nav class="nav">
@@ -12,24 +12,96 @@
       </nav>
     </div>
 
-    <!-- hours display section -->
-    <section class="hours-menu" @mouseenter="showAllHours = true" @mouseleave="showAllHours = false">
-      <button class="hours-trigger" type="button" :aria-expanded="showAllHours"
-        aria-label="View weekly restaurant hours" @click="showAllHours = !showAllHours">
-        <Hours :show-all="false" />
+  <!-- ========================================================
+     VISITOR INFORMATION
 
-        <span class="hours-arrow" :class="{ expanded: showAllHours }">
-          ▼
-        </span>
-      </button>
+     This row contains the three pieces of information most
+     visitors are likely to need immediately:
 
-      <Transition name="hours-dropdown">
-        <div v-show="showAllHours" class="weekly-hours-dropdown">
-          <Hours :show-all="true" />
-        </div>
-      </Transition>
+     - Today's hours
+     - Phone number
+     - Directions
+     ======================================================== -->
 
-    </section>
+<div class="visitor-info">
+
+  <!-- Hours dropdown -->
+  <section
+    class="hours-menu"
+    @mouseenter="showAllHours = true"
+    @mouseleave="showAllHours = false"
+    @focusin="showAllHours = true"
+    @focusout="showAllHours = false"
+  >
+    <button
+      class="hours-trigger"
+      type="button"
+      :aria-expanded="showAllHours"
+      aria-label="View weekly restaurant hours"
+      @click="showAllHours = !showAllHours"
+    >
+      <Hours :show-all="false" />
+
+      <span
+        class="hours-arrow"
+        :class="{ expanded: showAllHours }"
+        aria-hidden="true"
+      >
+        ▼
+      </span>
+    </button>
+
+    <Transition name="hours-dropdown">
+      <div
+        v-show="showAllHours"
+        class="weekly-hours-dropdown"
+      >
+        <Hours :show-all="true" />
+      </div>
+    </Transition>
+  </section>
+
+
+  <!-- Phone number -->
+  <a
+    class="visitor-link"
+    href="tel:+13302645475"
+    aria-label="Call Coccia House at 330-264-5475"
+  >
+    <span
+      class="visitor-icon"
+      aria-hidden="true"
+    >
+      ☎
+    </span>
+
+    <span>
+      (330) 264-5475
+    </span>
+  </a>
+
+
+  <!-- Google Maps directions -->
+  <a
+    class="visitor-link"
+    href="https://www.google.com/maps/search/?api=1&query=Coccia+House+Wooster+Ohio"
+    target="_blank"
+    rel="noopener noreferrer"
+    aria-label="Get directions to Coccia House in Google Maps"
+  >
+    <span
+      class="visitor-icon"
+      aria-hidden="true"
+    >
+      ◉
+    </span>
+
+    <span>
+      Get Directions
+    </span>
+  </a>
+
+</div>
   </header>
 </template>
 
@@ -89,7 +161,7 @@ const showAllHours = ref(false)
   font-size: 2.5rem;
   text-decoration: none;
   font-weight: 350;
-  color: white;
+  color: var(--default-color);
   background-color: transparent;
   padding: 0.65rem 1.6rem;
   border-radius: 4px;
@@ -103,10 +175,9 @@ const showAllHours = ref(false)
   position: absolute;
   left: 50%;
   bottom: 0.35rem;
-  ;
   width: 0;
   height: 2px;
-  background-color: white;
+  background-color: var(--default-color);
   border-radius: 999px;
   opacity: 0;
   transform: translateX(-50%);
@@ -130,10 +201,8 @@ const showAllHours = ref(false)
 
 .hours-menu {
   position: relative;
-  align-self: flex-start;
-  margin-top: 0.75rem;
+  flex-shrink: 0;
 }
-
 
 /* ==========================================================
    COMPACT CURRENT-DAY TRIGGER
@@ -144,17 +213,26 @@ const showAllHours = ref(false)
   align-items: flex-end;
   gap: 0.4rem;
   padding: 0.5rem 0.75rem;
-  border: none;
+  border: 1px solid rgb(185 133 63 / 45%);
   border-radius: 5px;
-  background-color: rgba(255, 255, 255, 0.94);
-  color: #111;
+  background-color: var(--default-dark);
+  color: #21170f;
   text-align: left;
   cursor: pointer;
+  box-shadow:
+    0 4px 12px rgb(0 0 0 / 25%);
+  transition: all .25s ease;
+
 }
 
 .hours-trigger:hover,
 .hours-trigger:focus-visible {
-  background-color: white;
+  background-color: var(--default-color);
+  border-color: #b9853f;
+
+  box-shadow:
+    0 6px 16px rgb(0 0 0 / 35%),
+    0 0 8px rgb(185 133 63 / 18%);
 }
 
 .hours-arrow {
@@ -181,7 +259,7 @@ const showAllHours = ref(false)
   z-index: 1100;
   width: max-content;
   padding: 0.75rem 1rem;
-  background-color: white;
+  background-color: var(--default-color);
   color: #111;
   border: 1px solid rgba(0, 0, 0, 0.2);
   border-radius: 5px;
@@ -205,14 +283,6 @@ const showAllHours = ref(false)
     transform 0.35s ease;
 }
 
-
-/*
-  Before entering and after leaving, the dropdown is:
-  - transparent
-  - slightly raised
-  - slightly compressed vertically
-*/
-
 .hours-dropdown-enter-from,
 .hours-dropdown-leave-to {
   opacity: 0;
@@ -222,11 +292,6 @@ const showAllHours = ref(false)
     scaleY(0.32);
 }
 
-
-/*
-  While visible, it returns to its normal position and size.
-*/
-
 .hours-dropdown-enter-to,
 .hours-dropdown-leave-from {
   opacity: 1;
@@ -234,5 +299,103 @@ const showAllHours = ref(false)
   transform:
     translateY(0)
     scaleY(1);
+}
+
+/* ==========================================================
+   VISITOR INFORMATION ROW
+   ========================================================== */
+
+.visitor-info {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  justify-content: space-between;
+  align-items: flex-end;
+
+  margin-top: 0.75rem;
+}
+
+/* ==========================================================
+   PHONE AND DIRECTIONS LINKS
+   ========================================================== */
+
+.visitor-link {
+  position: relative;
+
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+
+  padding: 0.45rem 0;
+
+  color: var(--default-dark);
+
+  font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
+  font-size: 1rem;
+  font-weight: 600;
+  text-decoration: none;
+
+  transition:
+    color 0.25s ease,
+    text-shadow 0.25s ease;
+}
+
+.visitor-link:hover,
+.visitor-link:focus-visible {
+  color: #d5a75d;
+  text-shadow:
+    0 0 8px rgb(213 167 93 / 45%);
+}
+
+.visitor-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 1.4rem;
+  height: 1.4rem;
+
+  color: #b9853f;
+
+  font-size: 1.15rem;
+  line-height: 1;
+}
+
+.visitor-link::after {
+  content: "";
+
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+
+  width: 0;
+  height: 1px;
+
+  background-color: #b9853f;
+
+  opacity: 0;
+
+  transform: translateX(-50%);
+
+  transition:
+    width 0.25s ease,
+    opacity 0.25s ease;
+}
+
+.visitor-link:hover::after,
+.visitor-link:focus-visible::after {
+  width: 100%;
+  opacity: 1;
+}
+
+@media (max-width: 700px) {
+  .visitor-info {
+    gap: 0.75rem 1.25rem;
+  }
+
+  .visitor-link {
+    font-size: 0.9rem;
+  }
 }
 </style>
