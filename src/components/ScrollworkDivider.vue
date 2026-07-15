@@ -96,20 +96,8 @@
     height: 100%;
 }
 
-/* .divider-line {
-    fill: none;
-
-    stroke: radial-gradient(
-    circle,
-    rgba(255,230,170,.8) 0%,
-    rgba(255,230,170,.15) 35%,
-    transparent 70%);
-    stroke-width: 2.5;
-    stroke-linecap: round;
-} */
-
 .ornament {
-    fill: #0c0330;
+    fill: #0c033069;
 
     stroke: #4c3018;
     stroke-width: 1.;
@@ -124,7 +112,7 @@
 
 .ornament path:nth-of-type(5),
 .ornament path:nth-of-type(6) {
-    fill: #240104;
+    fill: #24010474;
 }
 
 .divider-line,

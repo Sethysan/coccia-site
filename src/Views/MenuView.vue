@@ -26,7 +26,7 @@
       </section>
 
       <section id="desserts" class="menu-section">
-        <img src="../assets/menu/desserts-drinks.jpg" alt="Desserts and drinks menu" />
+        <img src="../assets/menu/desserts-drinks.png" alt="Desserts and drinks menu" />
       </section>
     </section>
   </main>
@@ -37,7 +37,7 @@ import pizza from '@/assets/menu/pizza-pasta.jpg'
 import favorites from '@/assets/menu/house-favorites.jpg'
 import starters from '@/assets/menu/starters-salads.jpg'
 import sandwiches from '@/assets/menu/sandwiches.jpg'
-import desserts from '@/assets/menu/desserts-drinks.jpg'
+import desserts from '@/assets/menu/desserts-drinks.png'
 import { ref } from 'vue'
 
 const menuPanel = ref(null)
@@ -91,6 +91,11 @@ function scrollToSection(id) {
   overflow-y: auto;
   max-width: 900px;
   width: 70%;
+  padding-bottom: 30vh;   /* or 400px */
+}
+
+.menu-section:last-child {
+  padding-bottom: 20vh;
 }
 
 .menu-nav {

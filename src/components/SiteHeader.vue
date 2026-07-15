@@ -102,7 +102,7 @@
   </a>
 
 </div>
-  <ScrollworkDivider />
+  <!-- <ScrollworkDivider /> -->
   </header>
 </template>
 
@@ -130,7 +130,7 @@ const showAllHours = ref(false)
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-  /* border-bottom: 4px solid #8a6a32; */
+  border-bottom: 4px solid #8a6a32;
   box-shadow:
   inset 0 -1px 0 rgb(255 255 255 / 10%),
     0 4px 8px rgb(0 0 0 / 25%),
