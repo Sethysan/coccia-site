@@ -102,11 +102,12 @@
   </a>
 
 </div>
+  <ScrollworkDivider />
   </header>
 </template>
 
 <script setup>
-
+import ScrollworkDivider from './ScrollworkDivider.vue'
 import { ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import Hours from './Hours.vue'
@@ -389,6 +390,19 @@ const showAllHours = ref(false)
   opacity: 1;
 }
 
+.scrollwork-divider {
+  position: relative;
+  z-index: 2000;
+
+  width: 100%;
+  height: 42px;
+
+  margin-top: -8px;
+  margin-bottom: -38px;
+
+  overflow: visible;
+  pointer-events: none;
+}
 @media (max-width: 700px) {
   .visitor-info {
     gap: 0.75rem 1.25rem;

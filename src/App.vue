@@ -1,6 +1,6 @@
 <template>
   <SiteHeader />
-  <ScrollworkDivider />
+  <!-- <ScrollworkDivider /> -->
   <main class="content">
     <RouterView />
   </main>
@@ -11,7 +11,7 @@ import { onMounted } from 'vue'
 import { RouterView } from 'vue-router'
 
 import SiteHeader from './components/SiteHeader.vue'
-import ScrollworkDivider from './components/ScrollworkDivider.vue'
+// import ScrollworkDivider from './components/ScrollworkDivider.vue'
 import { useTimeStore } from '@/stores/timeStore'
 
 // -----------------------------------------------------------------------------
@@ -43,7 +43,7 @@ onMounted(() => {
   background-repeat: no-repeat;
 }
 
-.scrollwork-divider {
+/* .scrollwork-divider {
   position: relative;
   z-index: 2000;
 
@@ -55,5 +55,5 @@ onMounted(() => {
 
   overflow: visible;
   pointer-events: none;
-}
+} */
 </style>

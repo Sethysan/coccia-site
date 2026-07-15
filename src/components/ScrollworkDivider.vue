@@ -89,18 +89,6 @@
 </template>
 
 <style scoped>
-.scrollwork-divider {
-    position: relative;
-
-    width: 100%;
-    height: 42px;
-
-    margin-top: -1px;
-
-    overflow: hidden;
-    pointer-events: none;
-}
-
 .scrollwork-svg {
     display: block;
 
