@@ -52,12 +52,16 @@ const showAllHours = ref(false)
   min-height: 90px;
   padding: 0.75rem 1.5rem;
   background-image:
-    linear-gradient(rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.55)),
+    linear-gradient(rgba(0, 0, 0, 0.48), rgba(0, 0, 0, 0.72)),
     url('@/assets/dinner.png');
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-  box-shadow: 0 8px 24px rgb(0, 0, 0, 0.35);
+  border-bottom: 4px solid #8a6a32;
+  box-shadow:
+  inset 0 -1px 0 rgb(255 255 255 / 10%),
+    0 4px 8px rgb(0 0 0 / 25%),
+    0 14px 28px rgb(0 0 0 / 45%);
 }
 
 .logo {

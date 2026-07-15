@@ -14,9 +14,9 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  color: #fff;
-  text-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff, 0 0 20px black;
-  animation: blink 1s infinite;
+  color: #d8d4a0;
+  text-shadow: 0 0 10px #666120, 0 0 20px #ffd900b5, 0 0 20px black;
+  animation: blink 1.85s infinite;
 
 }
 
