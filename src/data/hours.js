@@ -20,7 +20,8 @@ export const hours = [
     closed: false,
     open: 15,
     close: 20,
-    hours: "3 PM - 8 PM"
+    hours: "3 PM - 8 PM",
+    note: "Carryout only on Sunday's"
   },
   
   {

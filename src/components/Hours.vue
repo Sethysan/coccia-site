@@ -1,28 +1,19 @@
 <template>
-  <div
-    class="hours-display"
-    :class="{ expanded: showAll }"
-  >
-    <div
-      v-for="day in displayedHours"
-      :key="day.day"
-      class="day-row"
-      :class="getDayClass(day)"
-    >
+  <div class="hours-display" :class="{ expanded: showAll }">
+    <div v-for="day in displayedHours" :key="day.day" class="day-row" :class="getDayClass(day)">
       <strong class="day-name">
         {{ showAll ? `${day.name}:` : day.name }}
       </strong>
 
-      <span
-        v-if="!showAll && isOpenNow(day)"
-        class="open-now"
-      >
+      <span v-if="!showAll && isOpenNow(day)" class="open-now">
         OPEN NOW
       </span>
-
-      <span class="day-hours">
-        {{ day.hours }}
-      </span>
+        <span class="day-hours">
+          {{ day.hours }}
+        </span>
+        <span v-if="day.note" class="hours-note">
+          {{ day.note }}
+        </span>
     </div>
   </div>
 </template>
@@ -156,6 +147,13 @@ const displayedHours = computed(() => {
   white-space: nowrap;
 }
 
+.hours-note {
+  display: block;
+  margin-top: 0.15rem;
+  font-size: 0.8rem;
+  font-style: italic;
+  opacity: 0.8;
+}
 
 /* ==========================================================
    OPEN NOW
@@ -185,14 +183,16 @@ const displayedHours = computed(() => {
     opacity: 1;
   }
 }
+
 @media (max-width: 700px) {
   .hours-display.expanded {
-    max-height: 40vh;      
+    max-height: 40vh;
     overflow-y: auto;
   }
+
   .hours-display.expanded .day-row {
-  display: flex;
-  flex-direction: column;
-}
+    display: flex;
+    flex-direction: column;
+  }
 }
 </style>

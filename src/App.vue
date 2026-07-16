@@ -1,6 +1,11 @@
 <template>
   <SiteHeader />
   
+  <section class="site-announcement">
+    <strong>Annual Maintenance Closure:</strong>
+    Coccia House will be closed August 3–18.
+  </section>
+
   <main class="content">
     <RouterView />
   </main>
@@ -26,6 +31,21 @@ onMounted(() => {
 </script>
 
 <style scoped>
+.site-announcement {
+  padding: 0.85rem 1rem;
+  text-align: center;
+
+  background-color: #7a1f1f;
+  color: #fffaf1;
+
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+
+.site-announcement strong {
+  margin-right: 0.25rem;
+}
+
 .content {
   padding-top: 2rem;
   min-height: 75vh;
