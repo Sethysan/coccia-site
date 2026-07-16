@@ -1,10 +1,14 @@
 <template>
   <SiteHeader />
   
-  <section class="site-announcement">
-    <strong>Annual Maintenance Closure:</strong>
-    Coccia House will be closed August 3–18.
-  </section>
+  <section
+  v-for="announcement in announcements"
+  :key="announcement.id"
+  class="site-announcement"
+>
+  <strong>{{ announcement.title }}:</strong>
+  {{ announcement.message }}
+</section>
 
   <main class="content">
     <RouterView />
@@ -14,6 +18,7 @@
 <script setup>
 import { onMounted } from 'vue'
 import { RouterView } from 'vue-router'
+import { announcements } from '@/data/announcements'
 
 import SiteHeader from './components/SiteHeader.vue'
 
