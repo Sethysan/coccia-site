@@ -185,4 +185,14 @@ const displayedHours = computed(() => {
     opacity: 1;
   }
 }
+@media (max-width: 700px) {
+  .hours-display.expanded {
+    max-height: 40vh;      
+    overflow-y: auto;
+  }
+  .hours-display.expanded .day-row {
+  display: flex;
+  flex-direction: column;
+}
+}
 </style>

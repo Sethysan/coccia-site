@@ -54,7 +54,7 @@
 
 
                 <!-- Center vertical ornament -->
-                <path d="
+                <!-- <path d="
             M 600 5
             L 610 22
             L 600 30
@@ -68,7 +68,7 @@
             L 600 55
             L 590 38
             Z
-          " />
+          " /> -->
 
 
                 <!-- Small decorative circles -->
@@ -89,18 +89,32 @@
 </template>
 
 <style scoped>
-.scrollwork-svg {
-    display: block;
+.scrollwork-divider {
+  position: relative;
+  left: 50%;
 
-    width: 100%;
-    height: 100%;
+  width: 100vw;
+  height: 42px;
+
+  margin-left: -50vw;
+  margin-top: -8px;
+  margin-bottom: -32px;
+
+  overflow: visible;
+  pointer-events: none;
+}
+
+.scrollwork-svg {
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 
 .ornament {
-    fill: #0c033069;
+    fill: #0c0330e0;
 
     stroke: #4c3018;
-    stroke-width: 1.;
+    stroke-width: 1;
 
     stroke-linecap: round;
     stroke-linejoin: round;
@@ -112,13 +126,19 @@
 
 .ornament path:nth-of-type(5),
 .ornament path:nth-of-type(6) {
-    fill: #24010474;
+    fill: #ce450a34;
 }
 
+.divider-line {
+  fill: none;
+  stroke: #4c3018;
+  stroke-width: 2;
+  stroke-linecap: round;
+}
 .divider-line,
 .ornament {
     filter:
-        drop-shadow(0 1px 0 rgb(255 210 140 / 20%)) drop-shadow(0 3px 3px rgb(0 0 0 / 55%));
+        drop-shadow(0 2px 0 rgba(255, 211, 140, 0.448)) drop-shadow(0 3px 3px rgba(0, 0, 0, 0.421));
 }
 
 /* .bronze-highlight {

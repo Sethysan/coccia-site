@@ -12,7 +12,7 @@
       </nav>
     </div>
 
-  <!-- ========================================================
+    <!-- ========================================================
      VISITOR INFORMATION
 
      This row contains the three pieces of information most
@@ -23,86 +23,54 @@
      - Directions
      ======================================================== -->
 
-<div class="visitor-info">
+    <div class="visitor-info">
 
-  <!-- Hours dropdown -->
-  <section
-    class="hours-menu"
-    @mouseenter="showAllHours = true"
-    @mouseleave="showAllHours = false"
-    @focusin="showAllHours = true"
-    @focusout="showAllHours = false"
-  >
-    <button
-      class="hours-trigger"
-      type="button"
-      :aria-expanded="showAllHours"
-      aria-label="View weekly restaurant hours"
-      @click="showAllHours = !showAllHours"
-    >
-      <Hours :show-all="false" />
+      <!-- Hours dropdown -->
+      <section class="hours-menu" @mouseenter="showAllHours = true" @mouseleave="showAllHours = false"
+        @focusin="showAllHours = true" @focusout="showAllHours = false">
+        <button class="hours-trigger" type="button" :aria-expanded="showAllHours"
+          aria-label="View weekly restaurant hours" @click="showAllHours = !showAllHours">
+          <Hours :show-all="false" />
 
-      <span
-        class="hours-arrow"
-        :class="{ expanded: showAllHours }"
-        aria-hidden="true"
-      >
-        ▼
-      </span>
-    </button>
+          <span class="hours-arrow" :class="{ expanded: showAllHours }" aria-hidden="true">
+            ▼
+          </span>
+        </button>
 
-    <Transition name="hours-dropdown">
-      <div
-        v-show="showAllHours"
-        class="weekly-hours-dropdown"
-      >
-        <Hours :show-all="true" />
-      </div>
-    </Transition>
-  </section>
+        <Transition name="hours-dropdown">
+          <div v-show="showAllHours" class="weekly-hours-dropdown">
+            <Hours :show-all="true" />
+          </div>
+        </Transition>
+      </section>
 
 
-  <!-- Phone number -->
-  <a
-    class="visitor-link"
-    href="tel:+13302645475"
-    aria-label="Call Coccia House at 330-264-5475"
-  >
-    <span
-      class="visitor-icon"
-      aria-hidden="true"
-    >
-      ☎
-    </span>
+      <!-- Phone number -->
+      <a class="visitor-link" href="tel:+13302645475" aria-label="Call Coccia House at 330-264-5475">
+        <span class="visitor-icon" aria-hidden="true">
+          ☎
+        </span>
 
-    <span>
-      (330) 264-5475
-    </span>
-  </a>
+        <span>
+          (330) 264-5475
+        </span>
+      </a>
 
 
-  <!-- Google Maps directions -->
-  <a
-    class="visitor-link"
-    href="https://www.google.com/maps/search/?api=1&query=Coccia+House+Wooster+Ohio"
-    target="_blank"
-    rel="noopener noreferrer"
-    aria-label="Get directions to Coccia House in Google Maps"
-  >
-    <span
-      class="visitor-icon"
-      aria-hidden="true"
-    >
-      ◉
-    </span>
+      <!-- Google Maps directions -->
+      <a class="visitor-link" href="https://www.google.com/maps/search/?api=1&query=Coccia+House+Wooster+Ohio"
+        target="_blank" rel="noopener noreferrer" aria-label="Get directions to Coccia House in Google Maps">
+        <span class="visitor-icon" aria-hidden="true">
+          ◉
+        </span>
 
-    <span>
-      Get Directions
-    </span>
-  </a>
+        <span>
+          Get Directions
+        </span>
+      </a>
 
-</div>
-  <!-- <ScrollworkDivider /> -->
+    </div>
+    <!-- <ScrollworkDivider /> -->
   </header>
 </template>
 
@@ -122,19 +90,19 @@ const showAllHours = ref(false)
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  min-height: 90px;
-  padding: 0.75rem 1.5rem;
+  min-height: 60px;
+  padding: 0.75rem 1.0rem;
   background-image:
-    linear-gradient(rgba(0, 0, 0, 0.48), rgba(0, 0, 0, 0.72)),
+    linear-gradient(rgba(0, 0, 0, 0.58), rgba(0, 0, 0, 0.842)),
     url('@/assets/dinner.png');
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-  border-bottom: 4px solid #8a6a32;
+  border-bottom: 2px solid #8a6a32bd;
   box-shadow:
-  inset 0 -1px 0 rgb(255 255 255 / 10%),
-    0 4px 8px rgb(0 0 0 / 25%),
-    0 14px 28px rgb(0 0 0 / 45%);
+    inset 0 -1px 0 rgba(255, 255, 255, 0.11),
+    0 4px 8px rgb(0, 0, 0),
+    0 14px 28px rgba(0, 0, 0, 0.363);
 }
 
 .logo {
@@ -164,7 +132,7 @@ const showAllHours = ref(false)
   font-weight: 350;
   color: var(--default-color);
   background-color: transparent;
-  padding: 0.65rem 1.6rem;
+  padding: 0.65rem 2rem;
   border-radius: 4px;
   transition:
     background-color 0.3s ease,
@@ -289,8 +257,7 @@ const showAllHours = ref(false)
   opacity: 0;
 
   transform:
-    translateY(-0.95rem)
-    scaleY(0.32);
+    translateY(-0.95rem) scaleY(0.32);
 }
 
 .hours-dropdown-enter-to,
@@ -298,8 +265,7 @@ const showAllHours = ref(false)
   opacity: 1;
 
   transform:
-    translateY(0)
-    scaleY(1);
+    translateY(0) scaleY(1);
 }
 
 /* ==========================================================
@@ -390,26 +356,31 @@ const showAllHours = ref(false)
   opacity: 1;
 }
 
-.scrollwork-divider {
+/* .scrollwork-divider {
   position: relative;
   z-index: 2000;
 
-  width: 100%;
+  width: calc(100% + 3rem);
   height: 42px;
-
+  margin-left: -1.5rem;
   margin-top: -8px;
   margin-bottom: -38px;
 
   overflow: visible;
   pointer-events: none;
-}
+} */
+
 @media (max-width: 700px) {
   .visitor-info {
     gap: 0.75rem 1.25rem;
+    flex-direction: column-reverse;
   }
 
   .visitor-link {
     font-size: 0.9rem;
+  }
+  .header{
+    flex-direction: row;
   }
 }
 </style>

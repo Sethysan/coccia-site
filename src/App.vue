@@ -31,10 +31,7 @@ onMounted(() => {
   min-height: 75vh;
 
   background-image:
-    linear-gradient(
-      rgba(0, 0, 0, 0.55),
-      rgba(0, 0, 0, 0.55)
-    ),
+    linear-gradient(rgba(0, 0, 0, 0.58), rgba(0, 0, 0, 0.62)),
     url('./assets/hero-pizza.jpg');
 
   background-size: cover;
