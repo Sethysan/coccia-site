@@ -40,8 +40,8 @@ onMounted(() => {
   padding: 0.85rem 1rem;
   text-align: center;
 
-  background-color: #7a1f1f;
-  color: #fffaf1;
+  background-color: var(--announcement-warning);
+  color: var(--text-primary);
 
   font-size: 0.95rem;
   line-height: 1.4;

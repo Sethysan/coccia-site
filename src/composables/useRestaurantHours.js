@@ -2,7 +2,7 @@
 // the underlying time in the store changes.
 import { computed } from 'vue'
 import { useTimeStore } from '@/stores/timeStore'
-
+import { hours } from '@/data/hours'
 
 // =======================================================
 // Restaurant Hours Composable
@@ -65,6 +65,27 @@ export function useRestaurantHours() {
            timeStore.currentTime.minute()
   })
 
+  // -------------------------------------------------------
+// TODAY'S HOURS
+//
+// Returns the hours object for the current day.
+//
+// Example:
+//
+// {
+//   day: 4,
+//   name: "Thursday",
+//   hours: "3 PM - 9 PM",
+//   ...
+// }
+//
+// Components can use this instead of searching the
+// hours array themselves.
+// -------------------------------------------------------
+
+const todayHours = computed(() => {
+  return hours.find(day => day.day === currentDay.value)
+})
 
   // -------------------------------------------------------
   // Is this card representing TODAY?
@@ -158,6 +179,7 @@ export function useRestaurantHours() {
   // -------------------------------------------------------
 
   return {
+    todayHours,
     isToday,
     isOpenNow,
     getDayClass

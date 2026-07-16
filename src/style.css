@@ -1,14 +1,35 @@
 :root {
   font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
-  color: #2b1812;
-  background: #f7f1e8;
   scroll-behavior: smooth;
 }
 
-:root{
+/* Site color themes */
+:root {
   --default-color: #fffaf1;
   --default-dark: #fffaf1be;
-  --bronze-color: #8a6a32;
+  --bronze-color: #8a6a32bd;
+  --bronze-bold: #8a6a32;
+  --background-light-trans: rgba(255, 250, 241, 0.8);
+  --background-dark-trans: rgba(20, 15, 12, 0.8);
+  --announcement-warning: var(--status-closed);
+  --text-primary: var(--default-color);
+  --text-secondary: var(--default-dark);
+  --status-closed: #7a1f1f;
+  --status-open: #4f8a43;
+  --bronze-hover: #a88444;
+
+}
+/* TODO:
+   Add shadow vars to components and views
+*/
+
+/* Site behaviors */
+:root {
+  --shadow-soft: 0 4px 12px rgba(0, 0, 0, .25);
+
+  --shadow-medium: 0 8px 24px rgba(0, 0, 0, .35);
+
+  --shadow-header: 0 4px 12px rgba(0, 0, 0, .45);
 }
 
 body {
@@ -22,4 +43,3 @@ body {
 a {
   color: inherit;
 }
- 

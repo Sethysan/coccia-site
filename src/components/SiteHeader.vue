@@ -98,7 +98,7 @@ const showAllHours = ref(false)
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-  border-bottom: 2px solid #8a6a32bd;
+  border-bottom: 2px solid var(--bronze-color);
   box-shadow:
     inset 0 -1px 0 rgba(255, 255, 255, 0.11),
     0 4px 8px rgb(0, 0, 0),
@@ -130,7 +130,7 @@ const showAllHours = ref(false)
   font-size: 2.5rem;
   text-decoration: none;
   font-weight: 350;
-  color: var(--default-color);
+  color: var(--text-primary);
   background-color: transparent;
   padding: 0.65rem 2rem;
   border-radius: 4px;
@@ -228,7 +228,7 @@ const showAllHours = ref(false)
   z-index: 1100;
   width: max-content;
   padding: 0.75rem 1rem;
-  background-color: var(--default-color);
+  background-color: var(--background-light-trans);
   color: #111;
   border: 1px solid rgba(0, 0, 0, 0.2);
   border-radius: 5px;
@@ -296,7 +296,7 @@ const showAllHours = ref(false)
 
   padding: 0.45rem 0;
 
-  color: var(--default-dark);
+  color: var(--text-secondary);
 
   font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
   font-size: 1rem;
@@ -323,7 +323,7 @@ const showAllHours = ref(false)
   width: 1.4rem;
   height: 1.4rem;
 
-  color: #b9853f;
+  color: var(--bronze-bold);
 
   font-size: 1.15rem;
   line-height: 1;

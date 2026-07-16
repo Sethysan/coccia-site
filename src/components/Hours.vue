@@ -157,10 +157,11 @@ const displayedHours = computed(() => {
 
 /* ==========================================================
    OPEN NOW
+   // TODO: Add Opening Soon and Closing Soon status logic.
    ========================================================== */
 
 .open-now {
-  color: limegreen;
+  color: var(--status-open);
   font-weight: bold;
   animation: blink 1s infinite;
 }

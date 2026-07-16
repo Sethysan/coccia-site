@@ -16,29 +16,29 @@
 export const hours = [
   {
     day: 0,
-    name: "Sunday ",
+    name: "Sunday",
     closed: false,
     open: 15,
     close: 20,
     hours: "3 PM - 8 PM",
-    note: "Carryout only on Sunday's"
+    note: "Carryout only on Sundays"
   },
   
   {
     day: 1,
-    name: "Monday ",
+    name: "Monday",
     closed: true,
     hours: "Closed"
   },
   {
     day: 2,
-    name: "Tuesday ",
+    name: "Tuesday",
     closed: true,
     hours: "Closed"
   },
   {
     day: 3,
-    name: "Wednesday ",
+    name: "Wednesday",
     closed: false,
     open: 15,
     close: 21,
@@ -46,15 +46,15 @@ export const hours = [
   },
   {
     day: 4,
-    name: "Thursday ",
+    name: "Thursday",
     closed: false,
-    open: 15,
+    open: 13,
     close: 21,
     hours: "3 PM - 9 PM"
   },
   {
     day: 5,
-    name: "Friday ",
+    name: "Friday",
     closed: false,
     open: 15,
     close: 21,
@@ -62,7 +62,7 @@ export const hours = [
   },
   {
     day: 6,
-    name: "Saturday ",
+    name: "Saturday",
     closed: false,
     open: 15,
     close: 21,
