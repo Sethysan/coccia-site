@@ -19,37 +19,65 @@
         Call for Carryout
       </a>
 
-      <a href="https://www.google.com/maps/search/?api=1&query=Coccia+House+Wooster+Ohio" target="_blank" rel="noopener noreferrer" class="home-action">
+      <a href="https://www.google.com/maps/search/?api=1&query=Coccia+House+Wooster+Ohio" target="_blank"
+        rel="noopener noreferrer" class="home-action">
         Get Directions
       </a>
     </div>
 
+    <section class="news-card">
+
+      <h2>Latest News</h2>
+
+      <article class="news-item">
+        <h3>🍕 Dining Room Open</h3>
+
+        <p>
+          Join us in our dining room Wednesday through Saturday
+          from 3–9 PM and stop in for carryout on Sundays from 3–8 PM.
+        </p>
+      </article>
+
+      <article class="news-item">
+        <h3>📅 Annual Maintenance Closure</h3>
+
+        <p>
+          Coccia House will be closed August 3–18 for our annual
+          maintenance and deep cleaning.
+          We look forward to serving you again on August 19.
+        </p>
+      </article>
+
+    </section>
+
     <section class="today-card">
 
-<!-- Today's information Card -->
+      <!-- Today's information Card -->
 
-  <h2>Today's at Coccia House</h2>
+      <h2>Today at Coccia House</h2>
 
-  <p class="today-status">
-    {{ isOpenNow(todayHours) ? '🟢 Open Now' : '🔴 Closed' }}
-  </p>
+      <p class="today-status" :class="`is-${restaurantStatus.state}`">
+        <span class="status-dot" aria-hidden="true"></span>
 
-  <p class="today-day">
-    {{ todayHours.name }}
-  </p>
+        {{ restaurantStatus.label }}
+      </p>
 
-  <p class="today-hours">
-    {{ todayHours.hours }}
-  </p>
+      <p class="today-day">
+        {{ todayHours.name }}
+      </p>
 
-  <p
-    v-if="todayHours.note"
-    class="today-note"
-  >
-    {{ todayHours.note }}
-  </p>
+      <p class="today-hours">
+        {{ todayHours.hours }}
+      </p>
 
-</section>
+      <p class="today-message">
+        {{ restaurantStatus.message }}
+      </p>
+
+      <p v-if="todayHours.note" class="today-note">
+        {{ todayHours.note }}
+      </p>
+    </section>
 
     <div class="mission-section">
       <h2>Our Mission</h2>
@@ -67,7 +95,10 @@ import { useRestaurantHours } from '@/composables/useRestaurantHours'
 import { RouterLink } from 'vue-router'
 import { homeContent } from '@/content/homeContent'
 
-const { todayHours, isOpenNow } = useRestaurantHours()
+const {
+  todayHours,
+  restaurantStatus
+} = useRestaurantHours()
 
 </script>
 <style scoped>
@@ -160,6 +191,33 @@ const { todayHours, isOpenNow } = useRestaurantHours()
   background-color: var(--bronze-hover);
 }
 
+.news-card {
+  max-width: 700px;
+  margin: 2rem auto;
+
+  padding: 1.5rem;
+
+  background: var(--background-dark-trans);
+
+  border: 1px solid var(--bronze-color);
+  border-radius: .5rem;
+}
+
+.news-card h2 {
+  margin-bottom: 1rem;
+}
+
+.news-item+.news-item {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(255, 255, 255, .15);
+}
+
+.news-item h3 {
+  margin-bottom: .5rem;
+  color: var(--bronze-bold);
+}
+
 .today-card {
   max-width: 500px;
   margin: 2.5rem auto;
@@ -178,10 +236,55 @@ const { todayHours, isOpenNow } = useRestaurantHours()
 }
 
 .today-status {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+
+  margin-bottom: 0.5rem;
+
   font-size: 1.25rem;
   font-weight: 700;
-  margin-bottom: 0.5rem;
 }
+
+.status-dot {
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 50%;
+}
+
+F.today-status.is-open .status-dot {
+  background-color: #4caf50;
+  box-shadow: 0 0 8px rgba(76, 175, 80, 0.65);
+}
+
+.today-status.is-opening-soon .status-dot {
+  background-color: #d59a3a;
+  box-shadow: 0 0 8px rgba(213, 154, 58, 0.55);
+}
+
+.today-status.is-opening-later .status-dot {
+  background-color: #d59a3a;
+}
+
+.today-status.is-closing-soon .status-dot {
+  background-color: #dc7c38;
+  box-shadow: 0 0 8px rgba(220, 124, 56, 0.55);
+}
+
+.today-status.is-closed .status-dot {
+  background-color: #b84b43;
+  box-shadow: 0 0 6px rgba(184, 75, 67, 0.4);
+}
+
+.today-message {
+  max-width: 380px;
+  margin: 0.85rem auto 0;
+
+  line-height: 1.5;
+  color: var(--text-primary);
+}
+
 
 .today-day {
   font-size: 1.1rem;
@@ -229,6 +332,36 @@ const { todayHours, isOpenNow } = useRestaurantHours()
   100% {
     opacity: 1;
   }
+}
 
+@media (max-width: 600px) {
+  .welcome-section {
+    width: min(100%, 94%);
+    padding: 2rem 0.75rem;
+  }
+
+  .welcome-message {
+    font-size: 1rem;
+  }
+
+  .home-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .home-action {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .news-card,
+  .today-card,
+  .mission-section {
+    padding: 1rem;
+  }
+
+  .today-status {
+    font-size: 1.1rem;
+  }
 }
 </style>

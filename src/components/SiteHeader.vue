@@ -142,7 +142,7 @@ const showAllHours = ref(false)
 .nav a::before {
   content: "";
   position: absolute;
-  left: 50%;
+  left: 52%;
   bottom: 0.35rem;
   width: 0;
   height: 2px;
@@ -320,7 +320,7 @@ const showAllHours = ref(false)
   align-items: center;
   justify-content: center;
 
-  width: 1.4rem;
+  /* width: 1.4rem; */
   height: 1.4rem;
 
   color: var(--bronze-bold);
@@ -333,7 +333,7 @@ const showAllHours = ref(false)
   content: "";
 
   position: absolute;
-  left: 50%;
+  left: 51%;
   bottom: 0;
 
   width: 0;

@@ -16,6 +16,9 @@
   --text-secondary: var(--default-dark);
   --status-closed: #7a1f1f;
   --status-open: #4f8a43;
+  --status-opening-soon: rgba(213, 154, 58);
+  --status-opening-later:rgba(215, 140, 57);
+  --status-closing-soon:#dc7c38;
   --bronze-hover: #a88444;
 
 }

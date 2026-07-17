@@ -62,30 +62,30 @@ export function useRestaurantHours() {
 
   const currentMinutes = computed(() => {
     return timeStore.currentTime.hour() * 60 +
-           timeStore.currentTime.minute()
+      timeStore.currentTime.minute()
   })
 
   // -------------------------------------------------------
-// TODAY'S HOURS
-//
-// Returns the hours object for the current day.
-//
-// Example:
-//
-// {
-//   day: 4,
-//   name: "Thursday",
-//   hours: "3 PM - 9 PM",
-//   ...
-// }
-//
-// Components can use this instead of searching the
-// hours array themselves.
-// -------------------------------------------------------
+  // TODAY'S HOURS
+  //
+  // Returns the hours object for the current day.
+  //
+  // Example:
+  //
+  // {
+  //   day: 4,
+  //   name: "Thursday",
+  //   hours: "3 PM - 9 PM",
+  //   ...
+  // }
+  //
+  // Components can use this instead of searching the
+  // hours array themselves.
+  // -------------------------------------------------------
 
-const todayHours = computed(() => {
-  return hours.find(day => day.day === currentDay.value)
-})
+  const todayHours = computed(() => {
+    return hours.find(day => day.day === currentDay.value)
+  })
 
   // -------------------------------------------------------
   // Is this card representing TODAY?
@@ -138,7 +138,7 @@ const todayHours = computed(() => {
 
     // Is the current time between open and close?
     return currentMinutes.value >= openMinutes &&
-           currentMinutes.value < closeMinutes
+      currentMinutes.value < closeMinutes
   }
 
 
@@ -170,16 +170,102 @@ const todayHours = computed(() => {
     return 'closed'
   }
 
+  function formatHour(hour) {
+    const suffix = hour >= 12 ? 'PM' : 'AM'
+    const displayHour = hour % 12 || 12
 
-  // -------------------------------------------------------
-  // Export the helper functions.
-  //
-  // Any Vue component that imports this composable can use
-  // these functions.
-  // -------------------------------------------------------
+    return `${displayHour} ${suffix}`
+  }
+
+  const restaurantStatus = computed(() => {
+    const day = todayHours.value
+
+    if (!day) {
+      return {
+        state: 'closed',
+        label: 'Hours Unavailable',
+        message: 'Please call us for today’s hours.'
+      }
+    }
+
+    if (day.closed) {
+      return {
+        state: 'closed',
+        label: 'Closed Today',
+        message: 'We’ll reopen Wednesday at 3 PM.'
+      }
+    }
+
+    const openMinutes = day.open * 60
+    const closeMinutes = day.close * 60
+    const openingSoonMinutes = openMinutes - 90
+    const closingSoonMinutes = closeMinutes - 90
+
+    const openingSoon =
+      currentMinutes.value >= openingSoonMinutes &&
+      currentMinutes.value < openMinutes
+
+    const closingSoon =
+      currentMinutes.value >= closingSoonMinutes &&
+      currentMinutes.value < closeMinutes
+
+    if (openingSoon) {
+      return {
+        state: 'opening-soon',
+        label: 'Opening Soon',
+        message:
+          day.day === 0
+            ? `Sunday carryout begins at ${formatHour(day.open)}.`
+            : `We open at ${formatHour(day.open)}.`
+      }
+    }
+
+    if (isOpenNow(day) && closingSoon) {
+      return {
+        state: 'closing-soon',
+        label: 'Closing Soon',
+        message:
+          day.day === 0
+            ? `Sunday carryout ends at ${formatHour(day.close)}.`
+            : `We close at ${formatHour(day.close)}.`
+      }
+    }
+
+    if (isOpenNow(day)) {
+      return {
+        state: 'open',
+        label: 'Open Now',
+        message:
+          day.day === 0
+            ? `Sunday carryout is available until ${formatHour(day.close)}.`
+            : `Dine in or order carryout until ${formatHour(day.close)}.`
+      }
+    }
+
+    if (currentMinutes.value < openMinutes) {
+      return {
+        state: 'opening-later',
+        label: 'Opens Today',
+        message:
+          day.day === 0
+            ? `Sunday carryout begins at ${formatHour(day.open)}.`
+            : `We open at ${formatHour(day.open)}.`
+      }
+    }
+
+    return {
+      state: 'closed',
+      label: 'Closed for Today',
+      message:
+        day.day === 0
+          ? 'We’ll reopen Wednesday at 3 PM.'
+          : 'Thank you for visiting. We hope to see you again soon!'
+    }
+  })
 
   return {
     todayHours,
+    restaurantStatus,
     isToday,
     isOpenNow,
     getDayClass

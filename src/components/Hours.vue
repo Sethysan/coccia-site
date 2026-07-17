@@ -5,15 +5,15 @@
         {{ showAll ? `${day.name}:` : day.name }}
       </strong>
 
-      <span v-if="!showAll && isOpenNow(day)" class="open-now">
-        OPEN NOW
+      <span v-if="!showAll && isToday(day)" class="current-status" :class="`is-${restaurantStatus.state}`">
+        {{ restaurantStatus.label }}
       </span>
-        <span class="day-hours">
-          {{ day.hours }}
-        </span>
-        <span v-if="day.note" class="hours-note">
-          {{ day.note }}
-        </span>
+      <span class="day-hours">
+        {{ day.hours }}
+      </span>
+      <span v-if="day.note" class="hours-note">
+        {{ day.note }}
+      </span>
     </div>
   </div>
 </template>
@@ -43,7 +43,8 @@ const props = defineProps({
 // -----------------------------------------------------------------------------
 
 const {
-  isOpenNow,
+  restaurantStatus,
+  isToday,
   getDayClass
 } = useRestaurantHours()
 
@@ -159,29 +160,50 @@ const displayedHours = computed(() => {
    OPEN NOW
    // TODO: Add Opening Soon and Closing Soon status logic.
    ========================================================== */
+.current-status {
+  display: inline-block;
+  margin: 0.15rem 0;
 
-.open-now {
-  color: var(--status-open);
-  font-weight: bold;
-  animation: blink 1s infinite;
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
 }
 
+.current-status.is-open {
+  color: var(--status-open, #4caf50);
+}
+
+.current-status.is-opening-soon {
+  color: var(--status-opening-soon);
+  animation: status-pulse 1.5s ease-in-out infinite;
+}
+
+.current-status.is-opening-later {
+  color: var(--status-opening-later);
+}
+
+.current-status.is-closing-soon {
+  color: var(--status-closing-soon);
+  animation: status-pulse 1.5s ease-in-out infinite;
+}
+
+.current-status.is-closed {
+  color: var(--status-closed);
+}
 
 /* ==========================================================
    ANIMATION
    ========================================================== */
 
-@keyframes blink {
-  0% {
+@keyframes status-pulse {
+  0%,
+  100% {
     opacity: 1;
   }
 
   50% {
-    opacity: 0.25;
-  }
-
-  100% {
-    opacity: 1;
+    opacity: 0.55;
   }
 }
 
