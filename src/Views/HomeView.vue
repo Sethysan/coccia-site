@@ -45,13 +45,13 @@
         </p>
 
         <p>
-          Our website hasn't been updated since the pandemic, when we temporarily offered only half-bake pizzas.
+          Our website hasn't been updated since the pandemic, when we temporarily offered only half-baked pizzas.
           Today, <strong>our full menu is available again for dine-in and carryout</strong>, just like before.
         </p>
 
         <p>
           Prefer to bake your pizza at home?
-          <strong>Half-bake pizzas are still available for pickup</strong>, so you can enjoy a fresh-from-the-oven
+          <strong>Half-baked pizzas are still available for pickup</strong>, so you can enjoy a fresh-from-the-oven
           Coccia House pizza whenever you're ready.
         </p>
 
@@ -98,6 +98,22 @@
       </p>
     </section>
 
+    <!-- Gallery Section 
+// TODO: Add Dining Room and pizza photos  -->
+
+    <HomeGallery />
+    <!-- <section class="home-gallery">
+      <img src="@/assets/cheers.jpg" alt="Fresh Coccia House pizza" />
+
+      <img src="@/assets/peekaboo.jpg" alt="The Coccia House dining room" />
+
+      <img src="@/assets/1967.jpg" alt="Historic Coccia House photograph" />
+
+      <img src="@/assets/grandma-garden.jpg" alt="Historic Coccia House photograph" />
+    </section> -->
+
+    <!-- Mission section -->
+
     <div class="mission-section">
       <h2>Our Mission</h2>
 
@@ -113,6 +129,7 @@
 import { useRestaurantHours } from '@/composables/useRestaurantHours'
 import { RouterLink } from 'vue-router'
 import { homeContent } from '@/content/homeContent'
+import HomeGallery from '@/components/HomeGallery.vue'
 
 const {
   todayHours,
@@ -144,7 +161,7 @@ const {
   margin-bottom: 0.75rem;
 
   font-size: 1.2rem;
-  font-weight:bolder;
+  font-weight: bolder;
   color: var(--bronze-bold);
   font-style: italic;
   letter-spacing: 0.06rem;
@@ -273,7 +290,7 @@ const {
   border-radius: 50%;
 }
 
-F.today-status.is-open .status-dot {
+.today-status.is-open .status-dot {
   background-color: #4caf50;
   box-shadow: 0 0 8px rgba(76, 175, 80, 0.65);
 }
@@ -320,6 +337,36 @@ F.today-status.is-open .status-dot {
   font-style: italic;
   color: var(--default-dark);
 }
+
+/* .home-gallery {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+
+  max-width: 800px;
+  margin: 3rem auto;
+}
+
+.home-gallery img {
+
+  height: 220px;
+  display: block;
+
+  object-fit: cover;
+
+  border: 1px solid var(--bronze-color);
+  border-radius: 0.5rem;
+}
+
+@media (max-width: 700px) {
+  .home-gallery {
+    grid-template-columns: 1fr;
+  }
+
+  .home-gallery img {
+    height: 240px;
+  }
+} */
 
 .mission-section {
   max-width: 700px;

@@ -158,7 +158,7 @@ const displayedHours = computed(() => {
 
 /* ==========================================================
    OPEN NOW
-   // TODO: Add Opening Soon and Closing Soon status logic.
+
    ========================================================== */
 .current-status {
   display: inline-block;

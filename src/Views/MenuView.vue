@@ -10,19 +10,19 @@
     <section class="menu-panel" ref="menuPanel">
 
       <section id="starters" class="menu-section">
-        <img src="../assets/menu/starters-salads.jpg" alt="Starters and salads menu" />
+        <img src="../assets/menu/starters-salads.png" alt="Starters and salads menu" />
       </section>
 
       <section id="pizza" class="menu-section">
-        <img src="../assets/menu/pizza-pasta.jpg" alt="Pizza and pasta menu" />
+        <img src="../assets/menu/pizza-pasta.png" alt="Pizza and pasta menu" />
       </section>
 
       <section id="favorites" class="menu-section">
-        <img src="../assets/menu/house-favorites.jpg" alt="House favorites menu" />
+        <img src="../assets/menu/house-favorites.png" alt="House favorites menu" />
       </section>
 
       <section id="sandwiches" class="menu-section">
-        <img src="../assets/menu/sandwiches.jpg" alt="Sandwiches menu" />
+        <img src="../assets/menu/sandwiches.png" alt="Sandwiches menu" />
       </section>
 
       <section id="desserts" class="menu-section">
@@ -33,10 +33,10 @@
 </template>
 
 <script setup>
-import pizza from '@/assets/menu/pizza-pasta.jpg'
-import favorites from '@/assets/menu/house-favorites.jpg'
-import starters from '@/assets/menu/starters-salads.jpg'
-import sandwiches from '@/assets/menu/sandwiches.jpg'
+import pizza from '@/assets/menu/pizza-pasta.png'
+import favorites from '@/assets/menu/house-favorites.png'
+import starters from '@/assets/menu/starters-salads.png'
+import sandwiches from '@/assets/menu/sandwiches.png'
 import desserts from '@/assets/menu/desserts-drinks.png'
 import { ref } from 'vue'
 
