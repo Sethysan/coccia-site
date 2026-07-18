@@ -178,13 +178,17 @@ style scoped>.home-gallery {
 .home-gallery-swiper :deep(.swiper-button-next) {
     color: var(--bronze-bold);
 }
+.swiper-button-prev, .swiper-button-next {
+    color: var(--bronze-bold);
+}
 
 .home-gallery-swiper :deep(.swiper-pagination-bullet) {
     background-color: var(--default-color);
+    color: var(--bronze-bold);
     opacity: 0.45;
 }
 
-.home-gallery-swiper :deep(.swiper-pagination-bullet-active) {
+.home-gallery-swiper .swiper-pagination-bullet-active {
     background-color: var(--bronze-bold);
     opacity: 1;
 }
