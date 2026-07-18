@@ -1,18 +1,15 @@
 <template>
   <SiteHeader />
-  
-  <section
-  v-for="announcement in announcements"
-  :key="announcement.id"
-  class="site-announcement"
->
-  <strong>{{ announcement.title }}:</strong>
-  {{ announcement.message }}
-</section>
+
+  <section v-for="announcement in announcements" :key="announcement.id" class="site-announcement">
+    <strong>{{ announcement.title }}:</strong>
+    {{ announcement.message }}
+  </section>
 
   <main class="content">
     <RouterView />
   </main>
+  <SiteFooter />
 </template>
 
 <script setup>
@@ -21,6 +18,7 @@ import { RouterView } from 'vue-router'
 import { announcements } from '@/data/announcements'
 
 import SiteHeader from './components/SiteHeader.vue'
+import SiteFooter from './components/SiteFooter.vue'
 
 import { useTimeStore } from '@/stores/timeStore'
 
@@ -65,4 +63,13 @@ onMounted(() => {
   background-repeat: no-repeat;
 }
 
+.app-layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.site-main {
+  flex: 1;
+}
 </style>

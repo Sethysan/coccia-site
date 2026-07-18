@@ -100,17 +100,29 @@
 
     <!-- Gallery Section 
 // TODO: Add Dining Room and pizza photos  -->
-
     <HomeGallery />
-    <!-- <section class="home-gallery">
-      <img src="@/assets/cheers.jpg" alt="Fresh Coccia House pizza" />
 
-      <img src="@/assets/peekaboo.jpg" alt="The Coccia House dining room" />
 
-      <img src="@/assets/1967.jpg" alt="Historic Coccia House photograph" />
+    <!-- story Preview Section -->
 
-      <img src="@/assets/grandma-garden.jpg" alt="Historic Coccia House photograph" />
-    </section> -->
+    <section class="story-preview">
+      <p class="story-eyebrow">
+        A Wooster Tradition
+      </p>
+
+      <h2>Our Story</h2>
+
+      <p>
+        Since 1958, generations of families have gathered around the tables
+        at Coccia House. What began as a small family restaurant has grown
+        into a lasting Wooster tradition built around homemade food, familiar
+        faces, and time spent together.
+      </p>
+
+      <RouterLink to="/about" class="story-link">
+        Read Our Story
+      </RouterLink>
+    </section>
 
     <!-- Mission section -->
 
@@ -137,16 +149,8 @@ const {
 } = useRestaurantHours()
 
 </script>
-<style scoped>
-/* .news {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  color: #d8d4a0;
-  text-shadow: 0 0 10px #666120, 0 0 20px #ffd900b5, 0 0 20px black;
-  animation: blink 1.85s infinite;
 
-} */
+<style scoped>
 
 .welcome-section {
   width: min(900px, 90%);
@@ -338,35 +342,68 @@ const {
   color: var(--default-dark);
 }
 
-/* .home-gallery {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-
-  max-width: 800px;
+.story-preview {
+  max-width: 700px;
   margin: 3rem auto;
-}
+  padding: 2rem;
 
-.home-gallery img {
+  text-align: center;
 
-  height: 220px;
-  display: block;
-
-  object-fit: cover;
-
+  background-color: var(--background-dark-trans);
   border: 1px solid var(--bronze-color);
   border-radius: 0.5rem;
 }
 
-@media (max-width: 700px) {
-  .home-gallery {
-    grid-template-columns: 1fr;
-  }
+.story-eyebrow {
+  margin-bottom: 0.4rem;
 
-  .home-gallery img {
-    height: 240px;
-  }
-} */
+  color: var(--bronze-bold);
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.story-preview h2 {
+  margin-bottom: 1rem;
+}
+
+.story-preview>p:not(.story-eyebrow) {
+  max-width: 600px;
+  margin: 0 auto;
+
+  line-height: 1.7;
+}
+
+.story-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  margin-top: 1.5rem;
+  padding: 0.7rem 1.2rem;
+
+  color: var(--default-color);
+  background-color: var(--bronze-bold);
+
+  border: 1px solid var(--bronze-bold);
+  border-radius: 0.35rem;
+
+  font-weight: 700;
+  text-decoration: none;
+
+  transition:
+    background-color 200ms ease,
+    border-color 200ms ease,
+    transform 200ms ease;
+}
+
+.story-link:hover,
+.story-link:focus-visible {
+  background-color: var(--bronze-hover);
+  border-color: var(--bronze-hover);
+  transform: translateY(-2px);
+}
 
 .mission-section {
   max-width: 700px;
@@ -423,6 +460,7 @@ const {
 
   .news-card,
   .today-card,
+  .story-preview,
   .mission-section {
     padding: 1rem;
   }

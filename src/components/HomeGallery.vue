@@ -103,7 +103,8 @@ onBeforeUnmount(() => {
 </script>
 
 <style>
-style scoped>.home-gallery {
+
+.home-gallery {
     width: 100%;
     max-width: 800px;
     margin: 3rem auto;
@@ -178,7 +179,9 @@ style scoped>.home-gallery {
 .home-gallery-swiper :deep(.swiper-button-next) {
     color: var(--bronze-bold);
 }
-.swiper-button-prev, .swiper-button-next {
+
+.swiper-button-prev,
+.swiper-button-next {
     color: var(--bronze-bold);
 }
 

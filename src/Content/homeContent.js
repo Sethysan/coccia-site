@@ -4,7 +4,7 @@ export const homeContent = {
   mission: `
     Coccia House is dedicated to preserving the family recipes,
     welcoming atmosphere, and Italian traditions that have brought
-    generations of families together since 1958.
+    generations of families together.
   `,
 
   welcomeTitle: 'Welcome to Coccia House',

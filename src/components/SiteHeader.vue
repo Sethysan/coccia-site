@@ -46,7 +46,7 @@
 
 
       <!-- Phone number -->
-      <a class="visitor-link" href="tel:+13302627136" aria-label="Call Coccia House at 330-262-7136">
+      <a class="visitor-link visitor-phone" href="tel:+13302627136" aria-label="Call Coccia House at 330-262-7136">
         <span class="visitor-icon" aria-hidden="true">
           ☎
         </span>
@@ -58,8 +58,9 @@
 
 
       <!-- Google Maps directions -->
-      <a class="visitor-link" href="https://www.google.com/maps/search/?api=1&query=Coccia+House+Wooster+Ohio"
-        target="_blank" rel="noopener noreferrer" aria-label="Get directions to Coccia House in Google Maps">
+      <a class="visitor-link visitor-directions"
+        href="https://www.google.com/maps/search/?api=1&query=Coccia+House+Wooster+Ohio" target="_blank"
+        rel="noopener noreferrer" aria-label="Get directions to Coccia House in Google Maps">
         <span class="visitor-icon" aria-hidden="true">
           ◉
         </span>
@@ -371,16 +372,178 @@ const showAllHours = ref(false)
 } */
 
 @media (max-width: 700px) {
+  /* ========================================================
+     MOBILE HEADER GRID
+
+     Phone        Logo        Directions
+     Navigation            Hours
+     ======================================================== */
+
+  .header {
+    display: grid;
+    grid-template-columns:
+      minmax(0, 1fr) auto minmax(0, 1fr);
+
+    grid-template-areas:
+      "phone logo directions"
+      "nav nav hours";
+
+    align-items: center;
+    gap: 0.35rem 0.6rem;
+
+    min-height: 0;
+    padding: 0.4rem 0.65rem;
+  }
+
+  /*
+    These wrappers remain part of the desktop layout, but their
+    children participate directly in the mobile header grid.
+  */
+
+  .viewButtons,
   .visitor-info {
-    gap: 0.75rem 1.25rem;
-    flex-direction: column-reverse;
+    display: contents;
+  }
+
+  /* Top-left phone */
+
+  .visitor-phone {
+    grid-area: phone;
+    justify-self: start;
+  }
+
+  /* Centered logo */
+
+  .logo-link {
+    grid-area: logo;
+    justify-self: center;
+    align-self: center;
+  }
+
+  .logo {
+    width: auto;
+    /* height: 52px; */
+  }
+
+  /* Top-right directions */
+
+  .visitor-directions {
+    grid-area: directions;
+    justify-self: end;
+
+    text-align: right;
+  }
+
+  /* Bottom navigation */
+
+  .nav {
+    grid-area: nav;
+
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.25rem;
+
+    min-width: 0;
+  }
+
+  .nav a {
+    padding: 0.25rem 0.5rem;
+
+    font-size: 1.55rem;
+    line-height: 1;
+  }
+
+  .nav a::before {
+    bottom: 0;
+  }
+
+  /* Bottom-right hours dropdown */
+
+  .hours-menu {
+    grid-area: hours;
+    justify-self: end;
+
+    min-width: 0;
+  }
+
+  .hours-trigger {
+    gap: 0.25rem;
+
+    padding: 0.3rem 0.45rem;
+
+    font-size: 0.75rem;
+  }
+
+  /* Top-row contact links */
+
+  .visitor-link {
+    gap: 0.3rem;
+
+    min-width: 0;
+    padding: 0.2rem 0;
+
+    font-size: 0.7rem;
+    line-height: 1.15;
+  }
+
+  .visitor-icon {
+    height: 1rem;
+
+    font-size: 0.9rem;
+  }
+
+  /* Open the dropdown toward the left so it stays onscreen */
+
+  .weekly-hours-dropdown {
+    right: 0;
+    left: auto;
+
+    width: max-content;
+    max-width: calc(100vw - 1rem);
+
+    transform-origin: top right;
+  }
+}
+
+@media (max-width: 450px) {
+  .header {
+    gap: 0.3rem;
+    padding: 0.35rem 0.4rem;
+  }
+
+  .logo {
+    height: 52px;
   }
 
   .visitor-link {
-    font-size: 0.9rem;
+    font-size: 0.62rem;
   }
-  .header{
-    flex-direction: row;
+
+  .visitor-icon {
+    display: none;
+  }
+
+  .nav {
+    gap: 0;
+  }
+
+  .nav a {
+    padding: 0.2rem 0.35rem;
+    font-size: 1.3rem;
+  }
+
+  .hours-trigger {
+    padding: 0.25rem 0.35rem;
+    font-size: 0.68rem;
+  }
+}
+
+
+@media (max-width: 375px) {
+  .logo[data-v-a8a65ae7] {
+    height: 44px;
   }
 }
 </style>
