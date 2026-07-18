@@ -30,16 +30,35 @@
       <h2>Latest News</h2>
 
       <article class="news-item">
-        <h3>🍕 Dining Room Open</h3>
+        <h3>Dining Room Open</h3>
 
         <p>
           Join us in our dining room Wednesday through Saturday
-          from 3–9 PM and stop in for carryout on Sundays from 3–8 PM.
+          from 3–9 PM.
         </p>
+      </article>
+      <article class="news-item">
+
+        <h3>We're Back to Our Full Menu</h3>
+        <p>
+          If it's been a while since your last visit, welcome back!
+        </p>
+
+        <p>
+          Our website hasn't been updated since the pandemic, when we temporarily offered only half-bake pizzas.
+          Today, <strong>our full menu is available again for dine-in and carryout</strong>, just like before.
+        </p>
+
+        <p>
+          Prefer to bake your pizza at home?
+          <strong>Half-bake pizzas are still available for pickup</strong>, so you can enjoy a fresh-from-the-oven
+          Coccia House pizza whenever you're ready.
+        </p>
+
       </article>
 
       <article class="news-item">
-        <h3>📅 Annual Maintenance Closure</h3>
+        <h3>Annual Maintenance Closure</h3>
 
         <p>
           Coccia House will be closed August 3–18 for our annual
@@ -125,6 +144,7 @@ const {
   margin-bottom: 0.75rem;
 
   font-size: 1.2rem;
+  font-weight:bolder;
   color: var(--bronze-bold);
   font-style: italic;
   letter-spacing: 0.06rem;
