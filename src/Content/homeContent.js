@@ -1,19 +1,29 @@
 export const homeContent = {
-  slogan: 'A Wooster Tradition Since 1958',
 
-  mission: `
-    Coccia House is dedicated to preserving the family recipes,
-    welcoming atmosphere, and Italian traditions that have brought
-    generations of families together.
-  `,
+  intro: {
+    kicker: 'Welcome to Coccia House',
+    title: 'Gather Around the Table',
+    text:
+      'Homemade Italian food, friendly service, and a comfortable place to enjoy a meal with family and friends.'
+  },
 
-  welcomeTitle: 'Welcome to Coccia House',
+  story: {
+    // eyebrow: 'Our History',
+    title: 'Our Story',
+    text:
+      'Since 1958, Coccia House has been a familiar place for family dinners, celebrations, and everyday meals in Wooster.',
+    buttonText: 'Read Our Story'
+  },
+  gallery: {
+    title: 'From the Family Album',
+  },
 
-  welcomeMessage: `
-    For generations, Coccia House has served homemade Italian food
-    and its distinctive pizza to the Wooster community. Whether you
-    are joining us in the dining room or picking up dinner to take
-    home, we are proud to continue the traditions that began with
-    our family more than sixty years ago.
-  `
+  mission: {
+    title: 'Our Mission',
+    text:
+      'To serve homemade Italian food in a friendly, welcoming atmosphere and make everyone feel at home at Coccia House.'
+  },
+
+  slogan: 'From our family to yours... Buon Appetito!',
+
 }

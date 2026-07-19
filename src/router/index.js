@@ -12,7 +12,21 @@ const router = createRouter({
     { path: '/menu', component: MenuView },
     // { path: '/hours', component: HoursView },
     { path: '/about', component: AboutView }
-  ]
+  ],
+  
+  scrollBehavior(to, from, savedPosition) {
+    // Browser back/forward buttons
+    if (savedPosition) {
+      return savedPosition
+    }
+
+    // Always start new pages at the top
+    return {
+      top: 0,
+      left: 0,
+      behavior: 'smooth'
+    }
+  }
 })
 
 export default router

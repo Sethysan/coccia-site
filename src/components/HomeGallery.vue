@@ -1,7 +1,8 @@
 <template>
 
     <section class="home-gallery" aria-labelledby="gallery-title">
-        <h2 id="gallery-title">Coccia House Gallery</h2>
+
+        <h2 id="gallery-title">From the Family Album</h2>
 
         <Swiper :modules="swiperModules" :slides-per-view="1" :space-between="16" :navigation="true"
             :pagination="{ clickable: true }" :keyboard="{ enabled: true }" :grab-cursor="true" :breakpoints="{
@@ -10,14 +11,18 @@
                 }
             }" class="home-gallery-swiper">
             <SwiperSlide v-for="(photo, index) in galleryPhotos" :key="photo.src">
-                <button type="button" class="gallery-slide" :aria-label="`Open ${photo.alt} in full screen`"
-                    @click="openGallery(index)">
-                    <img :src="photo.src" :alt="photo.alt" loading="lazy" />
-
-                    <span class="gallery-expand" aria-hidden="true">
-                        ⛶
-                    </span>
-                </button>
+                <figure class="gallery-photo">
+                    <button type="button" class="gallery-slide" :aria-label="`Open ${photo.alt} in full screen`"
+                        @click="openGallery(index)">
+                        <img :src="photo.src" :alt="photo.alt" loading="lazy" />
+                        <figcaption>
+                            {{ photo.caption }}
+                        </figcaption>
+                        <!-- <span class="gallery-expand" aria-hidden="true">
+                            ⛶
+                        </span> -->
+                    </button>
+                    </figure>
             </SwiperSlide>
         </Swiper>
     </section>
@@ -66,8 +71,7 @@ import { galleryPhotos } from '@/data/gallery'
 const swiperModules = [
     Navigation,
     Pagination,
-    Keyboard,
-    A11y
+    Keyboard
 ]
 const isGalleryOpen = ref(false)
 const activePhotoIndex = ref(0)
@@ -103,11 +107,10 @@ onBeforeUnmount(() => {
 </script>
 
 <style>
-
 .home-gallery {
     width: 100%;
-    max-width: 800px;
-    margin: 3rem auto;
+    max-width: 900px;
+    margin: 5rem auto;
 }
 
 .home-gallery h2 {
@@ -121,9 +124,9 @@ onBeforeUnmount(() => {
 
 .gallery-slide {
     position: relative;
-    display: flex;
+    /* display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: center; */
 
     width: 100%;
     height: 400px;
@@ -276,7 +279,8 @@ body.gallery-open {
     height: 100%;
 }
 
-.lightbox-photo {
+.lightbox-photo,
+.gallery-photo {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -287,7 +291,8 @@ body.gallery-open {
     margin: 0;
 }
 
-.lightbox-photo img {
+.lightbox-photo img,
+.gallery-photo img {
     display: block;
 
     max-width: 100%;
@@ -298,7 +303,8 @@ body.gallery-open {
     border-radius: 0.35rem;
 }
 
-.lightbox-photo figcaption {
+.lightbox-photo figcaption,
+.gallery-photo figcaption {
     margin-top: 0.75rem;
 
     color: #fff;
@@ -329,7 +335,8 @@ body.gallery-open {
         display: none;
     }
 
-    .lightbox-photo img {
+    .lightbox-photo img,
+    .gallery-photo img {
         max-height: calc(100vh - 10rem);
     }
 }

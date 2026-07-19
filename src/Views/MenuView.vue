@@ -72,18 +72,12 @@ function scrollToSection(id) {
     flex-shrink:0;
 }
 
-.menu-panel{
-    flex:1;
-    overflow-y:auto;
-}
-
 .menu-page {
   min-height: 90vh;
-  /* background-image: url("../assets/menu/story.jpg"); */
   background-size: cover;
   background-position: center;
   background-attachment: fixed;
-  /* padding: 110px 1rem 2rem; */
+
 }
 
 .menu-panel {
@@ -91,7 +85,7 @@ function scrollToSection(id) {
   overflow-y: auto;
   max-width: 900px;
   width: 70%;
-  padding-bottom: 30vh;   /* or 400px */
+  padding-bottom: 30vh;   
 }
 
 .menu-section:last-child {

@@ -50,17 +50,17 @@ onMounted(() => {
 }
 
 .content {
-  padding-top: 2rem;
-  min-height: 75vh;
+  min-height: 100vh;
+  margin: 0;
 
   background-image:
     linear-gradient(rgba(0, 0, 0, 0.58), rgba(0, 0, 0, 0.62)),
     url('./assets/hero-pizza.jpg');
 
-  background-size: cover;
-  background-color: #111;
   background-position: center;
   background-repeat: no-repeat;
+  background-size: cover;
+  background-attachment: fixed;
 }
 
 .app-layout {

@@ -33,10 +33,10 @@
           <li>
             <RouterLink to="/about">Our Story</RouterLink>
           </li>
-
-          <li>
+          <!-- TODO: Create Contact view if needed -->
+          <!-- <li>
             <RouterLink to="/contact">Contact</RouterLink>
-          </li>
+          </li> -->
         </ul>
       </nav>
 
@@ -124,8 +124,6 @@ const currentYear = new Date().getFullYear()
 <style scoped>
 .site-footer {
   width: 100%;
-  margin-top: 4rem;
-
   color: var(--default-color);
   background-color: rgba(12, 9, 7, 0.96);
 
@@ -258,19 +256,17 @@ const currentYear = new Date().getFullYear()
 @media (max-width: 900px) {
   .footer-content {
     grid-template-columns: repeat(2, 1fr);
+    padding: 2.5rem 0.5rem;
   }
 }
 
 @media (max-width: 600px) {
-  .site-footer {
-    margin-top: 3rem;
-  }
 
   .footer-content {
     grid-template-columns: 1fr;
     gap: 2rem;
 
-    padding: 2.5rem 0.5rem;
+    padding: 0;
   }
 
   .footer-section {

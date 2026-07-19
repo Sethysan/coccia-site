@@ -170,6 +170,23 @@ export function useRestaurantHours() {
     return 'closed'
   }
 
+  // -------------------------------------------------------
+  // FORMAT HOUR
+  //
+  // Converts a 24-hour value into a user-friendly time.
+  //
+  // Example:
+  //
+  // 15
+  //
+  // becomes
+  //
+  // 3 PM
+  //
+  // This helper keeps all displayed times consistent
+  // throughout the website.
+  // -------------------------------------------------------
+
   function formatHour(hour) {
     const suffix = hour >= 12 ? 'PM' : 'AM'
     const displayHour = hour % 12 || 12
@@ -177,6 +194,33 @@ export function useRestaurantHours() {
     return `${displayHour} ${suffix}`
   }
 
+  // -------------------------------------------------------
+  // CURRENT RESTAURANT STATUS
+  //
+  // Determines the restaurant's current operating state.
+  //
+  // This is the primary source of truth used throughout
+  // the website.
+  //
+  // Possible states:
+  //
+  // open
+  // opening-soon
+  // opening-later
+  // closing-soon
+  // closed
+  //
+  // Returns:
+  //
+  // {
+  //   state,
+  //   label,
+  //   message
+  // }
+  //
+  // Components should use this instead of duplicating
+  // business logic.
+  // -------------------------------------------------------
   const restaurantStatus = computed(() => {
     const day = todayHours.value
 
@@ -261,13 +305,65 @@ export function useRestaurantHours() {
           ? 'We’ll reopen Wednesday at 3 PM.'
           : 'Thank you for visiting. We hope to see you again soon!'
     }
+  }
+  )
+
+   // -------------------------------------------------------
+  // COMPACT HEADER STATUS
+  //
+  // Returns a short version of the restaurant status
+  // for use in compact UI elements such as the mobile
+  // header hours button.
+  //
+  // Examples:
+  //
+  // Open Now
+  // Opening Soon
+  // Closing Soon
+  // Opens 3 PM - 9 PM
+  // Closed Today
+  //
+  // This intentionally omits the longer explanatory
+  // messages used elsewhere on the website.
+  // -------------------------------------------------------
+
+  const compactHoursMessage = computed(() => {
+    switch (restaurantStatus.value.state) {
+      case "open":
+        return "Open Now"
+
+      case "opening-soon":
+        return "Opening Soon"
+
+      case "closing-soon":
+        return "Closing Soon"
+
+      case "opening-later":
+        return `Opens at ${formatHour(todayHours.value.open)}`
+
+      case "closed":
+        return "Closed Today"
+
+      default:
+        return "Restaurant Hours"
+    }
   })
 
+   // -------------------------------------------------------
+  // PUBLIC API
+  //
+  // Export everything components need.
+  //
+  // Components should rely on these helpers rather than
+  // implementing restaurant-hour logic themselves.
+  // -------------------------------------------------------
+  
   return {
     todayHours,
     restaurantStatus,
     isToday,
     isOpenNow,
-    getDayClass
+    getDayClass,
+    compactHoursMessage
   }
 }

@@ -1,75 +1,109 @@
 <template>
   <header class="header">
-    <div class="viewButtons">
-      <RouterLink to="/" class="logo-link">
-        <img src="@/assets/coccia-logo.png" alt="Coccia House logo" class="logo" />
-      </RouterLink>
+    <!-- DESKTOP HEADER -->
+    <div class="desktop-header">
+      <div class="viewButtons">
+        <RouterLink to="/" class="logo-link">
+          <img src="@/assets/coccia-logo.png" alt="Coccia House logo" class="logo" />
+        </RouterLink>
 
-      <nav class="nav">
+        <nav class="nav">
+          <RouterLink to="/">Home</RouterLink>
+          <RouterLink to="/menu">Menu</RouterLink>
+          <RouterLink to="/about">About</RouterLink>
+        </nav>
+      </div>
+      <div class="visitor-info">
+
+        <!-- Hours dropdown -->
+        <section class="hours-menu" @mouseenter="showAllHours = true" @mouseleave="showAllHours = false"
+          @focusin="showAllHours = true" @focusout="showAllHours = false">
+          <button class="hours-trigger" type="button" :aria-expanded="showAllHours"
+            aria-label="View weekly restaurant hours" @click="showAllHours = !showAllHours">
+            <Hours :show-all="false" />
+
+            <span class="hours-arrow" :class="{ expanded: showAllHours }" aria-hidden="true">
+              ▼
+            </span>
+          </button>
+
+          <Transition name="hours-dropdown">
+            <div v-show="showAllHours" class="weekly-hours-dropdown">
+              <Hours :show-all="true" />
+            </div>
+          </Transition>
+        </section>
+
+        <!-- Phone number -->
+        <a class="visitor-link visitor-phone" href="tel:+13302627136" aria-label="Call Coccia House at 330-262-7136">
+          <span class="visitor-icon" aria-hidden="true">
+            ☎
+          </span>
+
+          <span>
+            (330) 262-7136
+          </span>
+        </a>
+
+
+        <!-- Google Maps directions -->
+        <a class="visitor-link visitor-directions"
+          href="https://www.google.com/maps/search/?api=1&query=Coccia+House+Wooster+Ohio" target="_blank"
+          rel="noopener noreferrer" aria-label="Get directions to Coccia House in Google Maps">
+          <span class="visitor-icon" aria-hidden="true">
+            ◉
+          </span>
+
+          <span>
+            Get Directions
+          </span>
+        </a>
+      </div>
+    </div>
+
+    <!-- MOBILE HEADER -->
+    <div class="mobile-header">
+      <div class="mobile-top-row">
+        <a href="tel:+13302627136" class="mobile-phone">
+          Phone
+        </a>
+
+        <RouterLink to="/" class="mobile-logo-link">
+          <img src="@/assets/coccia-logo.png" alt="Coccia House logo" class="mobile-logo" />
+        </RouterLink>
+        <a href="https://www.google.com/maps/search/?api=1&query=Coccia+House+Wooster+Ohio" target="_blank"
+          rel="noopener" class="mobile-directions">
+          Directions
+        </a>
+      </div>
+
+      <nav class="mobile-nav" aria-label="Main navigation">
         <RouterLink to="/">Home</RouterLink>
         <RouterLink to="/menu">Menu</RouterLink>
         <RouterLink to="/about">About</RouterLink>
       </nav>
-    </div>
 
-    <!-- ========================================================
-     VISITOR INFORMATION
+      <section class="mobile-hours">
+        <button type="button" class="mobile-hours-trigger" :aria-expanded="showMobileHours"
+          @click="showMobileHours = !showMobileHours">
+          <span>{{ compactHoursMessage }}</span>
 
-     This row contains the three pieces of information most
-     visitors are likely to need immediately:
-
-     - Today's hours
-     - Phone number
-     - Directions
-     ======================================================== -->
-
-    <div class="visitor-info">
-
-      <!-- Hours dropdown -->
-      <section class="hours-menu" @mouseenter="showAllHours = true" @mouseleave="showAllHours = false"
-        @focusin="showAllHours = true" @focusout="showAllHours = false">
-        <button class="hours-trigger" type="button" :aria-expanded="showAllHours"
-          aria-label="View weekly restaurant hours" @click="showAllHours = !showAllHours">
-          <Hours :show-all="false" />
-
-          <span class="hours-arrow" :class="{ expanded: showAllHours }" aria-hidden="true">
+          <span class="mobile-hours-arrow" :class="{ rotated: showMobileHours }" aria-hidden="true">
             ▼
           </span>
         </button>
+        <Transition name="mobile-hours">
+          <div v-if="showMobileHours" class="mobile-hours-dropdown">
 
-        <Transition name="hours-dropdown">
-          <div v-show="showAllHours" class="weekly-hours-dropdown">
+            <h3 class="mobile-hours-title">
+              This Week at Coccia House
+            </h3>
+
             <Hours :show-all="true" />
+
           </div>
         </Transition>
       </section>
-
-
-      <!-- Phone number -->
-      <a class="visitor-link visitor-phone" href="tel:+13302627136" aria-label="Call Coccia House at 330-262-7136">
-        <span class="visitor-icon" aria-hidden="true">
-          ☎
-        </span>
-
-        <span>
-          (330) 262-7136
-        </span>
-      </a>
-
-
-      <!-- Google Maps directions -->
-      <a class="visitor-link visitor-directions"
-        href="https://www.google.com/maps/search/?api=1&query=Coccia+House+Wooster+Ohio" target="_blank"
-        rel="noopener noreferrer" aria-label="Get directions to Coccia House in Google Maps">
-        <span class="visitor-icon" aria-hidden="true">
-          ◉
-        </span>
-
-        <span>
-          Get Directions
-        </span>
-      </a>
-
     </div>
     <!-- <ScrollworkDivider /> -->
   </header>
@@ -80,7 +114,23 @@ import ScrollworkDivider from './ScrollworkDivider.vue'
 import { ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import Hours from './Hours.vue'
+import { useRestaurantHours } from '@/composables/useRestaurantHours'
+
+// -----------------------------------------------------------------------------
+// Dropdown state
+// -----------------------------------------------------------------------------
+const showMobileHours = ref(false);
 const showAllHours = ref(false)
+
+// -----------------------------------------------------------------------------
+// Restaurant-hours helpers
+//
+// compactHoursMessage is displayed inside the mobile hours trigger.
+// -----------------------------------------------------------------------------
+const {
+  compactHoursMessage
+} = useRestaurantHours()
+
 </script>
 
 <style scoped>
@@ -104,6 +154,14 @@ const showAllHours = ref(false)
     inset 0 -1px 0 rgba(255, 255, 255, 0.11),
     0 4px 8px rgb(0, 0, 0),
     0 14px 28px rgba(0, 0, 0, 0.363);
+}
+
+.desktop-header {
+  display: block;
+}
+
+.mobile-header {
+  display: none;
 }
 
 .logo {
@@ -357,6 +415,25 @@ const showAllHours = ref(false)
   opacity: 1;
 }
 
+.mobile-hours-enter-active,
+.mobile-hours-leave-active {
+  transition:
+    opacity 0.2s ease-in-out,
+    transform 0.35s ease;
+}
+
+.mobile-hours-enter-from,
+.mobile-hours-leave-to {
+  opacity: 0;
+  transform: translateX(-50%) translateY(-8px);
+}
+
+.mobile-hours-enter-to,
+.mobile-hours-leave-from {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
 /* .scrollwork-divider {
   position: relative;
   z-index: 2000;
@@ -372,138 +449,204 @@ const showAllHours = ref(false)
 } */
 
 @media (max-width: 700px) {
-  /* ========================================================
-     MOBILE HEADER GRID
+  .desktop-header {
+    display: none;
+  }
 
-     Phone        Logo        Directions
-     Navigation            Hours
-     ======================================================== */
+  .mobile-header {
+    display: block;
+  }
+
+  .home-page {
+    padding-top: 0;
+  }
 
   .header {
+    position: sticky;
+    top: 0;
+    z-index: 1100;
+    width: 100%;
+  }
+
+  .mobile-header {
+    position: relative;
+    width: 100%;
+    background: var(--background-dark-trans);
+    border-bottom: 1px solid var(--bronze-color);
+  }
+
+  .mobile-top-row {
     display: grid;
-    grid-template-columns:
-      minmax(0, 1fr) auto minmax(0, 1fr);
-
-    grid-template-areas:
-      "phone logo directions"
-      "nav nav hours";
-
+    grid-template-columns: 1fr auto 1fr;
     align-items: center;
-    gap: 0.35rem 0.6rem;
-
-    min-height: 0;
-    padding: 0.4rem 0.65rem;
+    min-height: 54px;
+    padding: 0.25rem 0.65rem;
   }
 
-  /*
-    These wrappers remain part of the desktop layout, but their
-    children participate directly in the mobile header grid.
-  */
-
-  .viewButtons,
-  .visitor-info {
-    display: contents;
+  .mobile-phone,
+  .mobile-directions {
+    color: var(--default-color);
+    font-size: 0.72rem;
+    text-decoration: none;
+    white-space: nowrap;
   }
 
-  /* Top-left phone */
-
-  .visitor-phone {
-    grid-area: phone;
+  .mobile-phone {
     justify-self: start;
   }
 
-  /* Centered logo */
-
-  .logo-link {
-    grid-area: logo;
-    justify-self: center;
-    align-self: center;
-  }
-
-  .logo {
-    width: auto;
-    /* height: 52px; */
-  }
-
-  /* Top-right directions */
-
-  .visitor-directions {
-    grid-area: directions;
+  .mobile-directions {
     justify-self: end;
-
     text-align: right;
   }
 
-  /* Bottom navigation */
+  .mobile-logo-link {
+    justify-self: center;
+  }
 
-  .nav {
-    grid-area: nav;
+  .mobile-logo {
+    display: block;
+    width: clamp(90px, 25vw, 115px);
+    height: auto;
+  }
+
+  .mobile-nav {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    border-top: 1px solid var(--bronze-color);
+    border-bottom: 1px solid var(--bronze-color);
+  }
+
+  .mobile-nav a {
+    padding: 0.55rem 0.25rem;
+    color: var(--default-color);
+    text-align: center;
+    text-decoration: none;
+  }
+
+  .mobile-hours {
+    position: relative;
+  }
+
+  .mobile-hours-trigger {
+    width: 100%;
+    padding: .55rem 1rem;
 
     display: flex;
-    flex-wrap: nowrap;
-    justify-content: space-between;
+    justify-content: center;
     align-items: center;
-    gap: 0.25rem;
+    gap: .4rem;
 
-    min-width: 0;
+    background: rgba(20, 15, 12, .94);
+
+    color: var(--default-color);
+
+    border: none;
+    cursor: pointer;
+
+    font-size: .9rem;
+    font-weight: 600;
+
+    transition:
+      background .25s,
+      color .25s;
   }
 
-  .nav a {
-    padding: 0.25rem 0.5rem;
-
-    font-size: 1.55rem;
-    line-height: 1;
+  .mobile-hours-trigger:hover {
+    background: rgba(35, 28, 22, .98);
   }
 
-  .nav a::before {
-    bottom: 0;
+  .mobile-hours-trigger:focus-visible {
+    outline: 2px solid var(--bronze-bold);
+    outline-offset: -2px;
   }
 
-  /* Bottom-right hours dropdown */
-
-  .hours-menu {
-    grid-area: hours;
-    justify-self: end;
-
-    min-width: 0;
+  .mobile-hours-arrow {
+    font-size: 0.65rem;
+    transition: transform 0.2s ease;
   }
 
-  .hours-trigger {
-    gap: 0.25rem;
-
-    padding: 0.3rem 0.45rem;
-
-    font-size: 0.75rem;
+  .mobile-hours-arrow.rotated {
+    transform: rotate(180deg);
   }
 
-  /* Top-row contact links */
-
-  .visitor-link {
-    gap: 0.3rem;
-
-    min-width: 0;
-    padding: 0.2rem 0;
-
-    font-size: 0.7rem;
-    line-height: 1.15;
+  .mobile-hours-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    z-index: 1200;
+    width: min(92vw, 340px);
+    max-height: 65vh;
+    overflow-y: auto;
+    transform: translateX(-50%);
+    padding: 0.85rem;
+    background: var(--default-color);
+    color: #1f1712;
+    border-top: 1px solid rgba(0, 0, 0, .08);
+    border-bottom: 2px solid var(--bronze-bold);
+    box-shadow:
+      0 8px 20px rgba(0, 0, 0, .28);
+    /* animation: slideHours .5s ease; */
   }
 
-  .visitor-icon {
-    height: 1rem;
+  .mobile-hours-row {
 
-    font-size: 0.9rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+
+    padding: .65rem 1rem;
+
+    border-bottom: 1px solid rgba(0, 0, 0, .06);
+
   }
 
-  /* Open the dropdown toward the left so it stays onscreen */
+  .mobile-hours-row.today {
 
-  .weekly-hours-dropdown {
-    right: 0;
-    left: auto;
+    background: #fff6e7;
 
-    width: max-content;
-    max-width: calc(100vw - 1rem);
+  }
 
-    transform-origin: top right;
+  .mobile-day {
+
+    font-weight: 700;
+
+    color: #2d241d;
+
+  }
+
+  .mobile-time {
+
+    color: #5d5045;
+
+  }
+
+  .mobile-note {
+
+    margin-top: .15rem;
+
+    font-size: .78rem;
+
+    color: #8a6a32;
+
+    font-style: italic;
+
+  }
+
+  .mobile-hours-title {
+
+    padding: .85rem;
+
+    text-align: center;
+
+    font-size: .95rem;
+
+    font-weight: 700;
+
+    color: var(--bronze-bold);
+
+    border-bottom: 1px solid rgba(0, 0, 0, .08);
+
   }
 }
 
@@ -546,4 +689,18 @@ const showAllHours = ref(false)
     height: 44px;
   }
 }
+
+/* @keyframes slideHours {
+
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+} */
 </style>
