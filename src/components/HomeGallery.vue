@@ -2,7 +2,7 @@
 
     <section class="home-gallery" aria-labelledby="gallery-title">
 
-        <h2 id="gallery-title">From the Family Album</h2>
+        <!-- <h2 id="gallery-title">From the Family Album</h2> -->
 
         <Swiper :modules="swiperModules" :slides-per-view="1" :space-between="16" :navigation="true"
             :pagination="{ clickable: true }" :keyboard="{ enabled: true }" :grab-cursor="true" :breakpoints="{

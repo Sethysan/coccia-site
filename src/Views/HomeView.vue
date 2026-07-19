@@ -329,7 +329,7 @@ const {
   gap: 0.85rem;
 
   width: min(100%, 650px);
-  margin: 1.25rem auto 0;
+  margin: 1rem auto 0;
 }
 
 .home-action {
@@ -377,8 +377,8 @@ const {
    ========================================================== */
 
 .home-intro {
-  width: min(100%, 760px);
-  margin: 5rem auto;
+  width: min(900px, 94%);
+  margin: 7rem auto;
   padding: 0 1rem;
 }
 
@@ -403,8 +403,8 @@ const {
    ========================================================== */
 
 .story-preview {
-  width: min(100%, 540px);
-  margin: 0 auto 5rem;
+  width: min(100%, 600px);
+  margin: 0 auto 4rem;
   padding: 2rem;
 
   background-color: var(--background-dark-trans);
@@ -460,7 +460,7 @@ const {
 
 .family-album {
   width: min(100%, 1100px);
-  margin: 0 auto 5rem;
+  margin: 0 auto 6rem;
 }
 
 .family-album-heading {
@@ -480,7 +480,7 @@ const {
 
 .news-card {
   width: min(100%, 560px);
-  margin: 0 auto 5rem;
+  margin: 0 auto 6rem;
   padding: 1.75rem;
 
   background-color: var(--background-dark-trans);
@@ -527,7 +527,9 @@ const {
 .mission-section {
   width: min(100%, 680px);
   margin: 0 auto;
-  padding: 3rem 1rem 0;
+  /* padding: 3rem 1rem 0; */
+  padding-top: 5rem;
+
 
   border-top: 1px solid var(--bronze-color);
 }
@@ -550,8 +552,10 @@ const {
    ========================================================== */
 
 .home-closing {
-  width: min(100%, 760px);
-  margin: 3rem auto 0;
+  .home-closing {
+    width: min(100%, 760px);
+    margin: 2rem auto 0;
+  }
 }
 
 .home-slogan {
