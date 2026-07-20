@@ -4,7 +4,7 @@ import historic from '@/assets/1967.jpg'
 import garden from '@/assets/grandma-garden.jpg'
 import family from '@/assets/karen-joe.jpg'
 import group from '@/assets/family-photo.jpg'
-import ad from '@/assets/opening-night-ad.png'
+import ad from '@/assets/about/opening-night-ad.png'
 
 export const galleryPhotos = [
     // {
