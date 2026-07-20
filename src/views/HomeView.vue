@@ -189,7 +189,7 @@
 <script setup>
 import { RouterLink } from 'vue-router'
 import { useRestaurantHours } from '@/composables/useRestaurantHours'
-import { homeContent } from '@/content/homeContent'
+import { homeContent } from '@/content/homeContent.js'
 import HomeGallery from '@/components/HomeGallery.vue'
 
 const {
