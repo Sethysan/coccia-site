@@ -17,11 +17,12 @@
   --status-closed: #7a1f1f;
   --status-open: #4f8a43;
   --status-opening-soon: rgba(213, 154, 58);
-  --status-opening-later:rgba(215, 140, 57);
-  --status-closing-soon:#dc7c38;
+  --status-opening-later: rgba(215, 140, 57);
+  --status-closing-soon: #dc7c38;
   --bronze-hover: #a88444;
 
 }
+
 /* TODO:
    Add shadow vars to components and views
 */
@@ -37,9 +38,10 @@
 
 /* computed variables */
 :root {
-  --header-height: 202.075px;
+  --header-height: 140px
 }
 
+html,
 body {
   margin: 0;
 }

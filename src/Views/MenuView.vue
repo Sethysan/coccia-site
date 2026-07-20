@@ -1,6 +1,6 @@
 <template>
   <main class="menu-page">
-    <nav class="menu-nav" aria-label="Menu categories">
+    <nav class="menu-destination" aria-label="Menu categories">
       <button v-for="menu in menuPages" :key="menu.id" type="button" :class="{ active: selectedMenu === menu.id }"
         @click="selectMenu(menu.id)">
         {{ menu.label }}
@@ -8,42 +8,60 @@
     </nav>
 
     <section class="menu-panel">
-      <div class="vintage-menu">
-        <div class="menu-binding" aria-hidden="true"></div>
+      <Teleport to="body" :disabled="!isFullscreen">
+        <div class="vintage-menu" :class="{ 'is-fullscreen': isFullscreen }">
+          <div class="menu-toolbar">
+            <button type="button" class="fullscreen-button"
+              :aria-label="isFullscreen ? 'Exit full screen menu' : 'Open full screen menu'" @click="toggleFullscreen">
+              <span aria-hidden="true">
+                {{ isFullscreen ? '×' : '⛶' }}
+              </span>
 
-        <div class="menu-book">
-          <Transition :name="transitionName">
-            <div :key="selectedMenu" class="menu-page-sheet">
-              <img :src="currentMenu.image" :alt="currentMenu.alt" class="menu-image" />
+              {{ isFullscreen ? 'Close' : 'Full Screen' }}
+            </button>
+          </div>
+          <div class="menu-binding" aria-hidden="true"></div>
 
-              <div class="paper-shading" aria-hidden="true"></div>
-            </div>
-          </Transition>
+          <div class="menu-book">
+            <Transition :name="transitionName">
+              <div :key="selectedMenu" class="menu-page-sheet">
+                <img :src="currentMenu.image" :alt="currentMenu.alt" class="menu-image" />
+
+                <div class="paper-shading" aria-hidden="true"></div>
+              </div>
+            </Transition>
+          </div>
+
+          <div class="menu-controls">
+            <button type="button" class="page-control" :disabled="currentIndex === 0" @click="previousPage">
+              <span aria-hidden="true">←</span>
+              Previous
+            </button>
+
+            <p class="page-number">
+              Page {{ currentIndex + 1 }} of {{ menuPages.length }}
+            </p>
+
+            <button type="button" class="page-control" :disabled="currentIndex === menuPages.length - 1"
+              @click="nextPage">
+              Next
+              <span aria-hidden="true">→</span>
+            </button>
+          </div>
         </div>
-
-        <div class="menu-controls">
-          <button type="button" class="page-control" :disabled="currentIndex === 0" @click="previousPage">
-            <span aria-hidden="true">←</span>
-            Previous
-          </button>
-
-          <p class="page-number">
-            Page {{ currentIndex + 1 }} of {{ menuPages.length }}
-          </p>
-
-          <button type="button" class="page-control" :disabled="currentIndex === menuPages.length - 1"
-            @click="nextPage">
-            Next
-            <span aria-hidden="true">→</span>
-          </button>
-        </div>
-      </div>
+      </Teleport>
     </section>
   </main>
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import {
+  computed,
+  ref,
+  watch,
+  onMounted,
+  onBeforeUnmount
+} from 'vue'
 
 import starters from '@/assets/menu/starters-salads.png'
 import pizza from '@/assets/menu/pizza-pasta.png'
@@ -86,6 +104,7 @@ const menuPages = [
 
 const selectedMenu = ref('starters')
 const transitionName = ref('turn-forward')
+const isFullscreen = ref(false)
 
 const currentIndex = computed(() => {
   return menuPages.findIndex(
@@ -125,6 +144,35 @@ function previousPage() {
   transitionName.value = 'turn-backward'
   selectedMenu.value = menuPages[currentIndex.value - 1].id
 }
+function toggleFullscreen() {
+  isFullscreen.value = !isFullscreen.value
+}
+
+function closeFullscreen() {
+  isFullscreen.value = false
+}
+
+function handleFullscreenKeydown(event) {
+  if (event.key === 'Escape' && isFullscreen.value) {
+    closeFullscreen()
+  }
+}
+
+watch(isFullscreen, (isOpen) => {
+  document.body.style.overflow = isOpen ? 'hidden' : ''
+})
+
+onMounted(() => {
+  window.addEventListener('keydown', handleFullscreenKeydown)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('keydown', handleFullscreenKeydown)
+
+  // Restore scrolling if the component is removed while fullscreen is open.
+  document.body.style.overflow = ''
+})
+
 </script>
 
 <style scoped>
@@ -140,7 +188,7 @@ function previousPage() {
    CATEGORY TABS
    ========================================================= */
 
-.menu-nav {
+.menu-destination {
   position: sticky;
   top: var(--header-height);
   z-index: 20;
@@ -157,7 +205,7 @@ function previousPage() {
   border-bottom: 1px solid #d6b98c;
 }
 
-.menu-nav button {
+.menu-destination button {
   flex-shrink: 0;
   padding: 0.55rem 0.9rem;
 
@@ -177,12 +225,12 @@ function previousPage() {
     transform 0.2s ease;
 }
 
-.menu-nav button:hover {
+.menu-destination button:hover {
   border-color: #a87f45;
   background: rgba(138, 106, 50, 0.08);
 }
 
-.menu-nav button.active {
+.menu-destination button.active {
   color: #fffaf1;
   background: #6f421f;
   border-color: #8a6a32;
@@ -235,6 +283,71 @@ function previousPage() {
 }
 
 /* =========================================================
+   FULLSCREEN MENU
+   ========================================================= */
+
+.vintage-menu.is-fullscreen {
+  position: fixed;
+  inset: 0;
+
+  z-index: 2147483647;
+
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+
+  width: 100vw;
+  max-width: none;
+  height: 100vh;
+  height: 100dvh;
+
+  margin: 0;
+  padding:
+    max(0.5rem, env(safe-area-inset-top)) max(0.5rem, env(safe-area-inset-right)) max(0.5rem, env(safe-area-inset-bottom)) max(0.5rem, env(safe-area-inset-left));
+
+  border: none;
+  border-radius: 0;
+
+  overflow: hidden;
+
+  background:
+    radial-gradient(circle at center,
+      #5a351f,
+      #2d180f 65%,
+      #160c08);
+}
+
+.vintage-menu.is-fullscreen .menu-book {
+  align-self: center;
+  justify-self: center;
+
+  width: auto;
+  height: 100%;
+
+  max-width: 100%;
+  max-height: 100%;
+
+  aspect-ratio: 8.5 / 11;
+
+  margin: 0;
+}
+
+.vintage-menu.is-fullscreen .menu-toolbar {
+  width: min(100%, 48rem);
+  margin: 0 auto 0.4rem;
+}
+
+.vintage-menu.is-fullscreen .menu-controls {
+  width: min(100%, 48rem);
+  margin: 0 auto;
+
+  padding: 0.55rem 0.25rem 0.1rem;
+}
+
+.vintage-menu.is-fullscreen .menu-binding {
+  display: none;
+}
+
+/* =========================================================
    MENU BINDING
    ========================================================= */
 
@@ -282,6 +395,54 @@ function previousPage() {
   box-shadow:
     inset 16px 0 18px rgba(78, 45, 24, 0.18),
     inset -10px 0 18px rgba(78, 45, 24, 0.08);
+}
+
+/* =========================================================
+   MENU TOOLBAR
+   ========================================================= */
+
+.menu-toolbar {
+  position: relative;
+  z-index: 15;
+
+  display: flex;
+  justify-content: flex-end;
+
+  margin-bottom: 0.5rem;
+}
+
+.fullscreen-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+
+  padding: 0.45rem 0.7rem;
+
+  border: 1px solid rgba(214, 185, 140, 0.6);
+  border-radius: 4px;
+
+  background: rgba(255, 250, 241, 0.08);
+  color: #fff2d7;
+
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition:
+    background-color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.fullscreen-button:hover {
+  background: rgba(255, 250, 241, 0.16);
+  transform: translateY(-1px);
+}
+
+.fullscreen-button span {
+  font-size: 1.1rem;
+  line-height: 1;
 }
 
 .menu-page-sheet {
@@ -509,19 +670,80 @@ FORWARD PAGE TURN
    ========================================================= */
 
 @media (max-width: 700px) {
+
+  .menu-destination {
+    flex-direction: column;
+    align-items: stretch;
+    gap: .2rem;
+    position: sticky;
+    max-height: 220px;
+    padding: .35rem .5rem;
+    overflow-y: auto;
+  }
+
+  .menu-destination button {
+
+    width: 100%;
+
+    text-align: center;
+
+    padding: .55rem .75rem;
+
+    font-size: .9rem;
+    line-height: 1.2;
+  }
+
+  .menu-destination button.active {
+
+    padding-top: .55rem;
+    padding-bottom: .55rem;
+
+    border-radius: 6px;
+  }
+
   .menu-page {
     padding-inline: 0;
   }
 
   .menu-panel {
-    padding-top: 1rem;
+    padding-top: .25rem;
   }
 
   .vintage-menu {
-    padding: 0.6rem;
-    border-left: none;
-    border-right: none;
-    border-radius: 0;
+
+    width: 100%;
+
+    max-width: 540px;
+
+    margin: auto;
+  }
+
+  @media (max-width: 700px) {
+    .menu-toolbar {
+      margin-bottom: 0.35rem;
+    }
+
+    .fullscreen-button {
+      padding: 0.4rem 0.6rem;
+      font-size: 0.78rem;
+    }
+
+    .vintage-menu.is-fullscreen {
+      padding:
+        max(0.35rem, env(safe-area-inset-top)) max(0.35rem, env(safe-area-inset-right)) max(0.35rem, env(safe-area-inset-bottom)) max(0.35rem, env(safe-area-inset-left));
+    }
+
+    .vintage-menu.is-fullscreen .menu-controls {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 0.35rem;
+
+      padding-top: 0.4rem;
+    }
+
+    .vintage-menu.is-fullscreen .page-control {
+      min-height: 2.5rem;
+    }
   }
 
   .menu-binding {
@@ -536,7 +758,12 @@ FORWARD PAGE TURN
   }
 
   .menu-controls {
-    gap: 0.4rem;
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: .5rem;
   }
 
   .page-control {
@@ -546,10 +773,11 @@ FORWARD PAGE TURN
 
   .page-number {
     font-size: 0.7rem;
+    order: -1;
   }
 }
 
-/* Respect visitors who reduce motion */
+/*For visitors who reduce motion */
 
 @media (prefers-reduced-motion: reduce) {
 

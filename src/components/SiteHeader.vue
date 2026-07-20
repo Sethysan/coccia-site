@@ -110,15 +110,50 @@
 </template>
 
 <script setup>
-import ScrollworkDivider from './ScrollworkDivider.vue'
-import { ref } from 'vue'
+import {
+  ref,
+  onMounted,
+  onBeforeUnmount,
+  nextTick
+} from "vue";
 import { RouterLink } from 'vue-router'
 import Hours from './Hours.vue'
 import { useRestaurantHours } from '@/composables/useRestaurantHours'
+// import ScrollworkDivider from './ScrollworkDivider.vue'
+
+// -----------------------------------------------------------------------------
+// determining header height and creating variable to set view top values
+// -----------------------------------------------------------------------------
+
+const headerRef = ref(null);
+//  Measure
+function updateHeaderHeight() {
+  if (!headerRef.value) return;
+
+  document.documentElement.style.setProperty(
+    "--header-height",
+    `${headerRef.value.offsetHeight}px`
+  );
+}
+
+// constant observation and adjustment
+
+onMounted(async () => {
+  await nextTick();
+
+  updateHeaderHeight();
+
+  window.addEventListener("resize", updateHeaderHeight);
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener("resize", updateHeaderHeight);
+});
 
 // -----------------------------------------------------------------------------
 // Dropdown state
 // -----------------------------------------------------------------------------
+
 const showMobileHours = ref(false);
 const showAllHours = ref(false)
 
