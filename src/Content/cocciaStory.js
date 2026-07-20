@@ -140,12 +140,12 @@ export const cocciaStory = {
             title: "A Tradition Shared Across Generations",
             paragraphs: [
                 "As the years passed, another generation became part of the restaurant's daily life.",
-                "Jeannette's son Jeff Raynor joined the family tradition, helping preserve the recipes, character, and relationships that customers had come to cherish."
+                "Jeannette's nephew Jeff Raynor joined the family tradition, helping preserve the recipes, character, and relationships that customers had come to cherish."
             ],
             image: jeffJeanette,
-            alt: "Jeff Raynor seated with his mother Jeannette Calabria",
+            alt: "Jeff Raynor seated with his aunt Jeannette Calabria",
             caption:
-                "Jeff Raynor with his mother, Jeannette Calabria.",
+                "Jeff Raynor with his aunt, Jeannette Calabria.",
             layout: "left"
         },
 
