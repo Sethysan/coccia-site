@@ -15,14 +15,14 @@
                     <button type="button" class="gallery-slide" :aria-label="`Open ${photo.alt} in full screen`"
                         @click="openGallery(index)">
                         <img :src="photo.src" :alt="photo.alt" loading="lazy" />
-                        <figcaption>
-                            {{ photo.caption }}
-                        </figcaption>
                         <!-- <span class="gallery-expand" aria-hidden="true">
                             ⛶
                         </span> -->
                     </button>
-                    </figure>
+                    <figcaption>
+                        {{ photo.caption }}
+                    </figcaption>
+                </figure>
             </SwiperSlide>
         </Swiper>
     </section>

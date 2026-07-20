@@ -35,6 +35,11 @@
   --shadow-header: 0 4px 12px rgba(0, 0, 0, .45);
 }
 
+/* computed variables */
+:root {
+  --header-height: 202.075px;
+}
+
 body {
   margin: 0;
 }

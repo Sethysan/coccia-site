@@ -1,5 +1,5 @@
 <template>
-  <header class="header">
+  <header ref="headerRef" class="header">
     <!-- DESKTOP HEADER -->
     <div class="desktop-header">
       <div class="viewButtons">
