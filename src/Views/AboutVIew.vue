@@ -28,35 +28,20 @@
          STORY CHAPTERS
          ======================================================== -->
 
-    <section
-      class="story-timeline"
-      aria-label="The history of Coccia House"
-    >
-      <article
-        v-for="(chapter, index) in cocciaStory.chapters"
-        :id="chapter.id"
-        :key="chapter.id"
-        class="story-chapter"
+    <section class="story-timeline" aria-label="The history of Coccia House">
+      <article v-for="(chapter, index) in cocciaStory.chapters" :id="chapter.id" :key="chapter.id" class="story-chapter"
         :class="[
           `layout-${chapter.layout}`,
           { 'chapter-even': index % 2 !== 0 }
-        ]"
-      >
+        ]">
         <div class="chapter-photo-wrap">
           <figure class="chapter-photo">
-            <div
-              v-if="chapter.year"
-              class="photo-year"
-            >
+            <div v-if="chapter.year" class="photo-year">
               {{ chapter.year }}
             </div>
 
-            <img
-              :src="chapter.image"
-              :alt="chapter.alt"
-              :class="{ 'image-contain': chapter.imageFit === 'contain' }"
-              loading="lazy"
-            />
+            <img :src="chapter.image" :alt="chapter.alt" :class="{ 'image-contain': chapter.imageFit === 'contain' }"
+              loading="lazy" />
 
             <figcaption>
               {{ chapter.caption }}
@@ -71,10 +56,7 @@
 
           <h2>{{ chapter.title }}</h2>
 
-          <p
-            v-for="paragraph in chapter.paragraphs"
-            :key="paragraph"
-          >
+          <p v-for="paragraph in chapter.paragraphs" :key="paragraph">
             {{ paragraph }}
           </p>
         </div>
@@ -85,10 +67,7 @@
          CUSTOMER MEMORIES
          ======================================================== -->
 
-    <section
-      class="community-section"
-      aria-labelledby="community-title"
-    >
+    <section class="community-section" aria-labelledby="community-title">
       <div class="community-copy">
         <p class="section-eyebrow">
           {{ cocciaStory.community.eyebrow }}
@@ -98,29 +77,15 @@
           {{ cocciaStory.community.title }}
         </h2>
 
-        <p
-          v-for="paragraph in cocciaStory.community.paragraphs"
-          :key="paragraph"
-        >
+        <p v-for="paragraph in cocciaStory.community.paragraphs" :key="paragraph">
           {{ paragraph }}
         </p>
       </div>
 
-      <div
-        class="memory-gallery"
-        aria-label="Customer memories at Coccia House"
-      >
-        <figure
-          v-for="(photo, index) in cocciaStory.community.photos"
-          :key="photo.src"
-          class="memory-photo"
-          :class="`memory-photo-${index + 1}`"
-        >
-          <img
-            :src="photo.src"
-            :alt="photo.alt"
-            loading="lazy"
-          />
+      <div class="memory-gallery" aria-label="Customer memories at Coccia House">
+        <figure v-for="(photo, index) in cocciaStory.community.photos" :key="photo.src" class="memory-photo"
+          :class="`memory-photo-${index + 1}`">
+          <img :src="photo.src" :alt="photo.alt" loading="lazy" />
 
           <figcaption>
             {{ photo.caption }}
@@ -133,17 +98,10 @@
          CLOSING
          ======================================================== -->
 
-    <section
-      class="story-closing"
-      aria-labelledby="closing-title"
-    >
+    <section class="story-closing" aria-labelledby="closing-title">
       <div class="closing-photo-wrap">
         <figure class="closing-photo">
-          <img
-            :src="cocciaStory.closing.image"
-            :alt="cocciaStory.closing.alt"
-            loading="lazy"
-          />
+          <img :src="cocciaStory.closing.image" :alt="cocciaStory.closing.alt" loading="lazy" />
 
           <figcaption>
             {{ cocciaStory.closing.caption }}
@@ -160,10 +118,7 @@
           {{ cocciaStory.closing.title }}
         </h2>
 
-        <p
-          v-for="paragraph in cocciaStory.closing.paragraphs"
-          :key="paragraph"
-        >
+        <p v-for="paragraph in cocciaStory.closing.paragraphs" :key="paragraph">
           {{ paragraph }}
         </p>
       </div>
@@ -173,17 +128,34 @@
          FINAL QUOTE AND ACTION
          ======================================================== -->
 
-    <footer class="about-finale">
-      <blockquote>
-        “{{ cocciaStory.closing.quote }}”
-      </blockquote>
+    <!-- ========================================================
+     FINAL SLOGAN
+     ======================================================== -->
 
-      <RouterLink
-        to="/menu"
-        class="menu-link"
-      >
+    <footer class="about-finale">
+      <div class="finale-divider" aria-hidden="true">
+        <span></span>
+        <span class="finale-mark">◆</span>
+        <span></span>
+      </div>
+
+      <p class="finale-intro">
+        From Our Family to Yours
+      </p>
+
+      <p class="finale-slogan">
+        Buon Appetito
+      </p>
+
+      <RouterLink to="/menu" class="menu-link">
         View Our Menu
       </RouterLink>
+
+      <div class="finale-divider finale-divider-bottom" aria-hidden="true">
+        <span></span>
+        <span class="finale-mark">◆</span>
+        <span></span>
+      </div>
     </footer>
   </main>
 </template>
@@ -290,19 +262,15 @@ import { cocciaStory } from "@/content/cocciaStory"
   width: 100%;
   height: 1px;
 
-  background: linear-gradient(
-    to right,
-    transparent,
-    var(--bronze-color)
-  );
+  background: linear-gradient(to right,
+      transparent,
+      var(--bronze-color));
 }
 
 .hero-rule span:last-child {
-  background: linear-gradient(
-    to left,
-    transparent,
-    var(--bronze-color)
-  );
+  background: linear-gradient(to left,
+      transparent,
+      var(--bronze-color));
 }
 
 .hero-rule-mark {
@@ -468,10 +436,8 @@ import { cocciaStory } from "@/content/cocciaStory"
   padding: clamp(3rem, 7vw, 6rem);
 
   background:
-    linear-gradient(
-      rgba(19, 14, 11, 0.9),
-      rgba(19, 14, 11, 0.9)
-    );
+    linear-gradient(rgba(19, 14, 11, 0.9),
+      rgba(19, 14, 11, 0.9));
 
   border-top: 1px solid var(--bronze-color);
   border-bottom: 1px solid var(--bronze-color);
@@ -596,40 +562,92 @@ import { cocciaStory } from "@/content/cocciaStory"
 
 
 /* ==========================================================
-   FINALE
+   FINAL SLOGAN
    ========================================================== */
 
 .about-finale {
-  width: min(100%, 900px);
+  width: min(100%, 760px);
   margin: clamp(7rem, 14vw, 12rem) auto 0;
+  padding: clamp(2.5rem, 6vw, 4.5rem) 1rem;
 
   text-align: center;
 }
 
-.about-finale::before {
-  display: block;
+.finale-divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.9rem;
 
-  width: 1px;
-  height: 80px;
+  width: min(100%, 560px);
   margin: 0 auto 2.5rem;
 
-  background: linear-gradient(
-    transparent,
-    var(--bronze-bold)
-  );
-
-  content: "";
+  color: var(--bronze-bold);
 }
 
-.about-finale blockquote {
-  margin-bottom: 2.5rem;
+.finale-divider-bottom {
+  margin-top: 2.5rem;
+  margin-bottom: 0;
+}
 
-  color: #fffaf1;
+.finale-divider span:not(.finale-mark) {
+  width: 100%;
+  height: 1px;
+
+  background: linear-gradient(to right,
+      transparent,
+      var(--bronze-color));
+}
+
+.finale-divider span:last-child {
+  background: linear-gradient(to left,
+      transparent,
+      var(--bronze-color));
+}
+
+.finale-mark {
+  flex: 0 0 auto;
+
+  font-size: 0.65rem;
+}
+
+.finale-intro {
+  margin: 0 0 0.65rem;
+
+  color: var(--default-color);
 
   font-family: Georgia, "Times New Roman", serif;
-  font-size: clamp(1.75rem, 4vw, 3.5rem);
+  font-size: clamp(1.15rem, 2.5vw, 1.65rem);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.finale-slogan {
+  margin: 0;
+
+  color: var(--bronze-bold);
+
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(2.5rem, 7vw, 5rem);
   font-style: italic;
-  line-height: 1.35;
+  line-height: 1.1;
+}
+
+@media (max-width: 600px) {
+  .about-finale {
+    margin-top: 6rem;
+    padding-right: 0;
+    padding-left: 0;
+  }
+
+  .finale-intro {
+    font-size: 1rem;
+    letter-spacing: 0.06em;
+  }
+
+  .finale-divider {
+    gap: 0.65rem;
+  }
 }
 
 .menu-link {
@@ -669,6 +687,7 @@ import { cocciaStory } from "@/content/cocciaStory"
    ========================================================== */
 
 @media (max-width: 850px) {
+
   .story-chapter,
   .story-closing {
     grid-template-columns: 1fr;
@@ -783,6 +802,7 @@ import { cocciaStory } from "@/content/cocciaStory"
    ========================================================== */
 
 @media (prefers-reduced-motion: reduce) {
+
   .memory-photo,
   .menu-link {
     transition: none;
