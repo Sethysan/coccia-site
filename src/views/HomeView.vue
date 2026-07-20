@@ -36,7 +36,7 @@
         View Menu
       </RouterLink>
 
-      <a href="tel:13302645475" class="home-action">
+      <a href="tel:13302627136" class="home-action">
         Call for Carryout
       </a>
 
