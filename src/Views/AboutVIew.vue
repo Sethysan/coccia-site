@@ -1,161 +1,196 @@
 <template>
-  <main id="about" class="about-page">
-
+  <main class="about-page">
     <!-- ========================================================
-         PAGE INTRODUCTION
+         HERO
          ======================================================== -->
 
-    <header class="about-intro">
-      <!-- <p class="section-eyebrow">
-        {{ cocciaStory.intro.eyebrow }}
-      </p> -->
+    <header class="about-hero">
+      <p class="section-eyebrow">
+        {{ cocciaStory.hero.eyebrow }}
+      </p>
 
       <h1>
-        {{ cocciaStory.intro.title }}
+        {{ cocciaStory.hero.title }}
       </h1>
 
-      <p class="about-intro-text">
-        {{ cocciaStory.intro.text }}
+      <p class="hero-intro">
+        {{ cocciaStory.hero.intro }}
       </p>
+
+      <div class="hero-rule" aria-hidden="true">
+        <span></span>
+        <span class="hero-rule-mark">◆</span>
+        <span></span>
+      </div>
     </header>
 
-
     <!-- ========================================================
-         RESTAURANT STORY
+         STORY CHAPTERS
          ======================================================== -->
 
-    <article class="story-card">
-      <section v-for="section in cocciaStory.sections" :key="section.title" class="story-section">
-        <h2>
-          {{ section.title }}
-        </h2>
+    <section
+      class="story-timeline"
+      aria-label="The history of Coccia House"
+    >
+      <article
+        v-for="(chapter, index) in cocciaStory.chapters"
+        :id="chapter.id"
+        :key="chapter.id"
+        class="story-chapter"
+        :class="[
+          `layout-${chapter.layout}`,
+          { 'chapter-even': index % 2 !== 0 }
+        ]"
+      >
+        <div class="chapter-photo-wrap">
+          <figure class="chapter-photo">
+            <div
+              v-if="chapter.year"
+              class="photo-year"
+            >
+              {{ chapter.year }}
+            </div>
 
-        <p v-for="paragraph in section.paragraphs" :key="paragraph">
-          {{ paragraph }}
-        </p>
-      </section>
-    </article>
+            <img
+              :src="chapter.image"
+              :alt="chapter.alt"
+              :class="{ 'image-contain': chapter.imageFit === 'contain' }"
+              loading="lazy"
+            />
 
+            <figcaption>
+              {{ chapter.caption }}
+            </figcaption>
+          </figure>
+        </div>
 
-    <!-- ========================================================
-         PIZZA PHILOSOPHY
-         ======================================================== -->
-
-    <aside class="pizza-promise">
-      <p class="section-eyebrow">
-        {{ cocciaStory.pizzaPromise.title }}
-      </p>
-
-      <p>
-        {{ cocciaStory.pizzaPromise.text }}
-      </p>
-    </aside>
-
-    <!-- ========================================================
-     COCCIA HOUSE TIMELINE
-     ======================================================== -->
-
-    <section v-if="cocciaStory.timeline.events.length" class="history-timeline" aria-labelledby="timeline-title">
-      <p class="section-eyebrow">
-        {{ cocciaStory.timeline.eyebrow }}
-      </p>
-
-      <h2 id="timeline-title">
-        {{ cocciaStory.timeline.title }}
-      </h2>
-
-      <div class="timeline-list">
-        <article v-for="event in cocciaStory.timeline.events" :key="`${event.year}-${event.title}`"
-          class="timeline-event">
-          <p class="timeline-year">
-            {{ event.year }}
+        <div class="chapter-copy">
+          <p class="section-eyebrow">
+            {{ chapter.eyebrow }}
           </p>
 
-          <div class="timeline-content">
-            <p v-if="event.category" class="timeline-category">
-              {{ event.category }}
-            </p>
+          <h2>{{ chapter.title }}</h2>
 
-            <h3>
-              {{ event.title }}
-            </h3>
-
-            <p>
-              {{ event.text }}
-            </p>
-          </div>
-        </article>
-      </div>
+          <p
+            v-for="paragraph in chapter.paragraphs"
+            :key="paragraph"
+          >
+            {{ paragraph }}
+          </p>
+        </div>
+      </article>
     </section>
 
     <!-- ========================================================
-     HISTORIC ARCHIVE AND CONTRIBUTIONS
-     ======================================================== -->
-
-
-    <section class="history-archive" aria-labelledby="archive-title">
-      <h2 id="archive-title">
-        {{ cocciaStory.archive.title }}
-      </h2>
-
-      <p v-for="paragraph in cocciaStory.archive.paragraphs" :key="paragraph">
-        {{ paragraph }}
-      </p>
-
-      <a class="archive-email-link"
-        :href="`mailto:${cocciaStory.archive.emailAddress}?subject=Coccia%20House%20History`">
-        {{ cocciaStory.archive.emailText }}
-      </a>
-
-      <p class="archive-note">
-        {{ cocciaStory.archive.note }}
-      </p>
-    </section>
-    <!-- ========================================================
-         FUTURE PHOTO ALBUM PREVIEW
+         CUSTOMER MEMORIES
          ======================================================== -->
 
-    <!-- <section class="about-photos" aria-labelledby="photos-title">
+    <section
+      class="community-section"
+      aria-labelledby="community-title"
+    >
+      <div class="community-copy">
+        <p class="section-eyebrow">
+          {{ cocciaStory.community.eyebrow }}
+        </p>
 
-      <h2 id="photos-title">
-        From the Family Album
-      </h2>
+        <h2 id="community-title">
+          {{ cocciaStory.community.title }}
+        </h2>
 
-      <p>
-        We are gathering photographs and memories from throughout
-        the history of Coccia House. A larger collection will be
-        added here after the new website launches.
-      </p> -->
+        <p
+          v-for="paragraph in cocciaStory.community.paragraphs"
+          :key="paragraph"
+        >
+          {{ paragraph }}
+        </p>
+      </div>
 
-    <!--
-        Add a small group of two or three photographs here later.
+      <div
+        class="memory-gallery"
+        aria-label="Customer memories at Coccia House"
+      >
+        <figure
+          v-for="(photo, index) in cocciaStory.community.photos"
+          :key="photo.src"
+          class="memory-photo"
+          :class="`memory-photo-${index + 1}`"
+        >
+          <img
+            :src="photo.src"
+            :alt="photo.alt"
+            loading="lazy"
+          />
 
-        Keep this section understated. The future full gallery can
-        be linked from this section when it is ready.
-
-      </section>
-      -->
-
+          <figcaption>
+            {{ photo.caption }}
+          </figcaption>
+        </figure>
+      </div>
+    </section>
 
     <!-- ========================================================
          CLOSING
          ======================================================== -->
 
-    <footer class="about-closing">
-      <p class="about-slogan">
-        {{ cocciaStory.closing.slogan }}
-      </p>
+    <section
+      class="story-closing"
+      aria-labelledby="closing-title"
+    >
+      <div class="closing-photo-wrap">
+        <figure class="closing-photo">
+          <img
+            :src="cocciaStory.closing.image"
+            :alt="cocciaStory.closing.alt"
+            loading="lazy"
+          />
 
-      <p class="about-signature">
-        {{ cocciaStory.closing.signature }}
-      </p>
+          <figcaption>
+            {{ cocciaStory.closing.caption }}
+          </figcaption>
+        </figure>
+      </div>
+
+      <div class="closing-copy">
+        <p class="section-eyebrow">
+          {{ cocciaStory.closing.eyebrow }}
+        </p>
+
+        <h2 id="closing-title">
+          {{ cocciaStory.closing.title }}
+        </h2>
+
+        <p
+          v-for="paragraph in cocciaStory.closing.paragraphs"
+          :key="paragraph"
+        >
+          {{ paragraph }}
+        </p>
+      </div>
+    </section>
+
+    <!-- ========================================================
+         FINAL QUOTE AND ACTION
+         ======================================================== -->
+
+    <footer class="about-finale">
+      <blockquote>
+        “{{ cocciaStory.closing.quote }}”
+      </blockquote>
+
+      <RouterLink
+        to="/menu"
+        class="menu-link"
+      >
+        View Our Menu
+      </RouterLink>
     </footer>
-
   </main>
 </template>
 
 <script setup>
-import { cocciaStory } from '@/content/cocciaStory'
+import { RouterLink } from "vue-router"
+import { cocciaStory } from "@/content/cocciaStory"
 </script>
 
 <style scoped>
@@ -164,11 +199,23 @@ import { cocciaStory } from '@/content/cocciaStory'
    ========================================================== */
 
 .about-page {
-  width: 100%;
-  padding: 4rem 1.5rem 5rem;
+  width: min(100%, 1280px);
+  margin: 0 auto;
+  padding: clamp(2.5rem, 6vw, 6rem) clamp(1rem, 4vw, 3rem) 6rem;
 
-  color: var(--text-primary);
-  text-align: center;
+  color: var(--default-color);
+}
+
+.about-page h1,
+.about-page h2,
+.about-page p,
+.about-page figure,
+.about-page blockquote {
+  margin-top: 0;
+}
+
+.about-page p {
+  line-height: 1.8;
 }
 
 
@@ -177,367 +224,491 @@ import { cocciaStory } from '@/content/cocciaStory'
    ========================================================== */
 
 .section-eyebrow {
-  margin: 0 0 0.55rem;
+  margin-bottom: 0.65rem;
 
   color: var(--bronze-bold);
 
-  font-size: 0.8rem;
+  font-size: clamp(0.72rem, 1.2vw, 0.85rem);
   font-weight: 700;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
 }
 
-
-/* ==========================================================
-   INTRODUCTION
-   ========================================================== */
-
-.about-intro {
-  width: min(100%, 800px);
-  margin: 0 auto 4rem;
+.about-page h1,
+.about-page h2 {
+  font-family: Georgia, "Times New Roman", serif;
+  font-weight: 500;
+  line-height: 1.12;
 }
 
-.about-intro h1 {
-  margin: 0;
+.about-page h1 {
+  margin-bottom: 1.25rem;
 
-  font-size: clamp(2.5rem, 6vw, 4.5rem);
-  line-height: 1.05;
+  font-size: clamp(2.6rem, 7vw, 5.8rem);
 }
 
-.about-intro-text {
-  max-width: 650px;
-  margin: 1.25rem auto 0;
+.about-page h2 {
+  margin-bottom: 1.25rem;
 
-  font-size: clamp(1.05rem, 2vw, 1.25rem);
-  line-height: 1.7;
+  font-size: clamp(2rem, 4vw, 3.6rem);
 }
 
 
 /* ==========================================================
-   STORY
+   HERO
    ========================================================== */
 
-.story-card {
-  width: min(100%, 760px);
-  margin: 0 auto 4.5rem;
-  padding: clamp(1.5rem, 4vw, 3rem);
+.about-hero {
+  width: min(100%, 850px);
+  margin: 0 auto clamp(5rem, 10vw, 9rem);
 
-  background-color: var(--background-dark-trans);
-
-  border: 1px solid var(--bronze-color);
-  border-radius: 0.5rem;
-
-  text-align: left;
-}
-
-.story-section+.story-section {
-  margin-top: 2.75rem;
-  padding-top: 2.75rem;
-
-  border-top: 1px solid rgba(255, 255, 255, 0.15);
-}
-
-.story-section h2 {
-  margin: 0 0 1rem;
-
-  color: var(--bronze-bold);
   text-align: center;
 }
 
-.story-section p {
-  margin: 0;
+.hero-intro {
+  width: min(100%, 720px);
+  margin-right: auto;
+  margin-bottom: 2.25rem;
+  margin-left: auto;
 
-  font-size: 1.02rem;
-  line-height: 1.8;
+  font-size: clamp(1.05rem, 2vw, 1.35rem);
 }
 
-.story-section p+p {
-  margin-top: 1.15rem;
+.hero-rule {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.85rem;
+
+  width: min(100%, 420px);
+  margin: 0 auto;
+
+  color: var(--bronze-bold);
+}
+
+.hero-rule span:not(.hero-rule-mark) {
+  width: 100%;
+  height: 1px;
+
+  background: linear-gradient(
+    to right,
+    transparent,
+    var(--bronze-color)
+  );
+}
+
+.hero-rule span:last-child {
+  background: linear-gradient(
+    to left,
+    transparent,
+    var(--bronze-color)
+  );
+}
+
+.hero-rule-mark {
+  font-size: 0.7rem;
 }
 
 
 /* ==========================================================
-   PIZZA PHILOSOPHY
+   STORY TIMELINE
    ========================================================== */
 
-.pizza-promise {
-  width: min(100%, 640px);
-  margin: 0 auto 5rem;
-  padding: 2rem 1.5rem;
+.story-timeline {
+  position: relative;
+
+  display: grid;
+  gap: clamp(6rem, 12vw, 11rem);
+}
+
+.story-chapter {
+  display: grid;
+  grid-template-columns: minmax(280px, 0.9fr) minmax(320px, 1fr);
+  align-items: center;
+  gap: clamp(2.5rem, 7vw, 7rem);
+}
+
+.story-chapter.layout-right .chapter-photo-wrap {
+  order: 2;
+}
+
+.story-chapter.layout-right .chapter-copy {
+  order: 1;
+}
+
+.chapter-copy {
+  max-width: 600px;
+}
+
+.chapter-copy p:not(.section-eyebrow) {
+  color: rgba(255, 250, 241, 0.88);
+  font-size: clamp(1rem, 1.5vw, 1.13rem);
+}
+
+.chapter-copy p:last-child {
+  margin-bottom: 0;
+}
+
+
+/* ==========================================================
+   HISTORIC PHOTOGRAPHS
+   ========================================================== */
+
+.chapter-photo-wrap {
+  position: relative;
+
+  display: flex;
+  justify-content: center;
+}
+
+.chapter-photo {
+  position: relative;
+
+  width: min(100%, 520px);
+  margin: 0;
+  padding: clamp(0.55rem, 1.5vw, 0.9rem);
+
+  background-color: #eee5d4;
+  border: 1px solid rgba(138, 106, 50, 0.8);
+  box-shadow:
+    0 25px 60px rgba(0, 0, 0, 0.34),
+    0 4px 12px rgba(0, 0, 0, 0.22);
+
+  transform: rotate(-0.6deg);
+}
+
+.chapter-even .chapter-photo {
+  transform: rotate(0.6deg);
+}
+
+.chapter-photo img {
+  display: block;
+
+  width: 100%;
+  max-height: 650px;
+
+  object-fit: cover;
+  object-position: center;
+
+  background-color: #d9d0c1;
+}
+
+.chapter-photo img.image-contain {
+  object-fit: contain;
+}
+
+.chapter-photo figcaption,
+.closing-photo figcaption {
+  padding: 0.85rem 0.65rem 0.2rem;
+
+  color: #493e31;
+
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 0.88rem;
+  font-style: italic;
+  line-height: 1.45;
+  text-align: center;
+}
+
+.photo-year {
+  position: absolute;
+  top: -1.1rem;
+  left: -1rem;
+  z-index: 2;
+
+  padding: 0.65rem 1rem;
+
+  color: #fffaf1;
+  background-color: var(--bronze-bold);
+  border: 1px solid rgba(255, 250, 241, 0.4);
+  box-shadow: 0 5px 12px rgba(0, 0, 0, 0.25);
+
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1rem;
+  letter-spacing: 0.12em;
+}
+
+
+/* ==========================================================
+   FEATURE CHAPTERS
+
+   Full-width sections interrupt the alternating pattern so
+   the page does not feel like a repetitive list of rows.
+   ========================================================== */
+
+.story-chapter.layout-feature {
+  display: block;
+}
+
+.layout-feature .chapter-copy {
+  width: min(100%, 760px);
+  max-width: none;
+  margin: 0 auto 3rem;
+
+  text-align: center;
+}
+
+.layout-feature .chapter-photo {
+  width: min(100%, 940px);
+
+  transform: none;
+}
+
+.layout-feature .chapter-photo img {
+  max-height: none;
+}
+
+
+/* ==========================================================
+   COMMUNITY SECTION
+   ========================================================== */
+
+.community-section {
+  margin-top: clamp(7rem, 14vw, 12rem);
+  padding: clamp(3rem, 7vw, 6rem);
+
+  background:
+    linear-gradient(
+      rgba(19, 14, 11, 0.9),
+      rgba(19, 14, 11, 0.9)
+    );
 
   border-top: 1px solid var(--bronze-color);
   border-bottom: 1px solid var(--bronze-color);
 }
 
-.pizza-promise p:last-child {
-  max-width: 570px;
-  margin: 0 auto;
+.community-copy {
+  width: min(100%, 780px);
+  margin: 0 auto clamp(3rem, 7vw, 5rem);
 
-  font-size: clamp(1.1rem, 2vw, 1.3rem);
-  line-height: 1.7;
+  text-align: center;
 }
 
-
-/* ==========================================================
-   FAMILY PHOTOGRAPHS
-   ========================================================== */
-
-.about-photos {
-  width: min(100%, 760px);
-  margin: 0 auto 5rem;
+.community-copy p:not(.section-eyebrow) {
+  font-size: clamp(1rem, 1.7vw, 1.17rem);
 }
 
-.about-photos h2 {
-  margin: 0 0 1rem;
-
-  font-size: clamp(1.8rem, 4vw, 2.7rem);
+.memory-gallery {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: clamp(1rem, 2vw, 1.75rem);
 }
 
-.about-photos p {
-  max-width: 600px;
-  margin: 0 auto;
-
-  line-height: 1.7;
-}
-
-
-/* ==========================================================
-   CLOSING
-   ========================================================== */
-
-.about-closing {
-  width: min(100%, 760px);
-  margin: 0 auto;
-  padding-top: 3rem;
-
-  border-top: 1px solid var(--bronze-color);
-}
-
-.about-slogan {
-  margin: 0;
-
-  color: var(--bronze-bold);
-
-  font-size: clamp(1.4rem, 4vw, 2.2rem);
-  font-style: italic;
-  font-weight: 700;
-  line-height: 1.4;
-}
-
-.about-signature {
-  max-width: 520px;
-  margin: 1rem auto 0;
-
-  font-size: 0.95rem;
-  line-height: 1.6;
-}
-
-/* ==========================================================
-   HISTORY TIMELINE
-   ========================================================== */
-
-.history-timeline {
-  width: min(100%, 760px);
-  margin: 0 auto 5rem;
-}
-
-.history-timeline>h2 {
-  margin: 0 0 2rem;
-
-  font-size: clamp(1.8rem, 4vw, 2.7rem);
-}
-
-.timeline-list {
+.memory-photo {
   position: relative;
 
-  text-align: left;
+  grid-column: span 6;
+
+  margin: 0;
+  padding: 0.55rem;
+
+  background-color: #eee5d4;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.3);
+
+  transition:
+    transform 180ms ease,
+    box-shadow 180ms ease;
 }
 
-.timeline-list::before {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 5.1rem;
+.memory-photo:hover {
+  z-index: 2;
+
+  transform: translateY(-5px);
+  box-shadow: 0 24px 55px rgba(0, 0, 0, 0.38);
+}
+
+.memory-photo img {
+  display: block;
+
+  width: 100%;
+  aspect-ratio: 4 / 3;
+
+  object-fit: cover;
+}
+
+.memory-photo figcaption {
+  padding: 0.7rem 0.4rem 0.2rem;
+
+  color: #493e31;
+
+  font-family: Georgia, "Times New Roman", serif;
+  font-style: italic;
+  text-align: center;
+}
+
+.memory-photo-1 {
+  transform: rotate(-0.7deg);
+}
+
+.memory-photo-2 {
+  transform: rotate(0.6deg);
+}
+
+.memory-photo-3 {
+  transform: rotate(0.4deg);
+}
+
+.memory-photo-4 {
+  transform: rotate(-0.5deg);
+}
+
+
+/* ==========================================================
+   CLOSING STORY
+   ========================================================== */
+
+.story-closing {
+  display: grid;
+  grid-template-columns: minmax(320px, 1.1fr) minmax(300px, 0.9fr);
+  align-items: center;
+  gap: clamp(3rem, 8vw, 8rem);
+
+  margin-top: clamp(7rem, 14vw, 12rem);
+}
+
+.closing-photo {
+  width: 100%;
+  margin: 0;
+  padding: clamp(0.6rem, 1.5vw, 1rem);
+
+  background-color: #eee5d4;
+  border: 1px solid var(--bronze-color);
+  box-shadow: 0 25px 65px rgba(0, 0, 0, 0.36);
+}
+
+.closing-photo img {
+  display: block;
+
+  width: 100%;
+  max-height: 690px;
+
+  object-fit: cover;
+  object-position: center;
+}
+
+.closing-copy {
+  max-width: 570px;
+}
+
+.closing-copy p:not(.section-eyebrow) {
+  font-size: clamp(1rem, 1.6vw, 1.15rem);
+}
+
+
+/* ==========================================================
+   FINALE
+   ========================================================== */
+
+.about-finale {
+  width: min(100%, 900px);
+  margin: clamp(7rem, 14vw, 12rem) auto 0;
+
+  text-align: center;
+}
+
+.about-finale::before {
+  display: block;
 
   width: 1px;
+  height: 80px;
+  margin: 0 auto 2.5rem;
 
-  background-color: var(--bronze-color);
+  background: linear-gradient(
+    transparent,
+    var(--bronze-bold)
+  );
 
-  content: '';
+  content: "";
 }
 
-.timeline-event {
-  position: relative;
+.about-finale blockquote {
+  margin-bottom: 2.5rem;
 
-  display: grid;
-  grid-template-columns: 4rem 1fr;
-  gap: 2rem;
+  color: #fffaf1;
 
-  padding-bottom: 2.5rem;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(1.75rem, 4vw, 3.5rem);
+  font-style: italic;
+  line-height: 1.35;
 }
 
-.timeline-event:last-child {
-  padding-bottom: 0;
-}
-
-.timeline-year {
-  margin: 0;
-
-  color: var(--bronze-bold);
-
-  font-size: 1.1rem;
-  font-weight: 700;
-  text-align: right;
-}
-
-.timeline-content {
-  position: relative;
-
-  padding: 0 0 0 1.5rem;
-}
-
-.timeline-content::before {
-  position: absolute;
-  top: 0.35rem;
-  left: -0.42rem;
-
-  width: 0.75rem;
-  height: 0.75rem;
-
-  background-color: var(--bronze-bold);
-
-  border: 3px solid var(--background-dark);
-  border-radius: 50%;
-
-  content: '';
-}
-
-.timeline-category {
-  margin: 0 0 0.3rem;
-
-  color: var(--bronze-bold);
-
-  font-size: 0.75rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
-
-.timeline-content h3 {
-  margin: 0 0 0.5rem;
-}
-
-.timeline-content p:last-child {
-  margin: 0;
-
-  line-height: 1.7;
-}
-
-
-/* ==========================================================
-   HISTORIC ARCHIVE
-   ========================================================== */
-
-.history-archive {
-  width: min(100%, 680px);
-  margin: 0 auto 5rem;
-  padding: 2rem;
-
-  background-color: var(--background-dark-trans);
-
-  border: 1px solid var(--bronze-color);
-  border-radius: 0.5rem;
-}
-
-.history-archive h2 {
-  margin: 0 0 1rem;
-}
-
-.history-archive>p {
-  margin: 0 auto;
-
-  line-height: 1.7;
-}
-
-.history-archive>p+p {
-  margin-top: 1rem;
-}
-
-.archive-email-link {
+.menu-link {
   display: inline-flex;
   align-items: center;
   justify-content: center;
 
-  margin-top: 1.5rem;
-  padding: 0.75rem 1.2rem;
+  min-width: 190px;
+  padding: 0.9rem 1.5rem;
 
-  color: var(--default-color);
-  background-color: var(--bronze-bold);
-
+  color: #fffaf1;
+  background-color: transparent;
   border: 1px solid var(--bronze-bold);
-  border-radius: 0.35rem;
 
   font-weight: 700;
+  letter-spacing: 0.08em;
   text-decoration: none;
+  text-transform: uppercase;
 
   transition:
-    background-color 200ms ease,
-    border-color 200ms ease,
-    transform 200ms ease;
+    color 160ms ease,
+    background-color 160ms ease,
+    transform 160ms ease;
 }
 
-.archive-email-link:hover,
-.archive-email-link:focus-visible {
-  background-color: var(--bronze-hover);
-  border-color: var(--bronze-hover);
+.menu-link:hover,
+.menu-link:focus-visible {
+  color: #17110d;
+  background-color: var(--bronze-bold);
+
   transform: translateY(-2px);
-}
-
-.archive-note {
-  max-width: 540px;
-  margin-top: 1rem !important;
-
-  color: var(--default-dark);
-
-  font-size: 0.9rem;
-  font-style: italic;
 }
 
 
 /* ==========================================================
-   MOBILE TIMELINE
+   TABLET
    ========================================================== */
 
-@media (max-width: 600px) {
-  .history-archive {
-    padding: 1.25rem;
+@media (max-width: 850px) {
+  .story-chapter,
+  .story-closing {
+    grid-template-columns: 1fr;
+    gap: 2.5rem;
   }
 
-  .timeline-list::before {
-    left: 0.35rem;
+  .story-chapter.layout-right .chapter-photo-wrap,
+  .story-chapter.layout-right .chapter-copy {
+    order: initial;
   }
 
-  .timeline-event {
-    display: block;
-
-    padding-left: 1.75rem;
+  .chapter-photo-wrap,
+  .closing-photo-wrap {
+    order: 1;
   }
 
-  .timeline-year {
-    margin-bottom: 0.35rem;
+  .chapter-copy,
+  .closing-copy {
+    order: 2;
 
-    text-align: left;
+    width: min(100%, 650px);
+    max-width: none;
+    margin: 0 auto;
+
+    text-align: center;
   }
 
-  .timeline-content {
-    padding-left: 0;
+  .story-chapter {
+    gap: 2.5rem;
   }
 
-  .timeline-content::before {
-    top: -1.55rem;
-    left: -1.77rem;
+  .memory-gallery {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .memory-photo {
+    grid-column: auto;
   }
 }
+
 
 /* ==========================================================
    MOBILE
@@ -545,31 +716,76 @@ import { cocciaStory } from '@/content/cocciaStory'
 
 @media (max-width: 600px) {
   .about-page {
-    padding: 3rem 0.8rem 4rem;
+    padding-right: 1rem;
+    padding-left: 1rem;
   }
 
-  .about-intro {
-    margin-bottom: 3rem;
+  .about-hero {
+    margin-bottom: 5rem;
   }
 
-  .story-card {
-    margin-bottom: 4rem;
-    padding: 1.25rem;
+  .story-timeline {
+    gap: 5.5rem;
   }
 
-  .story-section+.story-section {
-    margin-top: 2rem;
-    padding-top: 2rem;
+  .chapter-photo {
+    padding: 0.45rem;
+
+    transform: none;
   }
 
-  .story-section p {
-    font-size: 1rem;
-    line-height: 1.7;
+  .chapter-even .chapter-photo {
+    transform: none;
   }
 
-  .pizza-promise,
-  .about-photos {
-    margin-bottom: 4rem;
+  .chapter-photo figcaption,
+  .closing-photo figcaption {
+    font-size: 0.8rem;
+  }
+
+  .photo-year {
+    top: -0.8rem;
+    left: -0.35rem;
+
+    padding: 0.5rem 0.75rem;
+  }
+
+  .community-section {
+    margin-right: -1rem;
+    margin-left: -1rem;
+    padding: 3.5rem 1rem;
+  }
+
+  .memory-gallery {
+    grid-template-columns: 1fr;
+  }
+
+  .memory-photo {
+    transform: none;
+  }
+
+  .memory-photo:hover {
+    transform: translateY(-3px);
+  }
+
+  .story-closing {
+    margin-top: 6rem;
+  }
+
+  .about-finale {
+    margin-top: 6rem;
+  }
+}
+
+
+/* ==========================================================
+   REDUCED MOTION
+   ========================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .memory-photo,
+  .menu-link {
+    transition: none;
   }
 }
 </style>
