@@ -178,8 +178,8 @@ onBeforeUnmount(() => {
     font-size: 1.2rem;
 }
 
-.home-gallery-swiper :deep(.swiper-button-prev),
-.home-gallery-swiper :deep(.swiper-button-next) {
+.home-gallery-swiper .swiper-button-prev,
+.home-gallery-swiper .swiper-button-next {
     color: var(--bronze-bold);
 }
 
@@ -188,10 +188,9 @@ onBeforeUnmount(() => {
     color: var(--bronze-bold);
 }
 
-.home-gallery-swiper :deep(.swiper-pagination-bullet) {
+.home-gallery-swiper .swiper-pagination-bullet {
     background-color: var(--default-color);
     color: var(--bronze-bold);
-    opacity: 0.45;
 }
 
 .home-gallery-swiper .swiper-pagination-bullet-active {
@@ -220,8 +219,8 @@ onBeforeUnmount(() => {
         padding-left: 0;
     }
 
-    .home-gallery-swiper :deep(.swiper-button-prev),
-    .home-gallery-swiper :deep(.swiper-button-next) {
+    .home-gallery-swiper .swiper-button-prev,
+    .home-gallery-swiper .swiper-button-next {
         display: none;
     }
 }
