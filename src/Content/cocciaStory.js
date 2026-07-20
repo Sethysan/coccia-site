@@ -103,7 +103,7 @@ export const cocciaStory = {
         title: 'Help Us Add to the Story',
 
         paragraphs: [
-            `We are gathering photographs, newspaper clippings, awards, renovation dates, and memories from throughout the history of Coccia House. A larger collection will be added to the website as the project grows.`,
+            `We are gathering photographs, newspaper clippings, property history and memories from throughout the history of Coccia House. A larger collection will be added to the website as the project grows.`,
 
             `If you have photographs or information that could help us add to the Coccia House story, we would be glad to hear from you.`
         ],

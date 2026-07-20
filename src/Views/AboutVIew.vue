@@ -6,9 +6,9 @@
          ======================================================== -->
 
     <header class="about-intro">
-      <p class="section-eyebrow">
+      <!-- <p class="section-eyebrow">
         {{ cocciaStory.intro.eyebrow }}
-      </p>
+      </p> -->
 
       <h1>
         {{ cocciaStory.intro.title }}
