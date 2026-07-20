@@ -162,7 +162,7 @@
 
 <script setup>
 import { RouterLink } from "vue-router"
-import { cocciaStory } from "@/content/cocciaStory"
+import { cocciaStory } from "@/content/cocciaStory.js"
 </script>
 
 <style scoped>
