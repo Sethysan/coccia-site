@@ -115,7 +115,7 @@
 
         <p>
           Join us in the Florentine Room on <strong>Thursday, July 23 at 6:00 PM</strong> as we
-          welcome back house favorite <strong>Rolando Pizano</strong> for an evening of live music.
+          welcome back house favorite <strong>Rolando</strong> for an evening of live music.
           We anticipate a larger-than-usual crowd, so seating will be limited. Standing room will
           be available around the bar.
         </p>
