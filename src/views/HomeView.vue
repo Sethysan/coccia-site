@@ -110,6 +110,16 @@
 
     <section class="news-card" aria-labelledby="news-title">
       <h2 id="news-title">Latest News</h2>
+      <article class="news-item">
+        <h3> Live Music – Thursday, July 23</h3>
+
+        <p>
+          Join us in the Florentine Room on <strong>Thursday, July 23 at 6:00 PM</strong> as we
+          welcome back house favorite <strong>Rolando Pizano</strong> for an evening of live music.
+          We anticipate a larger-than-usual crowd, so seating will be limited. Standing room will
+          be available around the bar.
+        </p>
+      </article>
 
       <article class="news-item">
         <h3>Dining Room Open</h3>
