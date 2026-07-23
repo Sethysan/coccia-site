@@ -20,6 +20,10 @@
       <p class="today-hours">
         {{ todayHours.hours }}
       </p>
+ <!-- todo -->
+      <p class="today-message">
+        {{ todayHours.note }}
+      </p>
 
       <p class="today-message">
         {{ restaurantStatus.message }}
@@ -36,16 +40,12 @@
         View Menu
       </RouterLink>
 
-      <a href="tel:13302627136" 
-      @click="trackPhoneClick('homeView')"
-      class="home-action">
-      Call for Carryout
+      <a href="tel:13302627136" @click="trackPhoneClick('homeView')" class="home-action">
+        Call for Carryout
       </a>
 
       <a href="https://www.google.com/maps/search/?api=1&query=Coccia+House+Wooster+Ohio" target="_blank"
-        rel="noopener noreferrer"  
-        @click="trackDirectionsClick('homeView')"
-        class="home-action">
+        rel="noopener noreferrer" @click="trackDirectionsClick('homeView')" class="home-action">
         Get Directions
       </a>
     </nav>
@@ -111,17 +111,22 @@
     <!-- ========================================================
          LATEST NEWS
          ======================================================== -->
-
-    <section class="news-card" aria-labelledby="news-title">
-      <h2 id="news-title">Latest News</h2>
+    <section class="news-card">
+ <!-- todo -->
       <article class="news-item">
-        <h3> Live Music – Thursday, July 23</h3>
+        <h3>Live Music Tonight – Thursday, July 23</h3>
+
+        <img class="news-flyer" :src="rolandoFlyer" alt="Rolando Live at Coccia House, Thursday July 23 at 6 PM" />
 
         <p>
-          Join us in the Florentine Room on <strong>Thursday, July 23 at 6:00 PM</strong> as we
-          welcome back house favorite <strong>Rolando</strong> for an evening of live music.
-          We anticipate a larger-than-usual crowd, so seating will be limited. Standing room will
-          be available around the bar.
+          Join us in the <strong>Florentine Room tonight at 6:00 PM</strong> as we
+          welcome back house favorite <strong>Rolando</strong> for an evening of
+          live music.
+        </p>
+
+        <p>
+          We anticipate a larger-than-usual crowd, so seating will be limited.
+          Standing room will be available around the bar.
         </p>
       </article>
 
@@ -207,6 +212,7 @@ import { homeContent } from '@/content/homeContent.js'
 import HomeGallery from '@/components/HomeGallery.vue'
 import { trackPhoneClick } from "@/utils/analytics"
 import { trackDirectionsClick } from "@/utils/analytics"
+import rolandoFlyer from '@/assets/rolando-live-july23.png'
 
 const {
   todayHours,
@@ -218,6 +224,15 @@ const {
 /* ==========================================================
    HOME PAGE
    ========================================================== */
+   /* TODO */
+.news-flyer {
+  display: block;
+  width: 100%;
+  max-width: 420px;
+  margin: 1rem auto 1.25rem;
+  border-radius: 10px;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.25);
+}
 
 .home-page {
   width: 100%;
