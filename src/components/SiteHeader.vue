@@ -86,7 +86,9 @@
       <section class="mobile-hours">
         <button type="button" class="mobile-hours-trigger" :aria-expanded="showMobileHours"
           @click="showMobileHours = !showMobileHours">
-          <span>{{ compactHoursMessage }}</span>
+          <span class="mobile-hours-today">
+            View Weekly Hours
+          </span>
 
           <span class="mobile-hours-arrow" :class="{ rotated: showMobileHours }" aria-hidden="true">
             ▼
@@ -565,26 +567,26 @@ const {
 
   .mobile-hours-trigger {
     width: 100%;
-    padding: .55rem 1rem;
+    padding: .55rem .75rem;
 
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: .4rem;
-
+    gap: .35rem;
+    font: inherit;
     background: rgba(20, 15, 12, .94);
-
     color: var(--default-color);
-
     border: none;
     cursor: pointer;
-
     font-size: .9rem;
     font-weight: 600;
-
     transition:
       background .25s,
       color .25s;
+  }
+
+  .mobile-hours-today {
+    white-space: nowrap;
   }
 
   .mobile-hours-trigger:hover {
