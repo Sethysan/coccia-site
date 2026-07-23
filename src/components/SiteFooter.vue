@@ -47,14 +47,15 @@
 
         <ul class="footer-links">
           <li>
-            <a href="tel:13302627136">
+            <a href="tel:13302627136" @click="trackPhoneClick('footer')">
               (330) 262-7136
             </a>
           </li>
 
           <li>
             <a href="https://www.google.com/maps/search/?api=1&query=Coccia+House+Wooster+Ohio" target="_blank"
-              rel="noopener noreferrer">
+              rel="noopener noreferrer"
+               @click="trackDirectionsClick('footer')">
               Get Directions
             </a>
           </li>
@@ -117,7 +118,8 @@
 
 <script setup>
 import { RouterLink } from 'vue-router'
-
+import { trackPhoneClick } from "@/utils/analytics"
+import { trackDirectionsClick } from "@/utils/analytics"
 const currentYear = new Date().getFullYear()
 </script>
 

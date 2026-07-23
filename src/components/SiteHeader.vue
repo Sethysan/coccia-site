@@ -19,7 +19,7 @@
         <section class="hours-menu" @mouseenter="showAllHours = true" @mouseleave="showAllHours = false"
           @focusin="showAllHours = true" @focusout="showAllHours = false">
           <button class="hours-trigger" type="button" :aria-expanded="showAllHours"
-            aria-label="View weekly restaurant hours" @click="showAllHours = !showAllHours">
+            aria-label="View weekly restaurant hours" @click="toggleDesktopHours">
             <Hours :show-all="false" />
 
             <span class="hours-arrow" :class="{ expanded: showAllHours }" aria-hidden="true">
@@ -35,7 +35,8 @@
         </section>
 
         <!-- Phone number -->
-        <a class="visitor-link visitor-phone" href="tel:+13302627136" aria-label="Call Coccia House at 330-262-7136">
+        <a class="visitor-link visitor-phone" href="tel:+13302627136" @click="trackPhoneClick('desktopHeader')"
+          aria-label="Call Coccia House at 330-262-7136">
           <span class="visitor-icon" aria-hidden="true">
             ☎
           </span>
@@ -49,7 +50,8 @@
         <!-- Google Maps directions -->
         <a class="visitor-link visitor-directions"
           href="https://www.google.com/maps/search/?api=1&query=Coccia+House+Wooster+Ohio" target="_blank"
-          rel="noopener noreferrer" aria-label="Get directions to Coccia House in Google Maps">
+          rel="noopener noreferrer" @click="trackDirectionsClick('desktopHeader')"
+          aria-label="Get directions to Coccia House in Google Maps">
           <span class="visitor-icon" aria-hidden="true">
             ◉
           </span>
@@ -64,7 +66,7 @@
     <!-- MOBILE HEADER -->
     <div class="mobile-header">
       <div class="mobile-top-row">
-        <a href="tel:+13302627136" class="mobile-phone">
+        <a href="tel:+13302627136" @click="trackPhoneClick('mobileHeader')" class="mobile-phone">
           Phone
         </a>
 
@@ -72,7 +74,7 @@
           <img src="@/assets/coccia-logo.png" alt="Coccia House logo" class="mobile-logo" />
         </RouterLink>
         <a href="https://www.google.com/maps/search/?api=1&query=Coccia+House+Wooster+Ohio" target="_blank"
-          rel="noopener" class="mobile-directions">
+          rel="noopener" @click="trackDirectionsClick('mobileHeader')" class="mobile-directions">
           Directions
         </a>
       </div>
@@ -85,7 +87,7 @@
 
       <section class="mobile-hours">
         <button type="button" class="mobile-hours-trigger" :aria-expanded="showMobileHours"
-          @click="showMobileHours = !showMobileHours">
+          @click="toggleMobileHours">
           <span class="mobile-hours-today">
             View Weekly Hours
           </span>
@@ -121,6 +123,9 @@ import {
 import { RouterLink } from 'vue-router'
 import Hours from './Hours.vue'
 import { useRestaurantHours } from '@/composables/useRestaurantHours'
+import { trackPhoneClick } from "@/utils/analytics"
+import { trackDirectionsClick } from "@/utils/analytics"
+import { trackHoursOpened } from "@/utils/analytics"
 // import ScrollworkDivider from './ScrollworkDivider.vue'
 
 // -----------------------------------------------------------------------------
@@ -156,8 +161,24 @@ onBeforeUnmount(() => {
 // Dropdown state
 // -----------------------------------------------------------------------------
 
-const showMobileHours = ref(false);
+const showMobileHours = ref(false)
 const showAllHours = ref(false)
+
+const toggleDesktopHours = () => {
+  showAllHours.value = !showAllHours.value
+
+  if (showAllHours.value) {
+    trackHoursOpened("desktopHeader")
+  }
+}
+
+const toggleMobileHours = () => {
+  showMobileHours.value = !showMobileHours.value
+
+  if (showMobileHours.value) {
+    trackHoursOpened("mobileHeader")
+  }
+}
 
 // -----------------------------------------------------------------------------
 // Restaurant-hours helpers

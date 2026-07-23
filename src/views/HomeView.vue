@@ -36,12 +36,16 @@
         View Menu
       </RouterLink>
 
-      <a href="tel:13302627136" class="home-action">
-        Call for Carryout
+      <a href="tel:13302627136" 
+      @click="trackPhoneClick('homeView')"
+      class="home-action">
+      Call for Carryout
       </a>
 
       <a href="https://www.google.com/maps/search/?api=1&query=Coccia+House+Wooster+Ohio" target="_blank"
-        rel="noopener noreferrer" class="home-action">
+        rel="noopener noreferrer"  
+        @click="trackDirectionsClick('homeView')"
+        class="home-action">
         Get Directions
       </a>
     </nav>
@@ -201,6 +205,8 @@ import { RouterLink } from 'vue-router'
 import { useRestaurantHours } from '@/composables/useRestaurantHours'
 import { homeContent } from '@/content/homeContent.js'
 import HomeGallery from '@/components/HomeGallery.vue'
+import { trackPhoneClick } from "@/utils/analytics"
+import { trackDirectionsClick } from "@/utils/analytics"
 
 const {
   todayHours,

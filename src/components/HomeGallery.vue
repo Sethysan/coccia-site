@@ -65,7 +65,6 @@ import {
 import 'swiper/css'
 import 'swiper/css/navigation'
 import 'swiper/css/pagination'
-
 import { galleryPhotos } from '@/data/gallery'
 
 const swiperModules = [
