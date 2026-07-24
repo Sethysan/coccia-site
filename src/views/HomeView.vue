@@ -21,9 +21,9 @@
         {{ todayHours.hours }}
       </p>
  <!-- todo -->
-      <p class="today-message">
+      <!-- <p class="today-message">
         {{ todayHours.note }}
-      </p>
+      </p> -->
 
       <p class="today-message">
         {{ restaurantStatus.message }}
@@ -113,7 +113,7 @@
          ======================================================== -->
     <section class="news-card">
  <!-- todo -->
-      <article class="news-item">
+      <!-- <article class="news-item">
         <h3>Live Music Tonight – Thursday, July 23</h3>
 
         <img class="news-flyer" :src="rolandoFlyer" alt="Rolando Live at Coccia House, Thursday July 23 at 6 PM" />
@@ -128,7 +128,7 @@
           We anticipate a larger-than-usual crowd, so seating will be limited.
           Standing room will be available around the bar.
         </p>
-      </article>
+      </article> -->
 
       <article class="news-item">
         <h3>Dining Room Open</h3>
@@ -225,14 +225,14 @@ const {
    HOME PAGE
    ========================================================== */
    /* TODO */
-.news-flyer {
+/* .news-flyer {
   display: block;
   width: 100%;
   max-width: 420px;
   margin: 1rem auto 1.25rem;
   border-radius: 10px;
   box-shadow: 0 8px 18px rgba(0, 0, 0, 0.25);
-}
+} */
 
 .home-page {
   width: 100%;

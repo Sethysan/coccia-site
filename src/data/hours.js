@@ -52,7 +52,7 @@ export const hours = [
     open: 13,
     close: 21,
     hours: "3 PM - 9 PM",
-    note:"Live music with Rolando • 6 PM"  
+    // note:"Live music with Rolando • 6 PM" 
   },
   {
     day: 5,
