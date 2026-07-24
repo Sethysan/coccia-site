@@ -68,6 +68,7 @@ import pizza from '@/assets/menu/pizza-pasta.png'
 import favorites from '@/assets/menu/house-favorites.png'
 import sandwiches from '@/assets/menu/sandwiches.png'
 import desserts from '@/assets/menu/desserts-drinks.png'
+import { trackMenuSectionClick } from "@/utils/analytics"
 
 const menuPages = [
   {
@@ -123,6 +124,8 @@ function selectMenu(id) {
 
   if (nextIndex === currentIndex.value) return
 
+  trackMenuSectionClick(id)
+
   transitionName.value =
     nextIndex > currentIndex.value
       ? 'turn-forward'
@@ -134,16 +137,25 @@ function selectMenu(id) {
 function nextPage() {
   if (currentIndex.value >= menuPages.length - 1) return
 
+  const nextMenu = menuPages[currentIndex.value + 1]
+
+  trackMenuSectionClick(nextMenu.id)
+
   transitionName.value = 'turn-forward'
-  selectedMenu.value = menuPages[currentIndex.value + 1].id
+  selectedMenu.value = nextMenu.id
 }
 
 function previousPage() {
   if (currentIndex.value <= 0) return
 
+  const previousMenu = menuPages[currentIndex.value - 1]
+
+  trackMenuSectionClick(previousMenu.id)
+
   transitionName.value = 'turn-backward'
-  selectedMenu.value = menuPages[currentIndex.value - 1].id
+  selectedMenu.value = previousMenu.id
 }
+
 function toggleFullscreen() {
   isFullscreen.value = !isFullscreen.value
 }

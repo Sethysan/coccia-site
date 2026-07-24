@@ -86,8 +86,7 @@
       </nav>
 
       <section class="mobile-hours">
-        <button type="button" class="mobile-hours-trigger" :aria-expanded="showMobileHours"
-          @click="toggleMobileHours">
+        <button type="button" class="mobile-hours-trigger" :aria-expanded="showMobileHours" @click="toggleMobileHours">
           <span class="mobile-hours-today">
             View Weekly Hours
           </span>
@@ -123,9 +122,11 @@ import {
 import { RouterLink } from 'vue-router'
 import Hours from './Hours.vue'
 import { useRestaurantHours } from '@/composables/useRestaurantHours'
-import { trackPhoneClick } from "@/utils/analytics"
-import { trackDirectionsClick } from "@/utils/analytics"
-import { trackHoursOpened } from "@/utils/analytics"
+import {
+  trackPhoneClick,
+  trackDirectionsClick,
+  trackHoursOpened
+} from "@/utils/analytics"
 // import ScrollworkDivider from './ScrollworkDivider.vue'
 
 // -----------------------------------------------------------------------------
