@@ -73,7 +73,7 @@ import pizza from '@/assets/menu/pizza-pasta.png'
 import favorites from '@/assets/menu/house-favorites.png'
 import sandwiches from '@/assets/menu/sandwiches.png'
 import desserts from '@/assets/menu/desserts-drinks.png'
-import { trackMenuSectionClick } from "@/utils/analytics"
+import { trackMenuSectionClick, trackMenuFullscreenOpen } from "@/utils/analytics"
 
 const menuPages = [
   {
@@ -162,6 +162,7 @@ function previousPage() {
 }
 
 function openFullscreen() {
+  trackMenuFullscreenOpen("menu_navigation")
   isFullscreen.value = true
 }
 

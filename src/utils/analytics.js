@@ -64,6 +64,11 @@ export const trackMenuSectionClick = (sectionName = "unknown") => {
     section_name: sectionName
   })
 }
+export const trackMenuFullscreenOpen = (source = "menu_page") => {
+  trackEvent("menu_fullscreen_open", {
+    link_location: source
+  })
+}
 export const trackNewsClick = (
   newsTitle = "unknown",
   action = "view_details"
