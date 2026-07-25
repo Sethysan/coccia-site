@@ -268,6 +268,28 @@ watch(
     transform 0.3s ease;
 }
 
+.nav .router-link-active,
+.mobile-nav .router-link-active {
+  color: var(--bronze-hover);
+  pointer-events: none;
+  cursor: default;
+  transition: .3s ease;
+  text-shadow:
+    0 10px 8px rgba(213, 167, 93, 0.35);
+    
+
+  transform: translateY(-2px);
+}
+
+.nav .router-link-active::before,
+.mobile-nav .router-link-active::before {
+  width: 65%;
+  opacity: 1;
+  transition: .3s ease;
+  background-color: var(--bronze-hover);
+}
+
+
 .nav a::before {
   content: "";
   position: absolute;

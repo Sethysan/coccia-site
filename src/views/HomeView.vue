@@ -158,8 +158,8 @@
         <p>
           Prefer to bake your pizza at home?
           <strong>
-            Half-baked pizzas are still available for pickup
-          </strong>,
+            Half-baked pizzas are still available for pickup,
+          </strong>
           so you can enjoy a fresh-from-the-oven Coccia House pizza
           whenever you're ready.
         </p>

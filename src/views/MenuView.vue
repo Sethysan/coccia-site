@@ -176,6 +176,8 @@ watch(isFullscreen, (isOpen) => {
 
 onMounted(() => {
   window.addEventListener('keydown', handleFullscreenKeydown)
+
+  document.body.classList.add('menu-view-active')
 })
 
 onBeforeUnmount(() => {
@@ -183,6 +185,7 @@ onBeforeUnmount(() => {
 
   // Restore scrolling if the component is removed while fullscreen is open.
   document.body.style.overflow = ''
+  document.body.classList.remove('menu-view-active')
 })
 
 </script>
@@ -202,7 +205,7 @@ onBeforeUnmount(() => {
 
 .menu-destination {
   position: sticky;
-  top: var(--header-height);
+  top: 0;
   z-index: 20;
 
   display: flex;
@@ -455,6 +458,8 @@ onBeforeUnmount(() => {
 .fullscreen-button span {
   font-size: 1.1rem;
   line-height: 1;
+  display: inline-block;
+  animation: fullscreenHint 5s ease-in-out infinite;
 }
 
 .menu-page-sheet {
@@ -807,4 +812,31 @@ FORWARD PAGE TURN
     transform: none;
   }
 }
+
+/* Animation */
+
+@keyframes fullscreenHint {
+  0%,
+  82%,
+  100% {
+    transform: scale(1);
+  }
+
+  86% {
+    transform: scale(1.18);
+  }
+
+  90% {
+    transform: scale(0.84);
+  }
+
+  94% {
+    transform: scale(1.12);
+  }
+
+  98% {
+    transform: scale(1);
+  }
+}
+
 </style>
