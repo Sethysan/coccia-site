@@ -1,31 +1,36 @@
 <template>
   <main class="menu-page">
     <nav class="menu-destination" aria-label="Menu categories">
-      <button v-for="menu in menuPages" :key="menu.id" type="button" :class="{ active: selectedMenu === menu.id }"
-        @click="selectMenu(menu.id)">
-        {{ menu.label }}
+      <div class="menu-category-buttons">
+        <button v-for="menu in menuPages" :key="menu.id" type="button" class="menu-category-button"
+          :class="{ active: selectedMenu === menu.id }" @click="selectMenu(menu.id)">
+          {{ menu.label }}
+        </button>
+      </div>
+
+      <button type="button" class="menu-fullscreen-link" aria-label="View menu in fullscreen" @click="openFullscreen">
+        <span aria-hidden="true">⛶</span>
+        View Menu in Fullscreen
       </button>
     </nav>
 
     <section class="menu-panel">
       <Teleport to="body" :disabled="!isFullscreen">
         <div class="vintage-menu" :class="{ 'is-fullscreen': isFullscreen }">
-          <div class="menu-toolbar">
-            <button type="button" class="fullscreen-button"
-              :aria-label="isFullscreen ? 'Exit full screen menu' : 'Open full screen menu'" @click="toggleFullscreen">
-              <span aria-hidden="true">
-                {{ isFullscreen ? '×' : '⛶' }}
-              </span>
-
-              {{ isFullscreen ? 'Close' : 'Full Screen' }}
+          <div v-if="isFullscreen" class="menu-toolbar">
+            <button type="button" class="fullscreen-button" aria-label="Exit fullscreen menu" @click="closeFullscreen">
+              <span aria-hidden="true">×</span>
+              Close
             </button>
           </div>
           <div class="menu-binding" aria-hidden="true"></div>
 
-          <div class="menu-book">
+          <div class="menu-book" @pointerdown="handlePointerDown" @pointerup="handlePointerUp"
+            @pointercancel="resetPointer">
             <Transition :name="transitionName">
               <div :key="selectedMenu" class="menu-page-sheet">
-                <img :src="currentMenu.image" :alt="currentMenu.alt" class="menu-image" />
+                <img :src="currentMenu.image" :alt="currentMenu.alt" class="menu-image" draggable="false"
+                  @dragstart.prevent />
 
                 <div class="paper-shading" aria-hidden="true"></div>
               </div>
@@ -156,8 +161,8 @@ function previousPage() {
   selectedMenu.value = previousMenu.id
 }
 
-function toggleFullscreen() {
-  isFullscreen.value = !isFullscreen.value
+function openFullscreen() {
+  isFullscreen.value = true
 }
 
 function closeFullscreen() {
@@ -188,6 +193,51 @@ onBeforeUnmount(() => {
   document.body.classList.remove('menu-view-active')
 })
 
+// Swiping functions
+
+const pointerStartX = ref(0)
+const pointerStartY = ref(0)
+const isPointerActive = ref(false)
+
+function resetPointer() {
+  pointerStartX.value = 0
+  pointerStartY.value = 0
+  isPointerActive.value = false
+}
+
+function handlePointerDown(event) {
+  if (event.pointerType === 'mouse' && event.button !== 0) return
+
+  pointerStartX.value = event.clientX
+  pointerStartY.value = event.clientY
+  isPointerActive.value = true
+
+  event.currentTarget.setPointerCapture?.(event.pointerId)
+}
+
+function handlePointerUp(event) {
+  if (!isPointerActive.value) return
+
+  const distanceX = event.clientX - pointerStartX.value
+  const distanceY = event.clientY - pointerStartY.value
+  const minimumSwipeDistance = 60
+
+  if (
+    Math.abs(distanceX) < minimumSwipeDistance ||
+    Math.abs(distanceX) <= Math.abs(distanceY)
+  ) {
+    resetPointer()
+    return
+  }
+
+  if (distanceX < 0) {
+    nextPage()
+  } else {
+    previousPage()
+  }
+
+  resetPointer()
+}
 </script>
 
 <style scoped>
@@ -209,18 +259,29 @@ onBeforeUnmount(() => {
   z-index: 20;
 
   display: flex;
-  justify-content: center;
-  gap: 0.5rem;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.65rem;
 
   width: 100%;
   padding: 0.75rem;
-  overflow-x: auto;
 
   background: rgba(255, 248, 235, 0.96);
   border-bottom: 1px solid #d6b98c;
 }
 
-.menu-destination button {
+.menu-category-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+
+  width: 100%;
+  overflow-x: auto;
+
+  scrollbar-width: thin;
+}
+
+.menu-category-button {
   flex-shrink: 0;
   padding: 0.55rem 0.9rem;
 
@@ -235,17 +296,56 @@ onBeforeUnmount(() => {
   cursor: pointer;
 
   transition:
-    background-color 0.2s ease,
-    border-color 0.2s ease,
+    color 0.4s ease,
+    background-color 0.4s ease,
+    border-color 0.4s ease,
+    transform 0.4s ease;
+}
+
+.menu-fullscreen-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+
+  padding: 0.45rem 0.85rem;
+
+  border: 0;
+  border-top: 1px solid rgba(138, 106, 50, 0.35);
+  border-radius: 0;
+
+  background: transparent;
+  color: #6f421f;
+
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+
+  cursor: pointer;
+  transition:
+    color 0.2s ease,
     transform 0.2s ease;
 }
 
-.menu-destination button:hover {
+.menu-fullscreen-link:hover {
+  color: #351b0f;
+  transform: translateY(-1px);
+}
+
+.menu-fullscreen-link span {
+  display: inline-block;
+  font-size: 1rem;
+  line-height: 1;
+  animation: fullscreenHint 5s ease-in-out infinite;
+}
+
+.menu-category-button:hover {
   border-color: #a87f45;
   background: rgba(138, 106, 50, 0.08);
 }
 
-.menu-destination button.active {
+.menu-category-button.active {
   color: #fffaf1;
   background: #6f421f;
   border-color: #8a6a32;
@@ -394,6 +494,12 @@ onBeforeUnmount(() => {
    ========================================================= */
 
 .menu-book {
+  cursor: grab;
+  touch-action: pan-y;
+  overscroll-behavior-x: contain;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
   position: relative;
   overflow: hidden;
 
@@ -410,6 +516,10 @@ onBeforeUnmount(() => {
   box-shadow:
     inset 16px 0 18px rgba(78, 45, 24, 0.18),
     inset -10px 0 18px rgba(78, 45, 24, 0.08);
+}
+
+.menu-book:active {
+  cursor: grabbing;
 }
 
 /* =========================================================
@@ -459,7 +569,6 @@ onBeforeUnmount(() => {
   font-size: 1.1rem;
   line-height: 1;
   display: inline-block;
-  animation: fullscreenHint 5s ease-in-out infinite;
 }
 
 .menu-page-sheet {
@@ -471,8 +580,6 @@ onBeforeUnmount(() => {
   background: #fffaf1;
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
-  /* transform-style: preserve-3d;
-  transform: translateZ(0); */
 }
 
 .menu-image {
@@ -482,6 +589,7 @@ onBeforeUnmount(() => {
   object-fit: contain;
   position: relative;
   z-index: 1;
+  -webkit-user-drag: none;
 }
 
 /* Gives the page an aged edge and subtle paper depth */
@@ -534,8 +642,6 @@ onBeforeUnmount(() => {
 .turn-forward-leave-active,
 .turn-forward-leave-to {
   z-index: 3;
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
 }
 
 /* Backward */
@@ -543,8 +649,6 @@ onBeforeUnmount(() => {
 .turn-backward-enter-active,
 .turn-backward-enter-to {
   z-index: 3;
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
 }
 
 /* =========================================================
@@ -680,6 +784,7 @@ FORWARD PAGE TURN
   font-size: 0.85rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
+  user-select: none;
 }
 
 /* =========================================================
@@ -687,80 +792,96 @@ FORWARD PAGE TURN
    ========================================================= */
 
 @media (max-width: 700px) {
-
-  .menu-destination {
-    flex-direction: column;
-    align-items: stretch;
-    gap: .2rem;
-    position: sticky;
-    max-height: 220px;
-    padding: .35rem .5rem;
-    overflow-y: auto;
-  }
-
-  .menu-destination button {
-
-    width: 100%;
-
-    text-align: center;
-
-    padding: .55rem .75rem;
-
-    font-size: .9rem;
-    line-height: 1.2;
-  }
-
-  .menu-destination button.active {
-
-    padding-top: .55rem;
-    padding-bottom: .55rem;
-
-    border-radius: 6px;
-  }
-
   .menu-page {
     padding-inline: 0;
   }
 
+  .menu-destination {
+    position: sticky;
+    top: 0;
+
+    align-items: stretch;
+    gap: 0.35rem;
+
+    max-height: none;
+    padding: 0.35rem 0.5rem;
+    overflow: visible;
+  }
+
+  .menu-category-buttons {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.1rem;
+
+    max-height: 180px;
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+
+  .menu-category-button {
+    width: 100%;
+    padding: 0.55rem 0.75rem;
+
+    text-align: center;
+    font-size: 0.75rem;
+    line-height: 1.2;
+  }
+
+  .menu-category-button.active {
+    border-radius: 6px;
+  }
+
+  .menu-fullscreen-link {
+    width: 100%;
+    min-height: 2.5rem;
+    padding: 0.5rem 0.75rem;
+
+    border: 1px solid rgba(138, 106, 50, 0.4);
+    border-radius: 5px;
+
+    background: rgba(138, 106, 50, 0.07);
+  }
+
   .menu-panel {
-    padding-top: .25rem;
+    padding-top: 0.25rem;
   }
 
   .vintage-menu {
-
     width: 100%;
-
     max-width: 540px;
-
     margin: auto;
   }
 
-  @media (max-width: 700px) {
-    .menu-toolbar {
-      margin-bottom: 0.35rem;
-    }
+  .menu-toolbar {
+    margin-bottom: 0.35rem;
+  }
 
-    .fullscreen-button {
-      padding: 0.4rem 0.6rem;
-      font-size: 0.78rem;
-    }
+  .fullscreen-button {
+    padding: 0.4rem 0.6rem;
+    font-size: 0.78rem;
+  }
 
-    .vintage-menu.is-fullscreen {
-      padding:
-        max(0.35rem, env(safe-area-inset-top)) max(0.35rem, env(safe-area-inset-right)) max(0.35rem, env(safe-area-inset-bottom)) max(0.35rem, env(safe-area-inset-left));
-    }
+  .vintage-menu.is-fullscreen {
+    padding:
+      max(0.35rem, env(safe-area-inset-top)) max(0.35rem, env(safe-area-inset-right)) max(0.35rem, env(safe-area-inset-bottom)) max(0.35rem, env(safe-area-inset-left));
+  }
 
-    .vintage-menu.is-fullscreen .menu-controls {
-      display: grid;
-      grid-template-columns: 1fr auto 1fr;
-      gap: 0.35rem;
+  .vintage-menu.is-fullscreen .menu-controls {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 0.35rem;
+    padding-top: 0.4rem;
+  }
 
-      padding-top: 0.4rem;
-    }
+  .vintage-menu.is-fullscreen .page-control {
+    min-height: 2.5rem;
+  }
 
-    .vintage-menu.is-fullscreen .page-control {
-      min-height: 2.5rem;
-    }
+  .vintage-menu:not(.is-fullscreen) .menu-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
   }
 
   .menu-binding {
@@ -774,23 +895,14 @@ FORWARD PAGE TURN
     margin-left: 0.3rem;
   }
 
-  .menu-controls {
-
-    display: flex;
-
-    flex-direction: column;
-
-    gap: .5rem;
-  }
-
   .page-control {
     padding: 0.5rem;
     font-size: 0.82rem;
   }
 
   .page-number {
-    font-size: 0.7rem;
     order: -1;
+    font-size: 0.7rem;
   }
 }
 
@@ -811,11 +923,16 @@ FORWARD PAGE TURN
   .turn-backward-leave-to {
     transform: none;
   }
+
+  .menu-fullscreen-link span {
+    animation: none;
+  }
 }
 
 /* Animation */
 
 @keyframes fullscreenHint {
+
   0%,
   82%,
   100% {
@@ -838,5 +955,4 @@ FORWARD PAGE TURN
     transform: scale(1);
   }
 }
-
 </style>
