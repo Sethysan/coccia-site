@@ -54,8 +54,7 @@
 
           <li>
             <a href="https://www.google.com/maps/search/?api=1&query=Coccia+House+Wooster+Ohio" target="_blank"
-              rel="noopener noreferrer"
-               @click="trackDirectionsClick('footer')">
+              rel="noopener noreferrer" @click="trackDirectionsClick('footer')">
               Get Directions
             </a>
           </li>
@@ -76,8 +75,8 @@
           <!-- official fb site link -->
           <li>
             <a class="facebook-row"
-              href="https://www.facebook.com/people/Coccia-House-Ristorante-Pizzeria/100063523334678/?name=xhp_nt__fb__action__open_user"
-              target="_blank" rel="noopener noreferrer" aria-label="Visit the official Coccia House Facebook page">
+              href="https://www.facebook.com/people/Coccia-House-Ristorante-Pizzeria/100063523334678/" target="_blank"
+              rel="noopener noreferrer" aria-label="Visit the official Coccia House Facebook page">
               <i class="bi bi-facebook facebook-icon" aria-hidden="true"></i>
 
               <span>

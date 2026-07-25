@@ -41,13 +41,13 @@ export const trackHoursOpened = (location = "unknown") => {
     link_location: location
   })
 }
-
+// todo
 export const trackFacebookClick = (linkName = "unknown") => {
   trackEvent("facebook_click", {
     link_name: linkName
   })
 }
-
+// todo
 export const trackGalleryOpened = (imageName = "unknown") => {
   trackEvent("gallery_opened", {
     image_name: imageName

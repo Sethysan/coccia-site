@@ -117,9 +117,10 @@ import {
   ref,
   onMounted,
   onBeforeUnmount,
-  nextTick
+  nextTick,
+  watch,
 } from "vue";
-import { RouterLink } from 'vue-router'
+import { RouterLink, useRoute } from 'vue-router'
 import Hours from './Hours.vue'
 import { useRestaurantHours } from '@/composables/useRestaurantHours'
 import {
@@ -189,6 +190,16 @@ const toggleMobileHours = () => {
 const {
   compactHoursMessage
 } = useRestaurantHours()
+
+const route = useRoute()
+
+watch(
+  () => route.fullPath,
+  () => {
+    showMobileHours.value = false,
+      showAllHours.value = false
+  }
+)
 
 </script>
 
