@@ -19,7 +19,7 @@ import jeffJeanette from "@/assets/about/jeff-jeanette.jpg"
 import jeffFamily from "@/assets/about/jeff-family.jpg"
 import steveKaren from "@/assets/about/steve-karen.jpg"
 import freshDough from "@/assets/about/fresh-dough.jpg"
-import kitchenTeam from "@/assets/about/kitchen-team.jpg"
+import kitchenTeam from "@/assets/about/saucyJoe.png"
 import steveJoeBar from "@/assets/about/steve-joe-bar.jpg"
 import customerOne from "@/assets/about/karen-bianca-sis.jpg"
 import customerTwo from "@/assets/about/customer-2.jpg"
@@ -188,9 +188,9 @@ export const cocciaStory = {
                 "We have never believed in rushing a pizza out of the oven before it is ready. Maintaining the quality and consistency of our old-world recipe is worth the wait."
             ],
             image: kitchenTeam,
-            alt: "The Coccia House kitchen team standing beside freshly baked pizzas",
+            alt: "Quality Control",
             caption:
-                "The Coccia House kitchen team with pizzas fresh from the oven.",
+                "Joe Calabria at his finest, making sure every batch met his standards—the old-fashioned way.",
             layout: "right"
         },
 
