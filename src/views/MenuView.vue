@@ -8,7 +8,8 @@
         </button>
       </div>
 
-      <button type="button" class="menu-fullscreen-link" aria-label="View menu in fullscreen" @click="openFullscreen">
+      <button type="button" class="menu-fullscreen-link" aria-label="View menu in fullscreen"
+        @click="openFullscreen('menu_navigation')">
         <span aria-hidden="true">⛶</span>
         View Menu in Fullscreen
       </button>
@@ -18,6 +19,23 @@
       <Teleport to="body" :disabled="!isFullscreen">
         <div class="vintage-menu" :class="{ 'is-fullscreen': isFullscreen }">
           <div v-if="isFullscreen" class="menu-toolbar">
+            <div class="menu-zoom-controls" aria-label="Menu zoom controls">
+              <button type="button" class="fullscreen-button zoom-button" aria-label="Zoom out"
+                :disabled="zoomScale <= minimumZoom" @click="zoomOut">
+                <span aria-hidden="true">−</span>
+              </button>
+
+              <button type="button" class="fullscreen-button zoom-level" aria-label="Reset menu zoom"
+                @click="resetZoom">
+                {{ Math.round(zoomScale * 100) }}%
+              </button>
+
+              <button type="button" class="fullscreen-button zoom-button" aria-label="Zoom in"
+                :disabled="zoomScale >= maximumZoom" @click="zoomIn">
+                <span aria-hidden="true">+</span>
+              </button>
+            </div>
+
             <button type="button" class="fullscreen-button" aria-label="Exit fullscreen menu" @click="closeFullscreen">
               <span aria-hidden="true">×</span>
               Close
@@ -25,18 +43,30 @@
           </div>
           <div class="menu-binding" aria-hidden="true"></div>
 
-          <div class="menu-book" @pointerdown="handlePointerDown" @pointerup="handlePointerUp"
-            @pointercancel="resetPointer">
+          <div ref="menuBook" class="menu-book" :class="{
+            'can-open-fullscreen': !isFullscreen,
+            'is-zoomed': isFullscreen && zoomScale > minimumZoom
+          }" :role="isFullscreen ? undefined : 'button'" :tabindex="isFullscreen ? undefined : 0" :aria-label="isFullscreen
+            ? zoomScale > minimumZoom
+              ? `${currentMenu.alt}. Drag to explore the enlarged menu. Use the mouse wheel to zoom.`
+              : `${currentMenu.alt}. Swipe to change pages. Pinch or use the mouse wheel to zoom.`
+            : `${currentMenu.alt}. Select to view fullscreen.`
+            " v-drag-scroll="isFullscreen && zoomScale > minimumZoom" @click="handleMenuBookClick"
+            @keydown.enter.prevent="handleMenuBookKeyboardOpen" @keydown.space.prevent="handleMenuBookKeyboardOpen"
+            @wheel="handleZoomWheel" @pointerdown="handleSwipeStart" @pointerup="handleSwipeEnd"
+            @pointercancel="resetSwipe" @touchstart="handleZoomTouchStart" @touchmove="handleZoomTouchMove"
+            @touchend="handleZoomTouchEnd" @touchcancel="handleZoomTouchEnd">
+
             <Transition :name="transitionName">
-              <div :key="selectedMenu" class="menu-page-sheet">
-                <img :src="currentMenu.image" :alt="currentMenu.alt" class="menu-image" draggable="false"
-                  @dragstart.prevent />
+              <div :key="currentMenu.id" class="menu-page-sheet" :style="menuPageZoomStyle">
+                <img :src="currentMenu.image" :alt="currentMenu.alt" class="menu-image" draggable="false" />
 
                 <div class="paper-shading" aria-hidden="true"></div>
               </div>
             </Transition>
           </div>
 
+          <!-- Controls belong AFTER the closing menu-book div -->
           <div class="menu-controls">
             <button type="button" class="page-control" :disabled="currentIndex === 0" @click="previousPage">
               <span aria-hidden="true">←</span>
@@ -65,7 +95,8 @@ import {
   ref,
   watch,
   onMounted,
-  onBeforeUnmount
+  onBeforeUnmount,
+  nextTick
 } from 'vue'
 
 import starters from '@/assets/menu/starters-salads.png'
@@ -75,6 +106,7 @@ import sandwiches from '@/assets/menu/sandwiches.png'
 import desserts from '@/assets/menu/desserts-drinks.png'
 import { trackMenuSectionClick, trackMenuFullscreenOpen } from "@/utils/analytics"
 
+// Menu Label Section
 const menuPages = [
   {
     id: 'starters',
@@ -110,8 +142,248 @@ const menuPages = [
 
 const selectedMenu = ref('starters')
 const transitionName = ref('turn-forward')
+
+// Full Screen Section
+
 const isFullscreen = ref(false)
 
+const minimumZoom = 1
+const maximumZoom = 3
+const zoomIncrement = 0.25
+const wheelZoomIncrement = 0.15
+
+const zoomScale = ref(minimumZoom)
+// Pinch refs
+const pinchStartDistance = ref(0)
+const pinchStartScale = ref(minimumZoom)
+const isPinching = ref(false)
+const pinchStartContentX = ref(0)
+const pinchStartContentY = ref(0)
+
+const menuBook = ref(null)
+const menuPageZoomStyle = computed(() => {
+  if (!isFullscreen.value || zoomScale.value <= minimumZoom) {
+    return undefined
+  }
+
+  const scaledSize = `${zoomScale.value * 100}%`
+
+  return {
+    width: scaledSize,
+    height: scaledSize
+  }
+})
+// Full Screen Functions
+
+async function openFullscreen(
+  source = 'menu_navigation'
+) {
+  if (isFullscreen.value) return
+
+  trackMenuFullscreenOpen(
+    source,
+    selectedMenu.value
+  )
+
+  isFullscreen.value = true
+
+  await nextTick()
+  await resetZoom()
+}
+
+function closeFullscreen() {
+  isFullscreen.value = false
+  zoomScale.value = minimumZoom
+}
+
+function handleFullscreenKeydown(event) {
+  if (event.key === 'Escape' && isFullscreen.value) {
+    closeFullscreen()
+  }
+}
+
+watch(isFullscreen, (isOpen) => {
+  document.body.style.overflow = isOpen ? 'hidden' : ''
+})
+
+watch(selectedMenu, () => {
+  if (!isFullscreen.value) return
+
+  resetZoom()
+})
+
+onMounted(() => {
+  window.addEventListener('keydown', handleFullscreenKeydown)
+
+  document.body.classList.add('menu-view-active')
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('keydown', handleFullscreenKeydown)
+
+  // Restore scrolling if the component is removed while fullscreen is open.
+  document.body.style.overflow = ''
+  document.body.classList.remove('menu-view-active')
+})
+// Full Screen Click Function
+function handleMenuBookClick() {
+  if (isFullscreen.value) return
+
+  openFullscreen('menu_image')
+}
+
+function handleMenuBookKeyboardOpen() {
+  if (isFullscreen.value) return
+
+  openFullscreen('menu_image_keyboard')
+}
+
+// Zoom Function Section
+
+function clampZoom(value) {
+  return Math.min(maximumZoom, Math.max(minimumZoom, value))
+}
+
+function zoomIn() {
+  zoomScale.value = clampZoom(
+    zoomScale.value + zoomIncrement
+  )
+}
+
+function zoomOut() {
+  zoomScale.value = clampZoom(
+    zoomScale.value - zoomIncrement
+  )
+}
+
+async function resetZoom() {
+  zoomScale.value = minimumZoom
+
+  await nextTick()
+
+  menuBook.value?.scrollTo({
+    left: 0,
+    top: 0
+  })
+}
+
+function getTouchDistance(touches) {
+  const firstTouch = touches[0]
+  const secondTouch = touches[1]
+
+  return Math.hypot(
+    secondTouch.clientX - firstTouch.clientX,
+    secondTouch.clientY - firstTouch.clientY
+  )
+}
+
+function getTouchMidpoint(touches, container) {
+  const rect = container.getBoundingClientRect()
+
+  return {
+    x:
+      (touches[0].clientX + touches[1].clientX) / 2 -
+      rect.left,
+    y:
+      (touches[0].clientY + touches[1].clientY) / 2 -
+      rect.top
+  }
+}
+
+function handleZoomTouchStart(event) {
+  if (
+    !isFullscreen.value ||
+    event.touches.length !== 2
+  ) {
+    return
+  }
+
+  const container = menuBook.value
+  if (!container) return
+
+  event.preventDefault()
+
+  const midpoint = getTouchMidpoint(
+    event.touches,
+    container
+  )
+
+  isPinching.value = true
+  pinchStartDistance.value =
+    getTouchDistance(event.touches)
+
+  pinchStartScale.value = zoomScale.value
+
+  /*
+   * Remember which location in the enlarged menu was
+   * beneath the midpoint of the two fingers.
+   */
+  pinchStartContentX.value =
+    container.scrollLeft + midpoint.x
+
+  pinchStartContentY.value =
+    container.scrollTop + midpoint.y
+
+  resetSwipe()
+}
+
+async function handleZoomTouchMove(event) {
+  if (
+    !isFullscreen.value ||
+    !isPinching.value ||
+    event.touches.length !== 2
+  ) {
+    return
+  }
+
+  event.preventDefault()
+
+  const container = menuBook.value
+  if (!container) return
+
+  const currentDistance =
+    getTouchDistance(event.touches)
+
+  if (pinchStartDistance.value === 0) return
+
+  const scaleChange =
+    currentDistance / pinchStartDistance.value
+
+  const newZoom = clampZoom(
+    pinchStartScale.value * scaleChange
+  )
+
+  const zoomRatio =
+    newZoom / pinchStartScale.value
+
+  const midpoint = getTouchMidpoint(
+    event.touches,
+    container
+  )
+
+  zoomScale.value = newZoom
+
+  await nextTick()
+
+  container.scrollLeft =
+    pinchStartContentX.value * zoomRatio -
+    midpoint.x
+
+  container.scrollTop =
+    pinchStartContentY.value * zoomRatio -
+    midpoint.y
+}
+
+function handleZoomTouchEnd(event) {
+  if (event.touches.length >= 2) return
+
+  isPinching.value = false
+  pinchStartDistance.value = 0
+  pinchStartContentX.value = 0
+  pinchStartContentY.value = 0
+}
+
+// Menu Page Section
 const currentIndex = computed(() => {
   return menuPages.findIndex(
     (menu) => menu.id === selectedMenu.value
@@ -161,73 +433,127 @@ function previousPage() {
   selectedMenu.value = previousMenu.id
 }
 
-function openFullscreen() {
-  trackMenuFullscreenOpen("menu_navigation")
-  isFullscreen.value = true
+async function handleZoomWheel(event) {
+  if (!isFullscreen.value) return
+
+  event.preventDefault()
+
+  const container = menuBook.value
+
+  if (!container) return
+
+  const oldZoom = zoomScale.value
+  const zoomDirection = event.deltaY < 0 ? 1 : -1
+
+  const newZoom = clampZoom(
+    oldZoom + zoomDirection * wheelZoomIncrement
+  )
+
+  // Do nothing when already at the zoom boundary.
+  if (newZoom === oldZoom) return
+
+  const containerRect = container.getBoundingClientRect()
+
+  /*
+   * Mouse position inside the visible scroll container.
+   */
+  const mouseX = event.clientX - containerRect.left
+  const mouseY = event.clientY - containerRect.top
+
+  /*
+   * Locate the point beneath the cursor in the old scaled
+   * content coordinate system.
+   */
+  const contentX = container.scrollLeft + mouseX
+  const contentY = container.scrollTop + mouseY
+
+  const zoomRatio = newZoom / oldZoom
+
+  zoomScale.value = newZoom
+
+  /*
+   * Wait for Vue to resize the menu-page-sheet before setting
+   * the new scroll position.
+   */
+  await nextTick()
+
+  container.scrollLeft =
+    contentX * zoomRatio - mouseX
+
+  container.scrollTop =
+    contentY * zoomRatio - mouseY
 }
 
-function closeFullscreen() {
-  isFullscreen.value = false
+// Swipe page navigation
+
+const swipeStartX = ref(0)
+const swipeStartY = ref(0)
+const swipePointerId = ref(null)
+
+const minimumSwipeDistance = 60
+
+function resetSwipe() {
+  swipeStartX.value = 0
+  swipeStartY.value = 0
+  swipePointerId.value = null
 }
 
-function handleFullscreenKeydown(event) {
-  if (event.key === 'Escape' && isFullscreen.value) {
-    closeFullscreen()
+function handleSwipeStart(event) {
+  /*
+   * Once zoomed, the drag-scroll directive owns the pointer
+   * interaction. A drag should pan, not change pages.
+   */
+  if (
+    isPinching.value ||
+    (isFullscreen.value && zoomScale.value > minimumZoom)
+  ) {
+    resetSwipe()
+    return
   }
-}
-
-watch(isFullscreen, (isOpen) => {
-  document.body.style.overflow = isOpen ? 'hidden' : ''
-})
-
-onMounted(() => {
-  window.addEventListener('keydown', handleFullscreenKeydown)
-
-  document.body.classList.add('menu-view-active')
-})
-
-onBeforeUnmount(() => {
-  window.removeEventListener('keydown', handleFullscreenKeydown)
-
-  // Restore scrolling if the component is removed while fullscreen is open.
-  document.body.style.overflow = ''
-  document.body.classList.remove('menu-view-active')
-})
-
-// Swiping functions
-
-const pointerStartX = ref(0)
-const pointerStartY = ref(0)
-const isPointerActive = ref(false)
-
-function resetPointer() {
-  pointerStartX.value = 0
-  pointerStartY.value = 0
-  isPointerActive.value = false
-}
-
-function handlePointerDown(event) {
-  if (event.pointerType === 'mouse' && event.button !== 0) return
-
-  pointerStartX.value = event.clientX
-  pointerStartY.value = event.clientY
-  isPointerActive.value = true
-
-  event.currentTarget.setPointerCapture?.(event.pointerId)
-}
-
-function handlePointerUp(event) {
-  if (!isPointerActive.value) return
-
-  const distanceX = event.clientX - pointerStartX.value
-  const distanceY = event.clientY - pointerStartY.value
-  const minimumSwipeDistance = 60
 
   if (
-    Math.abs(distanceX) < minimumSwipeDistance ||
-    Math.abs(distanceX) <= Math.abs(distanceY)
+    event.pointerType === 'mouse' &&
+    event.button !== 0
   ) {
-    resetPointer()
+    return
+  }
+
+  swipePointerId.value = event.pointerId
+  swipeStartX.value = event.clientX
+  swipeStartY.value = event.clientY
+}
+
+function handleSwipeEnd(event) {
+  if (
+    swipePointerId.value === null ||
+    event.pointerId !== swipePointerId.value
+  ) {
+    return
+  }
+
+  if (
+    isPinching.value ||
+    (isFullscreen.value && zoomScale.value > minimumZoom)
+  ) {
+    resetSwipe()
+    return
+  }
+
+  const distanceX =
+    event.clientX - swipeStartX.value
+
+  const distanceY =
+    event.clientY - swipeStartY.value
+
+  const absoluteX = Math.abs(distanceX)
+  const absoluteY = Math.abs(distanceY)
+
+  const isHorizontalSwipe =
+    absoluteX >= minimumSwipeDistance &&
+    absoluteX > absoluteY
+
+  if (!isHorizontalSwipe) {
+    resetSwipe()
     return
   }
 
@@ -237,7 +563,7 @@ function handlePointerUp(event) {
     previousPage()
   }
 
-  resetPointer()
+  resetSwipe()
 }
 </script>
 
@@ -435,16 +761,42 @@ function handlePointerUp(event) {
 .vintage-menu.is-fullscreen .menu-book {
   align-self: center;
   justify-self: center;
-
   width: auto;
   height: 100%;
-
   max-width: 100%;
   max-height: 100%;
-
   aspect-ratio: 8.5 / 11;
-
   margin: 0;
+  overflow: auto;
+
+  /*
+   * The component handles swipe, pinch, and dragging itself.
+   * Prevent the browser from claiming the gesture first.
+   */
+  touch-action: none;
+
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}
+
+.vintage-menu.is-fullscreen .menu-page-sheet {
+  min-width: 100%;
+  min-height: 100%;
+  transform-origin: top left;
+}
+
+.menu-book.can-open-fullscreen {
+  cursor: zoom-in;
+}
+
+.menu-book.can-open-fullscreen:focus-visible {
+  outline: 3px solid #d6b98c;
+  outline-offset: 4px;
+}
+
+.menu-book.is-zoomed .menu-image {
+  pointer-events: none;
 }
 
 .vintage-menu.is-fullscreen .menu-toolbar {
@@ -495,7 +847,7 @@ function handlePointerUp(event) {
    ========================================================= */
 
 .menu-book {
-  cursor: grab;
+  cursor: default;
   touch-action: pan-y;
   overscroll-behavior-x: contain;
   user-select: none;
@@ -519,10 +871,6 @@ function handlePointerUp(event) {
     inset -10px 0 18px rgba(78, 45, 24, 0.08);
 }
 
-.menu-book:active {
-  cursor: grabbing;
-}
-
 /* =========================================================
    MENU TOOLBAR
    ========================================================= */
@@ -532,9 +880,35 @@ function handlePointerUp(event) {
   z-index: 15;
 
   display: flex;
-  justify-content: flex-end;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
 
   margin-bottom: 0.5rem;
+}
+
+.menu-zoom-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.zoom-button {
+  justify-content: center;
+  min-width: 2.5rem;
+  min-height: 2.5rem;
+  padding: 0.35rem;
+}
+
+.zoom-level {
+  justify-content: center;
+  min-width: 4rem;
+}
+
+.fullscreen-button:disabled {
+  opacity: 0.35;
+  cursor: default;
+  transform: none;
 }
 
 .fullscreen-button {
@@ -561,7 +935,7 @@ function handlePointerUp(event) {
     transform 0.2s ease;
 }
 
-.fullscreen-button:hover {
+.fullscreen-button:hover:not(:disabled) {
   background: rgba(255, 250, 241, 0.16);
   transform: translateY(-1px);
 }
@@ -852,6 +1226,24 @@ FORWARD PAGE TURN
     width: 100%;
     max-width: 540px;
     margin: auto;
+  }
+
+  .vintage-menu.is-fullscreen .menu-toolbar {
+    gap: 0.35rem;
+  }
+
+  .vintage-menu.is-fullscreen .menu-zoom-controls {
+    gap: 0.2rem;
+  }
+
+  .vintage-menu.is-fullscreen .zoom-button {
+    min-width: 2.35rem;
+    min-height: 2.35rem;
+  }
+
+  .vintage-menu.is-fullscreen .zoom-level {
+    min-width: 3.5rem;
+    padding-inline: 0.4rem;
   }
 
   .menu-toolbar {
