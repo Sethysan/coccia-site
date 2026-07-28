@@ -3,4 +3,8 @@
 /latestmenu        /menu    301!
 /menu.asp          /menu    301!
 
+/contact.asp       /        301!
+/location.asp      /        301!
+/default.asp       /        301!
+
 /*                 /index.html    200
