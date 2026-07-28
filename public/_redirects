@@ -1,4 +1,6 @@
-/*    /index.html   200
-/LatestMenu   /menu   301
-/latestmenu    /menu    301
-/LatestMenu.pdf  /menu 301
+/LatestMenu.pdf    /menu    301!
+/LatestMenu        /menu    301!
+/latestmenu        /menu    301!
+/menu.asp          /menu    301!
+
+/*                 /index.html    200
