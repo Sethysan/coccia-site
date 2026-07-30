@@ -7,6 +7,7 @@
   </section>
 
   <main class="content">
+    <LoadingOverlay :visible="loading.visible" :frame="loading.frame" />
     <RouterView />
   </main>
   <SiteFooter />
@@ -21,6 +22,11 @@ import SiteHeader from './components/SiteHeader.vue'
 import SiteFooter from './components/SiteFooter.vue'
 
 import { useTimeStore } from '@/stores/timeStore'
+
+import LoadingOverlay from "@/components/LoadingOverlay.vue"
+import { useLoadingStore } from "@/stores/loadingStore"
+
+const loading = useLoadingStore()
 
 // -----------------------------------------------------------------------------
 // Start the site clock

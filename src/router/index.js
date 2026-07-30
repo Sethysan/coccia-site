@@ -3,6 +3,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
 import MenuView from '../views/MenuView.vue'
 import AboutView from '../views/AboutView.vue'
+import { useLoadingStore } from "@/stores/loadingStore"
 
 const router = createRouter({
   history: createWebHistory(),
@@ -11,7 +12,7 @@ const router = createRouter({
     { path: '/menu', component: MenuView },
     { path: '/about', component: AboutView }
   ],
-  
+
   scrollBehavior(to, from, savedPosition) {
     // Browser back/forward buttons
     if (savedPosition) {
@@ -25,6 +26,17 @@ const router = createRouter({
       behavior: 'smooth'
     }
   }
+
 })
 
+
+router.beforeEach(async (to, from, next) => {
+
+  const loading = useLoadingStore()
+
+  await loading.play()
+
+  next()
+
+})
 export default router
