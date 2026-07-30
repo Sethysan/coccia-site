@@ -4,6 +4,7 @@ export const useLoadingStore = defineStore("loading", {
     state: () => ({
         visible: false,
         frame: 0,
+        hasMounted: false,
 
         // Reserved for future full-stack request tracking
         activeRequests: 0
@@ -25,23 +26,22 @@ export const useLoadingStore = defineStore("loading", {
          * This is currently used for page transitions.
          */
         async play() {
+            if (!this.hasMounted) {
+                this.hasMounted = true
+                return
+            }
+
             if (this.visible) return
 
             this.visible = true
             this.frame = 0
 
-            // Allow Vue to render the loader before changing frames
-            await this.wait(100)
-
             for (let i = 0; i < 18; i++) {
                 this.frame = i
-                await this.wait(90)
+                await this.wait(80)
             }
 
-            await this.wait(100)
-
             this.visible = false
-            this.frame = 0
         }
 
         /*
