@@ -1,168 +1,407 @@
-# Backend Design
+# Coccia House Backend Design
 
-##  Architecture
+## 1. Purpose
 
-Vue 3 application hosted on Netlify.
+The backend will provide a Spring Boot REST API and PostgreSQL database for
+managing Coccia House website content without requiring a frontend redeploy.
 
-Website content is currently stored locally in the frontend repository.
-Updating content requires a new frontend deployment.
+The first managed feature will be recipes and weekly specials.
 
-### Target architecture
+The public Vue application must continue functioning safely if the backend is
+temporarily unavailable.
 
-Public frontend:
-- Vue 3
-- Vite
-- Pinia
-- Netlify
+## Guiding Principles
 
-Backend:
-- Spring Boot REST API
-- Spring Security
-- Railway or another managed Java host
+The backend should model how the restaurant actually operates rather than how
+the website currently displays information.
 
-Database:
-- PostgreSQL
-- Managed database service
+Recipes are permanent.
 
-### Core architectural rule
+Weekly Specials are temporary promotions of recipes.
 
-The public website should remain usable during a backend outage.
+Public information and internal restaurant knowledge remain intentionally
+separate.
 
-Remote content features should use one of these behaviors:
+The frontend should continue operating with fallback content if the backend is
+temporarily unavailable.
 
-1. Display safe fallback content.
-2. Hide the optional feature.
-3. Use a recently cached response when appropriate.
+Database changes are managed exclusively through Flyway migrations.
 
-The site should never display stale pricing as though it is current.
+---
 
-### Migration approach
+## 2. Technology
 
-Features will migrate independently.
+### Frontend
 
-Planned order:
+ - Vue 3
+ - Vite
+ - Pinia
+ - Netlify
 
-1. Weekly special
-2. Announcements
-3. Scheduled closures
-4. Hours overrides
-5. Events
-6. Menu items
-7. Gallery and About content
+### Backend
 
-### Out of scope for the first release
+ - Java 21
+ - Spring Boot
+ - Spring Web MVC
+ - Spring Data JPA
+ - Bean Validation
+ - Flyway
+ - PostgreSQL
 
-- Online ordering
-- Customer accounts
-- Payment processing
-- Table reservations
-- Multiple administrator roles
-- Complex analytics dashboard
+### Future security
 
-## Database
+ - Spring Security
+ - Authenticated administrator accounts
+ - Role-based access for protected recipe information
 
-### Initial table: weekly_specials
+---
 
-Planned columns:
+## 3. Architecture
 
-- id
-- title
-- description
-- price
-- image_url
-- image_alt
-- start_date
-- end_date
-- status
-- dish_creator_staff_id
-- created_at
-- updated_at
+The request flow will follow this pattern:
 
-### Important decisions
+```text
+Vue Component
+    ↓
+Pinia Store
+    ↓
+Frontend Service
+    ↓
+Frontend API Client
+    ↓
+Spring REST Controller
+    ↓
+Backend Service
+    ↓
+Repository
+    ↓
+PostgreSQL
+```
 
-#### Price
+Each layer has a separate responsibility:
 
-Use PostgreSQL NUMERIC rather than floating point.
+- Controllers translate HTTP requests into service calls.
+- Services contain business rules.
+- Repositories perform database access.
+- Entities represent persisted database records.
+- DTOs define the information accepted or returned by the API.
 
-Suggested definition:
 
-NUMERIC(8, 2)
+## 4. Recipe-centered design
 
-#### Deletion
+A `Recipe` represents a reusable dish.
 
-Prefer deactivation or archiving over permanent deletion.
+A `WeeklySpecial` represents a time-bound promotion of one recipe.
 
-#### Date ranges
+Recipe data should not be duplicated every time the same dish becomes a
+weekly special.
 
-The backend should reject an end date that is before the start date.
+### StaffMember ↔ Recipe
 
-#### Multiple active specials
+A staff member may know how to prepare many recipes.
 
-Initial assumption:
+A recipe may be known by many staff members.
 
-Only one special should be displayed at a time.
+This is a many-to-many relationship implemented through a join table named
+`staff_member_recipes`.
 
-The service layer must define what happens when two active records overlap.
+```text
+StaffMember
+    many
+    |
+    └── many Recipes
+```
 
-### Future tables
+### `Recipe` → `WeeklySpecial`
 
-- announcements
-- business_hours
-- hours_overrides
-- events
-- menu_categories
-- menu_items
-- menu_item_prices
-- admin_users
-- audit_log
+One `recipe` may appear in many `weekly-special` records over time.
 
-### TODO
+```text
+Recipe
+    1
+    |
+    └── many WeeklySpecial records
+ ```
 
-- [ x] Finalize weekly_specials schema.
-- [ x] Create Flyway migration V1.
-- [ ] Decide whether images use URLs or uploads.
-- [ ] Decide whether to add an archived column.
-- [ ] Define audit-history requirements.
 
-## API Plan
+### Recipe-owned information
 
-### API versioning
+The `recipe` owns permanent information about the dish:
 
-Initial routes will use `/api`.
-Before public release, decide whether to begin with `/api/v1`.
-Changing this after multiple features are deployed will be more disruptive.
+ - Internal recipe name
+ - Dish creator or knowledgeable staff member
+ - Active status
+ - Future ingredient relationships
+ - Future preparation instructions
+ - Future internal notes
 
-### Public weekly-special route
+### Weekly-special-owned information
 
+The weekly special owns information specific to one promotional period:
+
+ - Recipe reference
+ - Public title
+ - Public description
+ - Price
+ - Promotional image
+ - Start date
+ - End date
+ - Publication status
+
+### Future ingredient and allergen design
+
+Ingredients and allergen metadata will relate to `Recipe`, not directly to
+`WeeklySpecial`.
+
+The future relationship will broadly be:
+
+```text
+Recipe
+    many
+    |
+    └── many Ingredients
+```
+
+A join table such as `recipe_ingredients` will eventually store the connection
+between `recipes` and `ingredients`.
+
+Ingredient lists, quantities, preparation instructions, and internal notes
+will only be returned through protected staff endpoints.
+
+A future public ingredient-search endpoint may return matching dish names
+without exposing complete recipe details.
+
+Customer-facing allergy searches must not be described as a guarantee that a
+dish is allergy-safe because recipes, suppliers, and cross-contact conditions
+may change.
+
+---
+
+## 5. Current database model
+
+### `staff_members`
+
+#### Purpose:
+
+Stores people associated with recipe knowledge.
+
+#### Planned columns:
+
+ - id
+ - display_name
+ - active
+ - created_at
+ - updated_at
+
+#### Rules:
+
+ - Staff members should normally be deactivated rather than deleted.
+ - Historical recipes must retain their staff association.
+
+### `recipes`
+
+#### Purpose:
+
+Stores reusable dishes independently of any promotional schedule.
+
+#### Planned columns:
+
+ - id
+ - name
+ - dish_creator_staff_id
+ - active
+ - created_at
+ - updated_at
+
+#### Rules:
+
+ - A `recipe` belongs to one `staff member`.
+ - A `staff member` may be associated with many `recipes`.
+ - `Recipe` names should initially be unique.
+ - Inactive `recipes` remain available for historical reporting.
+
+### `weekly_specials`
+
+#### Purpose:
+
+Stores individual promotional appearances of `recipes`.
+
+#### Planned columns:
+
+ - id
+ - recipe_id
+ - public_title
+ - public_description
+ - price
+ - image_url
+ - image_alt
+ - start_date
+ - end_date
+ - status
+ - created_at
+ - updated_at
+
+`Statuses`:
+
+ - DRAFT
+ - PUBLISHED
+ - ARCHIVED
+
+#### Rules:
+
+ - A `weekly special` references exactly one `recipe`.
+ - A `recipe` may have many `weekly-special` records.
+ - The end date cannot occur before the start date.
+ - Draft and archived specials never appear publicly.
+ - A published `special` appears only during its configured date range.
+ - Historical weekly `specials` are preserved.
+ - The public endpoint returns at most one current special.
+
+---
+
+## 6. Database migration strategy
+
+Flyway migration files are the source of truth for the database schema.
+
+Current migrations:
+
+ - `V1__create_weekly_special_schema.sql`
+ - `V2__add_recipes_and_link_weekly_specials.sql`
+
+Migration history must not be rewritten after it has been applied to a shared
+or production database.
+
+Future schema changes should use new migrations:
+`
+ - `V3__add_recipe_ingredients.sql`
+ - `V4__add_allergen_categories.sql`
+
+The ERD is a living diagram of the current database structure. Git preserves
+its earlier versions.
+
+---
+
+## 7. Initial public API
+
+### Current weekly special
+
+```http
 GET /api/public/weekly-specials/current
+```
 
-Expected response:
+Possible responses:
 
-json
-{
-  "id": 12,
-  "title": "Baked Ziti",
-  "description": "Baked ziti served with a dinner salad.",
-  "price": "18.95",
-  "imageUrl": null,
-  "imageAlt": "",
-  "startDate": "2026-08-19",
-  "endDate": "2026-08-23",
-  "active": true,
-  "createdAt": "2026-08-17T15:30:00Z",
-  "updatedAt": "2026-08-17T15:30:00Z"
-}
-### TODO
+ - 200 OK when a current published special exists
+ - 204 No Content when no special is currently available
 
-- [ ] Decide API versioning.
-- [ ] Decide 204 versus inactive-object behavior.
-- [ ] Define validation-error response shape.
-- [ ] Define authentication method.
-- [ ] Define image-upload strategy.
+The public response may include:
 
+ - Weekly-special ID
+ - Recipe ID
+ - Recipe name
+ - Public title
+ - Public description
+ - Price
+ - Promotional image
+ - Start date
+ - End date
 
-## Deployment
+The public response must not include:
 
-## Decisions
+ - Recipe instructions
+ - Internal notes
+ - Full ingredient quantities
+ - Staff-only information
 
-## Open questions
+---
+
+## 8. Future protected API
+
+### Planned recipe-management endpoints:
+
+```http
+GET    /api/admin/recipes
+```
+```http
+GET    /api/admin/recipes/{id}
+```
+```http
+POST   /api/admin/recipes
+```
+```http
+PUT    /api/admin/recipes/{id}
+```
+```http
+POST   /api/admin/recipes/{id}/archive
+```
+
+### Planned weekly-special endpoints:
+
+```http
+GET    /api/admin/weekly-specials
+```
+```http
+GET    /api/admin/weekly-specials/{id}
+```
+```http
+POST   /api/admin/weekly-specials
+```
+```http
+PUT    /api/admin/weekly-specials/{id}
+```
+```http
+POST   /api/admin/weekly-specials/{id}/publish
+```
+```http
+POST   /api/admin/weekly-specials/{id}/archive
+```
+
+#### `Authentication` and `Authorization` will be added after the initial public read-only data flow works.
+
+---
+
+## 9. Initial implementation order
+
+1. Apply the recipe-centered database migration.
+2. Create StaffMember entity.
+3. Create Recipe entity.
+4. Create WeeklySpecialStatus enum.
+5. Create WeeklySpecial entity.
+6. Create repositories.
+7. Create public response DTOs.
+8. Create the weekly-special service.
+9. Create the public controller.
+10. Test the endpoint independently.
+11. Connect the Vue deploy preview.
+12. Add authentication.
+13. Add administrator write endpoints.
+14. Add recipe-management UI.
+
+--- 
+
+## 10. Future phases
+
+### Phase 1
+ - Recipe entity
+ - Weekly-special scheduling
+ - Public current-special endpoint
+
+### Phase 2
+ - Authentication
+ - Administrator recipe management
+ - Administrator weekly-special management
+
+### Phase 3
+ - Ingredients
+ - Recipe-ingredient relationships
+ - Protected recipe instructions and notes
+
+### Phase 4
+ - Allergen categories
+ - Public ingredient/allergen search
+ - Staff filtering by available recipe knowledge
+
+### Phase 5
+ - Announcements
+ - Hours overrides
+ - Menu management
