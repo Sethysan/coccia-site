@@ -5,7 +5,7 @@
 The backend will provide a Spring Boot REST API and PostgreSQL database for
 managing Coccia House website content without requiring a frontend redeploy.
 
-The first managed feature will be recipes and weekly specials.
+The first managed feature will be recipes and weekly offerings.
 
 The public Vue application must continue functioning safely if the backend is
 temporarily unavailable.
@@ -17,7 +17,7 @@ the website currently displays information.
 
 Recipes are permanent.
 
-Weekly Specials are temporary promotions of recipes.
+Weekly offerings are temporary promotions of recipes.
 
 Public information and internal restaurant knowledge remain intentionally
 separate.
@@ -87,71 +87,155 @@ Each layer has a separate responsibility:
 - DTOs define the information accepted or returned by the API.
 
 
-## 4. Recipe-centered design
+## 4. Weekly-offering-centered design
 
 A `Recipe` represents a reusable dish.
 
-A `WeeklySpecial` represents a time-bound promotion of one recipe.
+A `WeeklyOfferingItem` represents one independently priced recipe being
+promoted during a particular week.
 
-Recipe data should not be duplicated every time the same dish becomes a
-weekly special.
+A `WeeklyOffering` groups the independently priced dinner, soup, and dessert
+features that share a promotional date range.
 
-### StaffMember ↔ Recipe
+```text
+Recipe
+    ↓ reused by
+WeeklyOfferingItem
+    ↓ grouped inside
+WeeklyOffering
+```
+
+### `StaffMember` ↔ `Recipe`
 
 A staff member may know how to prepare many recipes.
 
 A recipe may be known by many staff members.
 
-This is a many-to-many relationship implemented through a join table named
-`staff_member_recipes`.
+This is a many-to-many relationship implemented through the
+`staff_member_recipes` join table.
 
 ```text
 StaffMember
     many
-    |
-    └── many Recipes
+      ↕
+    many
+Recipe
 ```
 
-### `Recipe` → `WeeklySpecial`
+Staff members are deactivated rather than deleted so historical recipe
+knowledge remains available.
 
-One `recipe` may appear in many `weekly-special` records over time.
+### `Recipe` → `WeeklyOfferingItem`
+
+One recipe may appear in many weekly-offering items over time.
+
+Each weekly-offering item references exactly one recipe.
 
 ```text
 Recipe
     1
     |
-    └── many WeeklySpecial records
- ```
+    └── many WeeklyOfferingItem records
+```
 
+This allows the same recipe to be promoted repeatedly with different prices,
+descriptions, date ranges, and price options.
+
+### `WeeklyOffering` → `WeeklyOfferingItem`
+
+One weekly offering may contain:
+
+- Zero or one dinner item
+- Zero or one soup item
+- Zero or one dessert item
+
+At least one item is required before a weekly offering can be scheduled.
+
+```text
+WeeklyOffering
+    1
+    |
+    └── many WeeklyOfferingItem records
+```
+
+The soup and dessert items are sold separately from the dinner special and
+are available in addition to the restaurant's normal soup and dessert
+offerings.
 
 ### Recipe-owned information
 
-The `recipe` owns permanent information about the dish:
+The `Recipe` owns permanent information about the dish:
 
- - Internal recipe name
- - Dish creator or knowledgeable staff member
- - Active status
- - Future ingredient relationships
- - Future preparation instructions
- - Future internal notes
+- Internal recipe name
+- Staff members who know how to prepare it
+- Active status
+- Future ingredient relationships
+- Future preparation instructions
+- Future internal notes
 
-### Weekly-special-owned information
+### Weekly-offering-owned information
 
-The weekly special owns information specific to one promotional period:
+The `WeeklyOffering` owns information shared by the promoted items:
 
- - Recipe reference
- - Public title
- - Public description
- - Price
- - Promotional image
- - Start date
- - End date
- - Publication status
+- Start date
+- End date
+- Publication status
+- Created timestamp
+- Updated timestamp
+
+### Weekly-offering-item-owned information
+
+Each `WeeklyOfferingItem` owns information specific to one promoted dinner,
+soup, or dessert:
+
+- Recipe reference
+- Offering type
+- Public title
+- Public description
+- Promotional image
+- House-salad inclusion
+- Homemade-bread inclusion
+- Display order
+- One or more prices
+
+House-salad and homemade-bread inclusions apply only to dinner items.
+
+### Multiple item prices
+
+Each weekly-offering item must have at least one price.
+
+Examples include:
+
+```text
+Pork Chop Special
+- Single: $21.95
+- Double: $25.95
+
+Baked Ziti
+- Regular: $20.00
+- Large: $24.99
+
+Featured Soup
+- Cup: $4.95
+- Bowl: $6.95
+```
+
+When an item has exactly one price, its label may be omitted.
+
+When an item has two or more prices:
+
+- Every price must have a nonblank label.
+- Labels must be unique within that item.
+- Label comparisons are case-insensitive.
+- Every amount must be zero or greater.
+
+The database enforces nonnegative amounts. The backend service enforces the
+rules that depend on the complete list of prices.
 
 ### Future ingredient and allergen design
 
 Ingredients and allergen metadata will relate to `Recipe`, not directly to
-`WeeklySpecial`.
+`Weeklyoffering`.
 
 The future relationship will broadly be:
 
@@ -220,44 +304,58 @@ Stores reusable dishes independently of any promotional schedule.
  - `Recipe` names should initially be unique.
  - Inactive `recipes` remain available for historical reporting.
 
-### `weekly_specials`
+### weekly_offerings
 
-#### Purpose:
+Purpose:
 
-Stores individual promotional appearances of `recipes`.
+Groups the dinner, soup, and dessert features promoted during the same date
+range.
 
-#### Planned columns:
+Columns:
 
- - id
- - recipe_id
- - public_title
- - public_description
- - price
- - image_url
- - image_alt
- - start_date
- - end_date
- - status
- - created_at
- - updated_at
+- `id`
+- `start_date`
+- `end_date`
+- `status`
+- `created_at`
+- `updated_at`
 
-`Statuses`:
+### weekly_offering_items
 
- - DRAFT
- - PUBLISHED
- - ARCHIVED
+Purpose:
 
-#### Rules:
+Stores one independently priced dinner, soup, or dessert feature within a
+weekly offering.
 
- - A `weekly special` references exactly one `recipe`.
- - A `recipe` may have many `weekly-special` records.
- - The end date cannot occur before the start date.
- - Draft and archived specials never appear publicly.
- - A published `special` appears only during its configured date range.
- - Historical weekly `specials` are preserved.
- - The public endpoint returns at most one current special.
+Columns:
 
----
+- `id`
+- `weekly_offering_id`
+- `recipe_id`
+- `offering_type`
+- `public_title`
+- `public_description`
+- `image_url`
+- `image_alt`
+- `includes_house_salad`
+- `includes_homemade_bread`
+- `display_order`
+- `created_at`
+- `updated_at`
+
+### weekly_offering_item_prices
+
+Purpose:
+
+Stores one or more prices for a weekly-offering item.
+
+Columns:
+
+- `id`
+- `weekly_offering_item_id`
+- `label`
+- `amount`
+- `display_order`
 
 ## 6. Database migration strategy
 
@@ -265,16 +363,14 @@ Flyway migration files are the source of truth for the database schema.
 
 Current migrations:
 
- - `V1__create_weekly_special_schema.sql`
- - `V2__add_recipes_and_link_weekly_specials.sql`
+- `V1__create_weekly_special_schema.sql`
+- `V2__add_recipes_and_link_weekly_specials.sql`
+- `V3__replace_recipe_creator_with_staff_recipe_relationship.sql`
+- `V4__replace_weekly_specials_with_weekly_offerings.sql`
 
 Migration history must not be rewritten after it has been applied to a shared
 or production database.
 
-Future schema changes should use new migrations:
-`
- - `V3__add_recipe_ingredients.sql`
- - `V4__add_allergen_categories.sql`
 
 The ERD is a living diagram of the current database structure. Git preserves
 its earlier versions.
@@ -283,20 +379,20 @@ its earlier versions.
 
 ## 7. Initial public API
 
-### Current weekly special
+### Current weekly offering
 
 ```http
-GET /api/public/weekly-specials/current
+GET /api/public/weekly-offerings/current
 ```
 
 Possible responses:
 
- - 200 OK when a current published special exists
- - 204 No Content when no special is currently available
+ - 200 OK when a current published offering exists
+ - 204 No Content when no offering is currently available
 
 The public response may include:
 
- - Weekly-special ID
+ - Weekly-offering ID
  - Recipe ID
  - Recipe name
  - Public title
@@ -335,25 +431,25 @@ PUT    /api/admin/recipes/{id}
 POST   /api/admin/recipes/{id}/archive
 ```
 
-### Planned weekly-special endpoints:
+### Planned weekly-offering endpoints:
 
 ```http
-GET    /api/admin/weekly-specials
+GET    /api/admin/weekly-offerings
 ```
 ```http
-GET    /api/admin/weekly-specials/{id}
+GET    /api/admin/weekly-offerings/{id}
 ```
 ```http
-POST   /api/admin/weekly-specials
+POST   /api/admin/weekly-offerings
 ```
 ```http
-PUT    /api/admin/weekly-specials/{id}
+PUT    /api/admin/weekly-offerings/{id}
 ```
 ```http
-POST   /api/admin/weekly-specials/{id}/publish
+POST   /api/admin/weekly-offerings/{id}/publish
 ```
 ```http
-POST   /api/admin/weekly-specials/{id}/archive
+POST   /api/admin/weekly-offerings/{id}/archive
 ```
 
 #### `Authentication` and `Authorization` will be added after the initial public read-only data flow works.
@@ -362,14 +458,14 @@ POST   /api/admin/weekly-specials/{id}/archive
 
 ## 9. Initial implementation order
 
-1. Apply the recipe-centered database migration.
+1. Apply the weeklyoffering-centered database migration.
 2. Create StaffMember entity.
 3. Create Recipe entity.
-4. Create WeeklySpecialStatus enum.
-5. Create WeeklySpecial entity.
+4. Create WeeklyofferingStatus enum.
+5. Create Weeklyoffering entity.
 6. Create repositories.
 7. Create public response DTOs.
-8. Create the weekly-special service.
+8. Create the weekly-offering service.
 9. Create the public controller.
 10. Test the endpoint independently.
 11. Connect the Vue deploy preview.
@@ -383,13 +479,13 @@ POST   /api/admin/weekly-specials/{id}/archive
 
 ### Phase 1
  - Recipe entity
- - Weekly-special scheduling
- - Public current-special endpoint
+ - Weekly-offering scheduling
+ - Public current-offering endpoint
 
 ### Phase 2
  - Authentication
  - Administrator recipe management
- - Administrator weekly-special management
+ - Administrator weekly-offering management
 
 ### Phase 3
  - Ingredients

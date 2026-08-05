@@ -1,11 +1,25 @@
 # Coccia House V2
 
-## Phase 1
-- [x] Spring Boot generated
-- [x] PostgreSQL connected
-- [ ] First Flyway migration
-- [ ] StaffMember entity
-- [ ] WeeklySpecial entity
+## Current phase
+
+Recipe-centered weekly offering backend
+
+## Completed
+
+- [x] Generate Spring Boot backend
+- [x] Connect PostgreSQL
+- [x] Configure Flyway
+- [x] Create recipe model
+- [x] Create many-to-many staff recipe relationship
+
+## In progress
+
+- [ ] Add weekly offering migration
+- [ ] Add weekly offering item model
+- [ ] Add item price model
+- [ ] Update ERD
+- [ ] Create JPA entities
+- [ ] Create public current-offering endpoint
 
 ## Phase 2
 - [ ] Public API
