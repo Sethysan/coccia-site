@@ -3,6 +3,7 @@
 import { computed } from 'vue'
 import { useTimeStore } from '@/stores/timeStore'
 import { hours } from '@/data/hours'
+import { scheduledClosures } from '@/data/scheduledClosures'
 
 // =======================================================
 // Restaurant Hours Composable
@@ -19,6 +20,32 @@ export function useRestaurantHours() {
   // Get access to the global time store.
   const timeStore = useTimeStore()
 
+  // -------------------------------------------------------
+  // ACTIVE SCHEDULED CLOSURE
+  //
+  // Returns the scheduled closure that applies today.
+  //
+  // The dates are compared using YYYY-MM-DD strings.
+  // This format can be compared safely because the values
+  // sort chronologically.
+  //
+  // Returns undefined when no closure is active.
+  // -------------------------------------------------------
+
+  const activeClosure = computed(() => {
+    const today = timeStore.currentTime.format('YYYY-MM-DD')
+
+    return scheduledClosures.find(closure => {
+      return (
+        today >= closure.startDate &&
+        today <= closure.endDate
+      )
+    })
+  })
+
+  const isScheduledClosure = computed(() => {
+    return Boolean(activeClosure.value)
+  })
 
   // -------------------------------------------------------
   // CURRENT DAY
@@ -126,6 +153,9 @@ export function useRestaurantHours() {
 
   function isOpenNow(day) {
 
+    // A temporary closure overrides regular operating hours.
+    if (isScheduledClosure.value) return false
+
     // Restaurant closed all day.
     if (day.closed) return false
 
@@ -159,6 +189,9 @@ export function useRestaurantHours() {
 
     // Not today's card.
     if (!isToday(day)) return 'normal'
+
+    // Closed for special circumstances, would otherwise fall in a different class
+    if (isScheduledClosure.value) return 'closed'
 
     // Today, but restaurant is closed all day.
     if (day.closed) return 'closed'
@@ -224,10 +257,20 @@ export function useRestaurantHours() {
   const restaurantStatus = computed(() => {
     const day = todayHours.value
 
+    if (activeClosure.value) {
+      return {
+        state: 'temporarily-closed',
+        label: activeClosure.value.title,
+        subtitle: activeClosure.value.subtitle,
+        message: activeClosure.value.message
+      }
+    }
+
     if (!day) {
       return {
         state: 'closed',
         label: 'Hours Unavailable',
+        subtitle: '',
         message: 'Please call us for today’s hours.'
       }
     }
@@ -236,6 +279,7 @@ export function useRestaurantHours() {
       return {
         state: 'closed',
         label: 'Closed Today',
+        subtitle: day.name,
         message: 'We’ll reopen Wednesday at 3 PM.'
       }
     }
@@ -257,6 +301,7 @@ export function useRestaurantHours() {
       return {
         state: 'opening-soon',
         label: 'Opening Soon',
+        subtitle: `${day.name} · ${day.hours}`,
         message:
           day.day === 0
             ? `Sunday carryout begins at ${formatHour(day.open)}.`
@@ -268,6 +313,7 @@ export function useRestaurantHours() {
       return {
         state: 'closing-soon',
         label: 'Closing Soon',
+        subtitle: `${day.name} · ${day.hours}`,
         message:
           day.day === 0
             ? `Sunday carryout ends at ${formatHour(day.close)}.`
@@ -279,6 +325,7 @@ export function useRestaurantHours() {
       return {
         state: 'open',
         label: 'Open Now',
+        subtitle: `${day.name} · ${day.hours}`,
         message:
           day.day === 0
             ? `Sunday carryout is available until ${formatHour(day.close)}.`
@@ -290,6 +337,7 @@ export function useRestaurantHours() {
       return {
         state: 'opening-later',
         label: 'Opens Today',
+        subtitle: `${day.name} · ${day.hours}`,
         message:
           day.day === 0
             ? `Sunday carryout begins at ${formatHour(day.open)}.`
@@ -300,15 +348,15 @@ export function useRestaurantHours() {
     return {
       state: 'closed',
       label: 'Closed for Today',
+      subtitle: `${day.name} · ${day.hours}`,
       message:
         day.day === 0
           ? 'We’ll reopen Wednesday at 3 PM.'
           : 'Thank you for visiting. We hope to see you again soon!'
     }
-  }
-  )
+  })
 
-   // -------------------------------------------------------
+  // -------------------------------------------------------
   // COMPACT HEADER STATUS
   //
   // Returns a short version of the restaurant status
@@ -329,27 +377,30 @@ export function useRestaurantHours() {
 
   const compactHoursMessage = computed(() => {
     switch (restaurantStatus.value.state) {
-      case "open":
-        return "Open Now"
+      case 'open':
+        return 'Open Now'
 
-      case "opening-soon":
-        return "Opening Soon"
+      case 'opening-soon':
+        return 'Opening Soon'
 
-      case "closing-soon":
-        return "Closing Soon"
+      case 'closing-soon':
+        return 'Closing Soon'
 
-      case "opening-later":
+      case 'opening-later':
         return `Opens at ${formatHour(todayHours.value.open)}`
 
-      case "closed":
-        return "Closed Today"
+      case 'temporarily-closed':
+        return 'Closed for Maintenance'
+
+      case 'closed':
+        return 'Closed Today'
 
       default:
-        return "Restaurant Hours"
+        return 'Restaurant Hours'
     }
   })
 
-   // -------------------------------------------------------
+  // -------------------------------------------------------
   // PUBLIC API
   //
   // Export everything components need.
@@ -357,10 +408,12 @@ export function useRestaurantHours() {
   // Components should rely on these helpers rather than
   // implementing restaurant-hour logic themselves.
   // -------------------------------------------------------
-  
+
   return {
     todayHours,
     restaurantStatus,
+    activeClosure,
+    isScheduledClosure,
     isToday,
     isOpenNow,
     getDayClass,

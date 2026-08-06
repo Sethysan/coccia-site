@@ -10,20 +10,13 @@
 
       <p class="today-status" :class="`is-${restaurantStatus.state}`">
         <span class="status-dot" aria-hidden="true"></span>
+
         {{ restaurantStatus.label }}
       </p>
 
-      <p class="today-day">
-        {{ todayHours.name }}
+      <p v-if="restaurantStatus.subtitle" class="today-hours">
+        {{ restaurantStatus.subtitle }}
       </p>
-
-      <p class="today-hours">
-        {{ todayHours.hours }}
-      </p>
- <!-- todo -->
-      <!-- <p class="today-message">
-        {{ todayHours.note }}
-      </p> -->
 
       <p class="today-message">
         {{ restaurantStatus.message }}
@@ -112,7 +105,7 @@
          LATEST NEWS
          ======================================================== -->
     <section class="news-card">
- <!-- todo -->
+      <!-- todo -->
       <!-- <article class="news-item">
         <h3>Live Music Tonight – Thursday, July 23</h3>
 
@@ -216,7 +209,9 @@ import rolandoFlyer from '@/assets/rolando-live-july23.png'
 
 const {
   todayHours,
-  restaurantStatus
+  restaurantStatus,
+  activeClosure,
+  isScheduledClosure
 } = useRestaurantHours()
 </script>
 
@@ -224,7 +219,7 @@ const {
 /* ==========================================================
    HOME PAGE
    ========================================================== */
-   /* TODO */
+/* TODO */
 /* .news-flyer {
   display: block;
   width: 100%;
@@ -319,7 +314,8 @@ const {
   box-shadow: 0 0 8px rgba(220, 124, 56, 0.55);
 }
 
-.today-status.is-closed .status-dot {
+.today-status.is-closed .status-dot,
+.today-status.is-temporarily-closed .status-dot {
   background-color: #b84b43;
   box-shadow: 0 0 6px rgba(184, 75, 67, 0.4);
 }

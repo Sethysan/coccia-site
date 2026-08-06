@@ -44,6 +44,8 @@ const props = defineProps({
 
 const {
   restaurantStatus,
+  activeClosure,
+  isScheduledClosure,
   isToday,
   getDayClass
 } = useRestaurantHours()
@@ -181,6 +183,10 @@ const displayedHours = computed(() => {
 
 .current-status.is-opening-later {
   color: var(--status-opening-later);
+}
+
+.current-status.is-temporarily-closed {
+  color: var(--status-closed);
 }
 
 .current-status.is-closing-soon {
