@@ -52,15 +52,16 @@ PATCH  /api/admin/weekly-specials/{id}/deactivate
 
 ## TODO
 
-- [ ] Generate the Spring Boot application.
-- [ ] Configure PostgreSQL.
-- [ ] Add Flyway migrations.
-- [ ] Create WeeklySpecial entity.
-- [ ] Create request and response DTOs.
-- [ ] Create repository.
-- [ ] Create service layer.
-- [ ] Create public controller.
-- [ ] Add integration tests.
+- [x] Generate the Spring Boot application.
+- [x] Configure PostgreSQL.
+- [x] Add Flyway migrations.
+- [x] Create Weekly Offering entity.
+- [x] Create request and response DTOs.
+- [x] Create repositories.
+- [x] Create service layer.
+- [x] Create public controller.
+- [x] Add integration tests.
 - [ ] Deploy a private test environment.
 - [ ] Add authentication.
 - [ ] Add administrator controller.
+- [ ] Add PostgreSQL repository integration tests when containerized testing is available.
