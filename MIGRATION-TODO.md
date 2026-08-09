@@ -31,24 +31,24 @@
 
 ### Weekly special
 
-- [ ] Create WeeklySpecial entity.
-- [ ] Create WeeklySpecialRepository.
-- [ ] Create WeeklySpecialService.
-- [ ] Create WeeklySpecialResponse DTO.
-- [ ] Create public current-special endpoint.
-- [ ] Add validation tests.
-- [ ] Add controller tests.
-- [ ] Seed a test weekly special.
+- [✔] Create WeeklySpecial entity.
+- [✔] Create WeeklySpecialRepository.
+- [✔] Create WeeklySpecialService.
+- [✔] Create WeeklySpecialResponse DTO.
+- [✔] Create public current-special endpoint.
+- [✔] Add validation tests.
+- [✔] Add controller tests.
+- [✔] Seed a test weekly special.
 
 ### Deployment
 
-- [ ] Create backend hosting service.
-- [ ] Create production PostgreSQL database.
-- [ ] Add production environment variables.
-- [ ] Configure allowed frontend origin.
-- [ ] Add API health endpoint.
-- [ ] Test API independently from Vue.
-- [ ] Test API from a Netlify deploy preview.
+- [✔] Create backend hosting service.
+- [✔] Create production PostgreSQL database.
+- [✔] Add production environment variables.
+- [✔] Configure allowed frontend origin.
+- [✔] Add API health endpoint.
+- [✔] Test API independently from Vue.
+- [✔] Test API from a Netlify deploy preview.
 
 ### Frontend connection
 

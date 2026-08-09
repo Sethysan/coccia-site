@@ -47,9 +47,6 @@ Database changes are managed exclusively through Flyway migrations.
  - Bean Validation
  - Flyway
  - PostgreSQL
-
-### Future security
-
  - Spring Security
  - Authenticated administrator accounts
  - Role-based access for protected recipe information
@@ -357,6 +354,18 @@ Columns:
 - `amount`
 - `display_order`
 
+### admin_users
+
+Stores administrator accounts used to access protected API operations.
+
+Fields:
+
+- `id` - primary key
+- `username` - unique administrator username
+- `password_hash` - BCrypt password hash
+- `active` - whether the account may authenticate
+- `created_at` - account creation timestamp
+
 ## 6. Database migration strategy
 
 Flyway migration files are the source of truth for the database schema.
@@ -367,6 +376,10 @@ Current migrations:
 - `V2__add_recipes_and_link_weekly_specials.sql`
 - `V3__replace_recipe_creator_with_staff_recipe_relationship.sql`
 - `V4__replace_weekly_specials_with_weekly_offerings.sql`
+- `V5__seed_development_data.sql`
+- `V6_create_admin_users.sql`
+- 
+
 
 Migration history must not be rewritten after it has been applied to a shared
 or production database.
@@ -408,6 +421,160 @@ The public response must not include:
  - Internal notes
  - Full ingredient quantities
  - Staff-only information
+
+---
+
+## 8. Authentication and security
+
+Public restaurant information and administrative restaurant operations remain
+intentionally separate.
+
+Public website requests do not require authentication.
+
+Administrative requests require an authenticated administrator account.
+
+### Public routes
+
+Public restaurant content is available through:
+
+```http
+/api/public/**
+```
+
+These routes may return information intended for customers, including the
+current weekly offering.
+
+They must not return internal recipe information, staff-only information, or
+administrative functionality.
+
+### Protected routes
+
+Administrative and other internal API routes require authentication.
+
+Protected routes will broadly use:
+
+```http
+/api/admin/**
+```
+
+These routes will eventually support:
+
+- Recipe management
+- Weekly-offering management
+- Staff recipe knowledge
+- Internal recipe information
+- Future administrative website content
+
+### Administrator accounts
+
+Administrator accounts are stored in the `admin_users` table.
+
+An `AdminUser` represents one administrator account.
+
+The account currently contains:
+
+- Username
+- Password hash
+- Active status
+- Created timestamp
+
+Administrator passwords are never stored as plaintext.
+
+Passwords are encoded using BCrypt before being stored in PostgreSQL.
+
+Inactive administrator accounts cannot authenticate.
+
+### Spring Security flow
+
+Spring Security controls access to public and protected routes.
+
+`SecurityConfig` defines which requests may be accessed publicly and which
+requests require authentication.
+
+`AdminUserDetailsService` connects Spring Security to the application's
+administrator accounts.
+
+`AdminUserRepository` retrieves the matching administrator from PostgreSQL.
+
+The authentication flow broadly follows:
+
+```text
+Administrator credentials
+        ↓
+Spring Security
+        ↓
+AdminUserDetailsService
+        ↓
+AdminUserRepository
+        ↓
+PostgreSQL
+        ↓
+BCrypt password verification
+        ↓
+Authenticated administrator
+```
+
+### Current authentication state
+
+Database-backed administrator authentication is implemented and has been
+verified using HTTP Basic authentication during development.
+
+HTTP Basic authentication is an intermediate development mechanism rather than
+the final administrator login flow.
+
+Valid administrator credentials successfully authenticate protected requests.
+
+Invalid credentials return `401 Unauthorized`.
+
+Public `/api/public/**` routes remain accessible without authentication.
+
+### Planned session authentication
+
+The administrator interface will use session-based authentication.
+
+After a successful login, Spring Security will maintain the authenticated
+administrator in a server-side session.
+
+The planned flow is:
+
+```text
+Vue administrator login
+        ↓
+Login request
+        ↓
+Spring Security
+        ↓
+AdminUserDetailsService
+        ↓
+PostgreSQL
+        ↓
+BCrypt password verification
+        ↓
+Authenticated server-side session
+        ↓
+Protected administrator API requests
+```
+
+Login, logout, and session handling will be implemented before the
+administrator write endpoints are connected to the Vue application.
+
+---
+
+## 9. Authentication and security
+
+Public restaurant information and administrative restaurant operations remain
+intentionally separate.
+
+Public website requests do not require authentication.
+
+Administrative requests require an authenticated administrator account.
+
+### Public routes
+
+Public restaurant content is available through:
+
+```http
+/api/public/**
 
 ---
 
@@ -456,7 +623,7 @@ POST   /api/admin/weekly-offerings/{id}/archive
 
 ---
 
-## 9. Initial implementation order
+## 10. Initial implementation order
 
 1. Apply the weeklyoffering-centered database migration.
 2. Create StaffMember entity.
@@ -475,7 +642,7 @@ POST   /api/admin/weekly-offerings/{id}/archive
 
 --- 
 
-## 10. Future phases
+## 11. Future phases
 
 ### Phase 1
  - Recipe entity
