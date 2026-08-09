@@ -6,7 +6,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
-
+import com.cocciahouse.api.exception.DuplicateRecipeException;
 @Service
 public class RecipeService {
 
@@ -33,7 +33,7 @@ public class RecipeService {
         String cleanedName = name.trim();
 
         if (recipeRepository.existsByNameIgnoreCase(cleanedName)) {
-            throw new IllegalArgumentException("A recipe with that name already exists.");
+            throw new DuplicateRecipeException("A recipe with that name already exists.");
         }
 
         Recipe recipe = new Recipe(cleanedName);

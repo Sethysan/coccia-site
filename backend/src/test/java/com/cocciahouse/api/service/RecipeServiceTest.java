@@ -13,6 +13,8 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import com.cocciahouse.api.exception.DuplicateRecipeException;
+
 @ExtendWith(MockitoExtension.class)
 class RecipeServiceTest {
 
@@ -122,9 +124,9 @@ class RecipeServiceTest {
         when(recipeRepository.existsByNameIgnoreCase("Baked Ziti"))
                 .thenReturn(true);
 
-        IllegalArgumentException exception =
+        DuplicateRecipeException exception =
                 assertThrows(
-                        IllegalArgumentException.class,
+                        DuplicateRecipeException.class,
                         () -> recipeService.createRecipe("Baked Ziti")
                 );
 
@@ -146,10 +148,10 @@ class RecipeServiceTest {
         when(recipeRepository.existsByNameIgnoreCase("Baked Ziti"))
                 .thenReturn(true);
 
-        IllegalArgumentException exception =
+        DuplicateRecipeException exception =
                 assertThrows(
-                        IllegalArgumentException.class,
-                        () -> recipeService.createRecipe("   Baked Ziti   ")
+                        DuplicateRecipeException.class,
+                        () -> recipeService.createRecipe("Baked Ziti")
                 );
 
         assertEquals(

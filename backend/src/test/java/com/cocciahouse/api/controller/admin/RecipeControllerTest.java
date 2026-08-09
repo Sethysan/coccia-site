@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import com.cocciahouse.api.exception.DuplicateRecipeException;
 
 import java.util.List;
 
@@ -89,5 +90,35 @@ class RecipeControllerTest {
                 }
                 """)).andExpect(status().isBadRequest());
     }
+
+    @Test
+    void createRecipe_whenDuplicate_returns409Conflict() throws Exception {
+
+        when(recipeService.createRecipe("Baked Ziti"))
+                .thenThrow(
+                        new DuplicateRecipeException(
+                                "A recipe with that name already exists."
+                        )
+                );
+
+        mockMvc.perform(
+                        post("/api/recipes")
+                                .contentType("application/json")
+                                .content("""
+                                        {
+                                          "name": "Baked Ziti"
+                                        }
+                                        """)
+                )
+                .andExpect(status().isConflict())
+                .andExpect(content().contentTypeCompatibleWith("application/json"))
+                .andExpect(jsonPath("$.status").value(409))
+                .andExpect(jsonPath("$.error").value("Conflict"))
+                .andExpect(jsonPath("$.message")
+                        .value("A recipe with that name already exists."));
+
+        verify(recipeService).createRecipe("Baked Ziti");
+    }
+
 
 }
