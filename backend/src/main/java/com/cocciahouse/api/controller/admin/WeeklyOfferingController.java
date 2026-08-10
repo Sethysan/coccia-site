@@ -1,6 +1,7 @@
 package com.cocciahouse.api.controller.admin;
 
 import com.cocciahouse.api.dto.WeeklyOfferingCreateRequest;
+import com.cocciahouse.api.dto.WeeklyOfferingItemCreateRequest;
 import com.cocciahouse.api.dto.WeeklyOfferingResponse;
 import com.cocciahouse.api.service.WeeklyOfferingService;
 import jakarta.validation.Valid;
@@ -31,5 +32,53 @@ public class WeeklyOfferingController {
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(response);
+    }
+
+    @PostMapping("/{offeringId}/items")
+    public ResponseEntity<WeeklyOfferingResponse> addItem(
+            @PathVariable Long offeringId,
+            @Valid @RequestBody WeeklyOfferingItemCreateRequest request
+    ) {
+
+        WeeklyOfferingResponse response =
+                weeklyOfferingService.addItem(
+                        offeringId,
+                        request
+                );
+
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(response);
+    }
+
+    @PutMapping("/{offeringId}/items/{itemId}")
+    public ResponseEntity<WeeklyOfferingResponse> updateItem(
+            @PathVariable Long offeringId,
+            @PathVariable Long itemId,
+            @Valid @RequestBody WeeklyOfferingItemCreateRequest request
+    ) {
+
+        WeeklyOfferingResponse response =
+                weeklyOfferingService.updateItem(
+                        offeringId,
+                        itemId,
+                        request
+                );
+
+        return ResponseEntity.ok(response);
+    }
+
+    @DeleteMapping("/{offeringId}/items/{itemId}")
+    public ResponseEntity<Void> deleteItem(
+            @PathVariable Long offeringId,
+            @PathVariable Long itemId
+    ) {
+
+        weeklyOfferingService.deleteItem(
+                offeringId,
+                itemId
+        );
+
+        return ResponseEntity.noContent().build();
     }
 }
