@@ -1,11 +1,12 @@
 package com.cocciahouse.api.controller.admin;
 
-import com.cocciahouse.api.controller.RecipeController;
+
 import com.cocciahouse.api.model.Recipe;
 import com.cocciahouse.api.service.RecipeService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import com.cocciahouse.api.exception.DuplicateRecipeException;
@@ -19,6 +20,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(RecipeController.class)
+@ActiveProfiles("test")
 class RecipeControllerTest {
 
     @Autowired
@@ -36,7 +38,7 @@ class RecipeControllerTest {
 
         when(recipeService.getActiveRecipes()).thenReturn(List.of(bakedZiti, chickenMarsala));
 
-        mockMvc.perform(get("/api/recipes")).andExpect(status().isOk()).andExpect(content().contentTypeCompatibleWith("application/json")).andExpect(jsonPath("$[0].name").value("Baked Ziti")).andExpect(jsonPath("$[0].active").value(true)).andExpect(jsonPath("$[1].name").value("Chicken Marsala")).andExpect(jsonPath("$[1].active").value(true));
+        mockMvc.perform(get("/api/admin/recipes")).andExpect(status().isOk()).andExpect(content().contentTypeCompatibleWith("application/json")).andExpect(jsonPath("$[0].name").value("Baked Ziti")).andExpect(jsonPath("$[0].active").value(true)).andExpect(jsonPath("$[1].name").value("Chicken Marsala")).andExpect(jsonPath("$[1].active").value(true));
 
         verify(recipeService).getActiveRecipes();
     }
@@ -49,7 +51,7 @@ class RecipeControllerTest {
 
         when(recipeService.searchActiveRecipes("ziti")).thenReturn(List.of(bakedZiti));
 
-        mockMvc.perform(get("/api/recipes").param("search", "ziti")).andExpect(status().isOk()).andExpect(content().contentTypeCompatibleWith("application/json")).andExpect(jsonPath("$.length()").value(1)).andExpect(jsonPath("$[0].name").value("Baked Ziti")).andExpect(jsonPath("$[0].active").value(true));
+        mockMvc.perform(get("/api/admin/recipes").param("search", "ziti")).andExpect(status().isOk()).andExpect(content().contentTypeCompatibleWith("application/json")).andExpect(jsonPath("$.length()").value(1)).andExpect(jsonPath("$[0].name").value("Baked Ziti")).andExpect(jsonPath("$[0].active").value(true));
 
         verify(recipeService).searchActiveRecipes("ziti");
     }
@@ -62,7 +64,7 @@ class RecipeControllerTest {
 
         when(recipeService.createRecipe("Pork Chop")).thenReturn(porkChop);
 
-        mockMvc.perform(post("/api/recipes").contentType("application/json").content("""
+        mockMvc.perform(post("/api/admin/recipes").contentType("application/json").content("""
                 {
                   "name": "Pork Chop"
                 }
@@ -74,7 +76,7 @@ class RecipeControllerTest {
     @Test
     void createRecipe_withBlankName_returns400() throws Exception {
 
-        mockMvc.perform(post("/api/recipes").contentType("application/json").content("""
+        mockMvc.perform(post("/api/admin/recipes").contentType("application/json").content("""
                 {
                   "name": ""
                 }
@@ -85,7 +87,7 @@ class RecipeControllerTest {
     @Test
     void createRecipe_withMissingName_returns400() throws Exception {
 
-        mockMvc.perform(post("/api/recipes").contentType("application/json").content("""
+        mockMvc.perform(post("/api/admin/recipes").contentType("application/json").content("""
                 {
                 }
                 """)).andExpect(status().isBadRequest());
@@ -102,7 +104,7 @@ class RecipeControllerTest {
                 );
 
         mockMvc.perform(
-                        post("/api/recipes")
+                        post("/api/admin/recipes")
                                 .contentType("application/json")
                                 .content("""
                                         {

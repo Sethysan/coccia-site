@@ -9,7 +9,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.config.Customizer;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 
@@ -28,8 +28,20 @@ public class SecurityConfig {
                         .anyRequest().authenticated()
                 )
                 .csrf(csrf -> csrf
-                        .ignoringRequestMatchers("/api/auth/login")
-                ).httpBasic(Customizer.withDefaults());
+                        .ignoringRequestMatchers(
+                                "/api/auth/login",
+                                "/api/auth/logout"
+                        )
+                )
+                .exceptionHandling(exceptions -> exceptions
+                        .authenticationEntryPoint(
+                                (request, response, authException) ->
+                                        response.sendError(
+                                                HttpStatus.UNAUTHORIZED.value(),
+                                                HttpStatus.UNAUTHORIZED.getReasonPhrase()
+                                        )
+                        )
+                );
 
         return http.build();
     }

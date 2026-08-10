@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -97,4 +98,26 @@ public class AuthController {
                 )
         );
     }
+
+    @PostMapping("/logout")
+    public ResponseEntity<AuthSessionResponse> logout(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            Authentication authentication
+    ) {
+
+        new SecurityContextLogoutHandler().logout(
+                request,
+                response,
+                authentication
+        );
+
+        return ResponseEntity.ok(
+                new AuthSessionResponse(
+                        false,
+                        null
+                )
+        );
+    }
+
 }

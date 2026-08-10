@@ -1,4 +1,4 @@
-package com.cocciahouse.api.controller;
+package com.cocciahouse.api.controller.admin;
 
 import com.cocciahouse.api.dto.RecipeRequest;
 import com.cocciahouse.api.dto.RecipeResponse;
@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/recipes")
+@RequestMapping("/api/admin/recipes")
 public class RecipeController {
 
     private final RecipeService recipeService;

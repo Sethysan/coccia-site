@@ -1,5 +1,7 @@
 package com.cocciahouse.api.service;
 
+import com.cocciahouse.api.dto.WeeklyOfferingCreateRequest;
+import com.cocciahouse.api.model.WeeklyOffering;
 import com.cocciahouse.api.dto.WeeklyOfferingResponse;
 import com.cocciahouse.api.mapper.WeeklyOfferingMapper;
 import com.cocciahouse.api.model.WeeklyOfferingStatus;
@@ -41,4 +43,28 @@ public class WeeklyOfferingService {
                 )
                 .map(weeklyOfferingMapper::toResponse);
     }
+
+    @Transactional
+    public WeeklyOfferingResponse createOffering(
+            WeeklyOfferingCreateRequest request
+    ) {
+
+        if (request.endDate().isBefore(request.startDate())) {
+            throw new IllegalArgumentException(
+                    "End date cannot be before start date."
+            );
+        }
+
+        WeeklyOffering weeklyOffering = new WeeklyOffering();
+
+        weeklyOffering.setStartDate(request.startDate());
+        weeklyOffering.setEndDate(request.endDate());
+        weeklyOffering.setStatus(WeeklyOfferingStatus.DRAFT);
+
+        WeeklyOffering savedOffering =
+                weeklyOfferingRepository.save(weeklyOffering);
+
+        return weeklyOfferingMapper.toResponse(savedOffering);
+    }
+
 }

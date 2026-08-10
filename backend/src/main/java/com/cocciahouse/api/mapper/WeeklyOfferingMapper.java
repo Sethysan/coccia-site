@@ -36,6 +36,7 @@ public class WeeklyOfferingMapper {
                 offering.getId(),
                 offering.getStartDate(),
                 offering.getEndDate(),
+                offering.getStatus(),
                 items,
                 offering.getCreatedAt(),
                 offering.getUpdatedAt()

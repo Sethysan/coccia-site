@@ -62,6 +62,6 @@ PATCH  /api/admin/weekly-specials/{id}/deactivate
 - [x] Create public controller.
 - [x] Add integration tests.
 - [x] Deploy a private test environment.
-- [ ] Add authentication.
+- [x] Add authentication.
 - [ ] Add administrator controller.
 - [ ] Add PostgreSQL repository integration tests when containerized testing is available.
