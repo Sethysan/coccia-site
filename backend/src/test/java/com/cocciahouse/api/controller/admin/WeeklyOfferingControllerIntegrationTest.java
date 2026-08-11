@@ -1225,5 +1225,5 @@ class WeeklyOfferingControllerIntegrationTest {
                                 .value("Weekly offering not found.")
                 );
     }
-    
+
 }
