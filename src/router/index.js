@@ -3,14 +3,19 @@ import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
 import MenuView from '../views/MenuView.vue'
 import AboutView from '../views/AboutView.vue'
+import AdminLoginView from '../views/admin/AdminLoginView.vue'
+import AdminWeeklyOfferingsView from '../views/admin/AdminWeeklyOfferingsView.vue'
 import { useLoadingStore } from "@/stores/loadingStore"
+import { useAuthStore } from '@/stores/authStore'
 
 const router = createRouter({
   history: createWebHistory(),
   routes: [
     { path: '/', component: HomeView },
     { path: '/menu', component: MenuView },
-    { path: '/about', component: AboutView }
+    { path: '/about', component: AboutView },
+    { path: '/admin/login', component: AdminLoginView},
+    { path: '/admin/weekly-offerings', component: AdminWeeklyOfferingsView, meta: {requiresAuth: true }  }
   ],
 
   scrollBehavior(to, from, savedPosition) {
@@ -30,13 +35,28 @@ const router = createRouter({
 })
 
 
-router.beforeEach(async (to, from, next) => {
-
+router.beforeEach(async (to) => {
   const loading = useLoadingStore()
 
   await loading.play()
 
-  next()
+  if (to.meta.requiresAuth) {
+    const auth = useAuthStore()
 
+    if (!auth.sessionChecked) {
+      await auth.checkSession()
+    }
+
+    if (!auth.authenticated) {
+      return {
+        path: '/admin/login',
+        query: {
+          redirect: to.fullPath
+        }
+      }
+    }
+  }
+
+  return true
 })
 export default router
