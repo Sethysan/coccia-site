@@ -9,6 +9,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import com.cocciahouse.api.model.WeeklyOfferingStatus;
+
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/admin/weekly-offerings")
 public class WeeklyOfferingController {
@@ -81,4 +85,39 @@ public class WeeklyOfferingController {
 
         return ResponseEntity.noContent().build();
     }
+
+    @PutMapping("/{offeringId}/schedule")
+    public ResponseEntity<WeeklyOfferingResponse> scheduleOffering(
+            @PathVariable Long offeringId
+    ) {
+
+        WeeklyOfferingResponse response =
+                weeklyOfferingService.scheduleOffering(offeringId);
+
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping
+    public ResponseEntity<List<WeeklyOfferingResponse>> getOfferings(
+            @RequestParam(required = false)
+            WeeklyOfferingStatus status
+    ) {
+
+        List<WeeklyOfferingResponse> response =
+                weeklyOfferingService.getAdminOfferings(status);
+
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/{offeringId}")
+    public ResponseEntity<WeeklyOfferingResponse> getOfferingById(
+            @PathVariable Long offeringId
+    ) {
+
+        WeeklyOfferingResponse response =
+                weeklyOfferingService.getAdminOfferingById(offeringId);
+
+        return ResponseEntity.ok(response);
+    }
+
 }

@@ -250,4 +250,86 @@ public class WeeklyOfferingService {
 
         offering.removeItem(item);
     }
+
+    @Transactional
+    public WeeklyOfferingResponse scheduleOffering(Long offeringId) {
+
+        WeeklyOffering offering = weeklyOfferingRepository
+                .findById(offeringId)
+                .orElseThrow(() ->
+                        new IllegalArgumentException(
+                                "Weekly offering not found."
+                        )
+                );
+
+        if (offering.getStatus() != WeeklyOfferingStatus.DRAFT) {
+            throw new IllegalArgumentException(
+                    "Only draft offerings can be scheduled."
+            );
+        }
+
+        if (offering.getStartDate().isAfter(offering.getEndDate())) {
+            throw new IllegalArgumentException(
+                    "Start date cannot be after end date."
+            );
+        }
+
+        if (offering.getItems().isEmpty()) {
+            throw new IllegalArgumentException(
+                    "Weekly offering must contain at least one item."
+            );
+        }
+
+        boolean itemWithoutPrices = offering.getItems()
+                .stream()
+                .anyMatch(item -> item.getPrices().isEmpty());
+
+        if (itemWithoutPrices) {
+            throw new IllegalArgumentException(
+                    "Every weekly offering item must have at least one price."
+            );
+        }
+
+        offering.setStatus(WeeklyOfferingStatus.SCHEDULED);
+
+        return weeklyOfferingMapper.toResponse(offering);
+    }
+
+    @Transactional(readOnly = true)
+    public List<WeeklyOfferingResponse> getAdminOfferings(
+            WeeklyOfferingStatus status
+    ) {
+
+        List<WeeklyOffering> offerings;
+
+        if (status == null) {
+            offerings =
+                    weeklyOfferingRepository
+                            .findAllByOrderByStartDateDesc();
+        } else {
+            offerings =
+                    weeklyOfferingRepository
+                            .findAllByStatusOrderByStartDateDesc(status);
+        }
+
+        return offerings
+                .stream()
+                .map(weeklyOfferingMapper::toResponse)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public WeeklyOfferingResponse getAdminOfferingById(Long offeringId) {
+
+        WeeklyOffering offering = weeklyOfferingRepository
+                .findById(offeringId)
+                .orElseThrow(() ->
+                        new IllegalArgumentException(
+                                "Weekly offering not found."
+                        )
+                );
+
+        return weeklyOfferingMapper.toResponse(offering);
+    }
+
 }
