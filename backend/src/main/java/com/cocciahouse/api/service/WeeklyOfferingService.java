@@ -1,6 +1,7 @@
 package com.cocciahouse.api.service;
 
 import com.cocciahouse.api.dto.WeeklyOfferingCreateRequest;
+import com.cocciahouse.api.exception.DuplicateOfferingItemException;
 import com.cocciahouse.api.model.WeeklyOffering;
 import com.cocciahouse.api.dto.WeeklyOfferingResponse;
 import com.cocciahouse.api.mapper.WeeklyOfferingMapper;
@@ -111,6 +112,21 @@ public class WeeklyOfferingService {
                                 "Recipe not found."
                         )
                 );
+
+        boolean recipeAlreadyIncluded = offering.getItems()
+                .stream()
+                .anyMatch(existingItem ->
+                        existingItem.getRecipe()
+                                .getId()
+                                .equals(recipe.getId())
+                );
+
+        if (recipeAlreadyIncluded) {
+            throw new DuplicateOfferingItemException(
+                    recipe.getName()
+                            + " is already included in this weekly offering."
+            );
+        }
 
         WeeklyOfferingItem item = new WeeklyOfferingItem();
 

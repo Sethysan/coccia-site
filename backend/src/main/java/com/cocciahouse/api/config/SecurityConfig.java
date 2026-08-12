@@ -21,13 +21,16 @@ public class SecurityConfig {
 
         http
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/public/**",
+                        .requestMatchers(
+                                "/api/public/**",
                                 "/api/auth/login",
-                                "/api/auth/session"
+                                "/api/auth/session",
+                                "/api/auth/csrf"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
                 .csrf(csrf -> csrf
+                        .spa()
                         .ignoringRequestMatchers(
                                 "/api/auth/login",
                                 "/api/auth/logout"

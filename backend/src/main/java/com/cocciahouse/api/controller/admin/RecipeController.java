@@ -8,6 +8,7 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import com.cocciahouse.api.dto.WeeklyOfferingItemResponse;
 
 import java.util.List;
 
@@ -33,6 +34,18 @@ public class RecipeController {
         }
 
         return recipes.stream().map(this::toResponse).toList();
+    }
+
+    @GetMapping("/{recipeId}/latest-offering-item")
+    public ResponseEntity<WeeklyOfferingItemResponse> getLatestOfferingItem(
+            @PathVariable Long recipeId
+    ) {
+        return recipeService
+                .getLatestOfferingItem(recipeId)
+                .map(ResponseEntity::ok)
+                .orElseGet(() ->
+                        ResponseEntity.noContent().build()
+                );
     }
 
     @PostMapping

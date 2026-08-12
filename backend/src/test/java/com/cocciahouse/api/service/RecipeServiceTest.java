@@ -7,7 +7,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
+import com.cocciahouse.api.mapper.WeeklyOfferingMapper;
+import com.cocciahouse.api.repository.WeeklyOfferingItemRepository;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -15,17 +16,33 @@ import static org.mockito.Mockito.*;
 
 import com.cocciahouse.api.exception.DuplicateRecipeException;
 
+import com.cocciahouse.api.dto.WeeklyOfferingItemResponse;
+import com.cocciahouse.api.model.WeeklyOfferingItem;
+import com.cocciahouse.api.model.WeeklyOfferingStatus;
+
+import java.util.Optional;
+
 @ExtendWith(MockitoExtension.class)
 class RecipeServiceTest {
 
     @Mock
     private RecipeRepository recipeRepository;
 
+    @Mock
+    private WeeklyOfferingItemRepository weeklyOfferingItemRepository;
+
+    @Mock
+    private WeeklyOfferingMapper weeklyOfferingMapper;
+
     private RecipeService recipeService;
 
     @BeforeEach
     void setUp() {
-        recipeService = new RecipeService(recipeRepository);
+        recipeService = new RecipeService(
+                recipeRepository,
+                weeklyOfferingItemRepository,
+                weeklyOfferingMapper
+        );
     }
 
     @Test
@@ -64,7 +81,7 @@ class RecipeServiceTest {
                 recipeService.searchActiveRecipes("ziti");
 
         assertEquals(1, result.size());
-        assertEquals("Baked Ziti", result.get(0).getName());
+        assertEquals("Baked Ziti", result.getFirst().getName());
 
         verify(recipeRepository)
                 .findByActiveTrueAndNameContainingIgnoreCaseOrderByNameAsc("ziti");
@@ -165,4 +182,68 @@ class RecipeServiceTest {
         verify(recipeRepository, never())
                 .save(any(Recipe.class));
     }
+
+    @Test
+    void getLatestOfferingItem_returnsMappedLatestPublishedOrScheduledItem() {
+
+        Long recipeId = 1L;
+
+        WeeklyOfferingItem item = new WeeklyOfferingItem();
+
+        WeeklyOfferingItemResponse response =
+                mock(WeeklyOfferingItemResponse.class);
+
+        when(
+                weeklyOfferingItemRepository
+                        .findFirstByRecipeIdAndWeeklyOfferingStatusInOrderByWeeklyOfferingStartDateDesc(
+                                eq(recipeId),
+                                anyCollection()
+                        )
+        ).thenReturn(Optional.of(item));
+
+        when(weeklyOfferingMapper.toItemResponse(item))
+                .thenReturn(response);
+
+        Optional<WeeklyOfferingItemResponse> result =
+                recipeService.getLatestOfferingItem(recipeId);
+
+        assertTrue(result.isPresent());
+        assertSame(response, result.get());
+
+        verify(weeklyOfferingItemRepository)
+                .findFirstByRecipeIdAndWeeklyOfferingStatusInOrderByWeeklyOfferingStartDateDesc(
+                        eq(recipeId),
+                        argThat(statuses ->
+                                statuses.contains(WeeklyOfferingStatus.PUBLISHED)
+                                        && statuses.contains(WeeklyOfferingStatus.SCHEDULED)
+                                        && !statuses.contains(WeeklyOfferingStatus.DRAFT)
+                        )
+                );
+
+        verify(weeklyOfferingMapper)
+                .toItemResponse(item);
+    }
+
+    @Test
+    void getLatestOfferingItem_returnsEmptyWhenRecipeHasNoPreviousOffering() {
+
+        Long recipeId = 1L;
+
+        when(
+                weeklyOfferingItemRepository
+                        .findFirstByRecipeIdAndWeeklyOfferingStatusInOrderByWeeklyOfferingStartDateDesc(
+                                eq(recipeId),
+                                anyCollection()
+                        )
+        ).thenReturn(Optional.empty());
+
+        Optional<WeeklyOfferingItemResponse> result =
+                recipeService.getLatestOfferingItem(recipeId);
+
+        assertTrue(result.isEmpty());
+
+        verify(weeklyOfferingMapper, never())
+                .toItemResponse(any());
+    }
+
 }

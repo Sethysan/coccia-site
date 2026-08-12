@@ -1,8 +1,10 @@
 package com.cocciahouse.api.repository;
 
 import com.cocciahouse.api.model.WeeklyOfferingItem;
+import com.cocciahouse.api.model.WeeklyOfferingStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.Collection;
 import java.util.Optional;
 
 public interface WeeklyOfferingItemRepository
@@ -12,4 +14,11 @@ public interface WeeklyOfferingItemRepository
             Long itemId,
             Long weeklyOfferingId
     );
+
+    Optional<WeeklyOfferingItem>
+    findFirstByRecipeIdAndWeeklyOfferingStatusInOrderByWeeklyOfferingStartDateDesc(
+            Long recipeId,
+            Collection<WeeklyOfferingStatus> statuses
+    );
+
 }

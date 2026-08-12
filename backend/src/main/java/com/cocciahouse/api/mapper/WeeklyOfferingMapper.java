@@ -43,7 +43,7 @@ public class WeeklyOfferingMapper {
         );
     }
 
-    private WeeklyOfferingItemResponse toItemResponse(
+    public WeeklyOfferingItemResponse toItemResponse(
             WeeklyOfferingItem item
     ) {
         List<OfferingItemPriceResponse> prices = item.getPrices()

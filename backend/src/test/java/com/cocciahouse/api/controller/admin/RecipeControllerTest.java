@@ -18,6 +18,12 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import com.cocciahouse.api.dto.OfferingItemPriceResponse;
+import com.cocciahouse.api.dto.WeeklyOfferingItemResponse;
+import com.cocciahouse.api.model.OfferingType;
+
+import java.math.BigDecimal;
+import java.util.Optional;
 
 @WebMvcTest(RecipeController.class)
 @ActiveProfiles("test")
@@ -122,5 +128,64 @@ class RecipeControllerTest {
         verify(recipeService).createRecipe("Baked Ziti");
     }
 
+    @Test
+    void getLatestOfferingItem_returnsPreviousUsage() throws Exception {
+
+        WeeklyOfferingItemResponse response =
+                new WeeklyOfferingItemResponse(
+                        10L,
+                        1L,
+                        "Chicken Cacciatore",
+                        OfferingType.DINNER,
+                        "Chicken Cacciatore Dinner",
+                        "Slow-cooked chicken.",
+                        null,
+                        null,
+                        true,
+                        true,
+                        "Served with house salad and homemade bread.",
+                        0,
+                        List.of(
+                                new OfferingItemPriceResponse(
+                                        20L,
+                                        null,
+                                        new BigDecimal("21.95"),
+                                        0
+                                )
+                        )
+                );
+
+        when(recipeService.getLatestOfferingItem(1L))
+                .thenReturn(Optional.of(response));
+
+        mockMvc.perform(
+                        get("/api/admin/recipes/{recipeId}/latest-offering-item", 1L)
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.recipeId").value(1))
+                .andExpect(jsonPath("$.recipeName").value("Chicken Cacciatore"))
+                .andExpect(jsonPath("$.offeringType").value("DINNER"))
+                .andExpect(jsonPath("$.publicTitle")
+                        .value("Chicken Cacciatore Dinner"))
+                .andExpect(jsonPath("$.prices.length()").value(1))
+                .andExpect(jsonPath("$.prices[0].amount").value(21.95));
+
+        verify(recipeService).getLatestOfferingItem(1L);
+    }
+
+    @Test
+    void getLatestOfferingItem_whenNoPreviousUsage_returns204()
+            throws Exception {
+
+        when(recipeService.getLatestOfferingItem(1L))
+                .thenReturn(Optional.empty());
+
+        mockMvc.perform(
+                        get("/api/admin/recipes/{recipeId}/latest-offering-item", 1L)
+                )
+                .andExpect(status().isNoContent());
+
+        verify(recipeService).getLatestOfferingItem(1L);
+    }
 
 }

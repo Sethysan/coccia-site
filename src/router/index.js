@@ -7,6 +7,8 @@ import AdminLoginView from '../views/admin/AdminLoginView.vue'
 import AdminWeeklyOfferingsView from '../views/admin/AdminWeeklyOfferingsView.vue'
 import { useLoadingStore } from "@/stores/loadingStore"
 import { useAuthStore } from '@/stores/authStore'
+import AdminWeeklyOfferingDetailView
+  from '../views/admin/AdminWeeklyOfferingDetailView.vue'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -14,8 +16,15 @@ const router = createRouter({
     { path: '/', component: HomeView },
     { path: '/menu', component: MenuView },
     { path: '/about', component: AboutView },
-    { path: '/admin/login', component: AdminLoginView},
-    { path: '/admin/weekly-offerings', component: AdminWeeklyOfferingsView, meta: {requiresAuth: true }  }
+    { path: '/admin/login', component: AdminLoginView },
+    {
+      path: '/admin/weekly-offerings',
+      component: AdminWeeklyOfferingsView, meta: { requiresAuth: true }
+    },
+    {
+      path: '/admin/weekly-offerings/:id',
+      component: AdminWeeklyOfferingDetailView, meta: { requiresAuth: true }
+    }
   ],
 
   scrollBehavior(to, from, savedPosition) {
