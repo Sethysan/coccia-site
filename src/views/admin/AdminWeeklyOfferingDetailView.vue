@@ -28,128 +28,25 @@
             <p>
                 Status: {{ offering.status }}
             </p>
+            <button v-if="offering.status === 'DRAFT' && !showDateForm" type="button" @click="showDateForm = true">
+                Edit Dates
+            </button>
+            <WeeklyOfferingForm v-if="showDateForm" :saving="savingDates" submit-label="Save Dates"
+                :initial-start-date="offering.startDate" :initial-end-date="offering.endDate"
+                @submit="updateOfferingDates" @cancel="showDateForm = false" />
+
+            <button v-if="offering.status === 'DRAFT'" type="button" @click="scheduleOffering">
+                Schedule Offering
+            </button>
 
             <h2>Items</h2>
 
-            <button v-if="offering.status === 'DRAFT' && !showAddItemForm" @click="showAddItemForm = true">
+            <button v-if="offering.status === 'DRAFT' && !showAddItemForm" @click="startAddingItem">
                 Add Item
             </button>
 
-            <form v-if="showAddItemForm" @submit.prevent="saveItem">
-                <h3>
-                    {{ editingItemId ? 'Edit Weekly Offering Item' : 'Add Weekly Offering Item' }}
-                </h3>
-
-                <div>
-                    <label for="recipe">
-                        Recipe
-                    </label>
-
-                    <select id="recipe" v-model="newItem.recipeId" @change="handleRecipeSelected" required>
-                        <option disabled :value="null">
-                            Select a recipe
-                        </option>
-
-                        <option v-for="recipe in recipeStore.recipes" :key="recipe.id" :value="recipe.id">
-                            {{ recipe.name }}
-                        </option>
-                    </select>
-
-                    <p v-if="recipeStore.loading">
-                        Loading recipes...
-                    </p>
-
-                    <p v-if="recipeStore.error">
-                        {{ recipeStore.error }}
-                    </p>
-                </div>
-
-                <div>
-                    <label for="offering-type">
-                        Type
-                    </label>
-
-                    <select id="offering-type" v-model="newItem.offeringType" required>
-                        <option disabled value="">
-                            Select a type
-                        </option>
-
-                        <option value="DINNER">Dinner</option>
-                        <option value="SOUP">Soup</option>
-                        <option value="DESSERT">Dessert</option>
-                    </select>
-                </div>
-
-                <div>
-                    <label for="public-title">
-                        Public Title
-                    </label>
-
-                    <input id="public-title" v-model="newItem.publicTitle" type="text" required />
-                </div>
-
-                <div>
-                    <label for="public-description">
-                        Description
-                    </label>
-
-                    <textarea id="public-description" v-model="newItem.publicDescription"></textarea>
-                </div>
-
-                <div>
-                    <h4>Prices</h4>
-
-                    <div v-for="(price, index) in newItem.prices" :key="index">
-                        <label>
-                            Label
-                        </label>
-
-                        <input v-model="price.label" type="text" placeholder="Optional, e.g. Cup" />
-
-                        <label>
-                            Amount
-                        </label>
-
-                        <input v-model="price.amount" type="number" min="0.01" step="0.01" required />
-
-                        <button type="button" @click="removePrice(index)" v-if="newItem.prices.length > 1">
-                            Remove Price
-                        </button>
-                    </div>
-
-                    <button type="button" @click="addPrice">
-                        Add Price
-                    </button>
-                </div>
-
-                <fieldset v-if="newItem.offeringType === 'DINNER'">
-                    <legend>Dinner Includes</legend>
-
-                    <label>
-                        <input v-model="newItem.includesHouseSalad" type="checkbox" />
-                        House Salad
-                    </label>
-
-                    <label>
-                        <input v-model="newItem.includesHomemadeBread" type="checkbox" />
-                        Homemade Bread
-                    </label>
-                </fieldset>
-
-                <button type="submit" :disabled="savingItem">
-                    {{
-                        savingItem
-                            ? 'Saving...'
-                            : editingItemId
-                                ? 'Save Changes'
-                                : 'Save Item'
-                    }}
-                </button>
-
-                <button type="button" @click="cancelAddItem">
-                    Cancel
-                </button>
-            </form>
+            <WeeklyOfferingItemForm v-if="showAddItemForm" ref="itemForm" :item="editingItem" :saving="savingItem"
+                @submit="saveItem" @cancel="cancelItemForm" />
 
             <p v-if="offering.items.length === 0">
                 No items have been added yet.
@@ -202,7 +99,9 @@ import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useWeeklyOfferingStore } from '@/stores/weeklyOfferingStore'
 import { useRecipeStore } from '@/stores/recipeStore'
-
+import WeeklyOfferingItemForm
+    from '@/components/admin/WeeklyOfferingItemForm.vue'
+import WeeklyOfferingForm from '@/components/admin/WeeklyOfferingForm.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -210,18 +109,10 @@ const weeklyOfferings = useWeeklyOfferingStore()
 const recipeStore = useRecipeStore()
 const showAddItemForm = ref(false)
 const savingItem = ref(false)
-const editingItemId = ref(null)
-
-
-const newItem = ref({
-    recipeId: null,
-    offeringType: '',
-    publicTitle: '',
-    publicDescription: '',
-    includesHouseSalad: false,
-    includesHomemadeBread: false,
-    prices: []
-})
+const itemForm = ref(null)
+const editingItem = ref(null)
+const showDateForm = ref(false)
+const savingDates = ref(false)
 
 const offering = computed(
     () => weeklyOfferings.currentOffering
@@ -234,154 +125,32 @@ onMounted(async () => {
     ])
 })
 
-async function handleRecipeSelected() {
-    if (!newItem.value.recipeId) {
-        return
-    }
-
-    try {
-        const previousItem =
-            await recipeStore.fetchLatestOfferingItem(
-                newItem.value.recipeId
-            )
-
-        if (!previousItem) {
-            // This recipe has never been featured before.
-            // Keep the selected recipe but clear the offering-specific fields.
-            newItem.value.offeringType = ''
-            newItem.value.publicTitle = ''
-            newItem.value.publicDescription = ''
-            newItem.value.includesHouseSalad = false
-            newItem.value.includesHomemadeBread = false
-            newItem.value.prices = [
-                {
-                    label: '',
-                    amount: null,
-                    displayOrder: 0
-                }
-            ]
-
-            return
-        }
-
-        newItem.value.offeringType =
-            previousItem.offeringType ?? ''
-
-        newItem.value.publicTitle =
-            previousItem.publicTitle ?? ''
-
-        newItem.value.publicDescription =
-            previousItem.publicDescription ?? ''
-
-        newItem.value.includesHouseSalad =
-            previousItem.includesHouseSalad ?? false
-
-        newItem.value.includesHomemadeBread =
-            previousItem.includesHomemadeBread ?? false
-
-        newItem.value.prices =
-            previousItem.prices?.map(price => ({
-                label: price.label ?? '',
-                amount: price.amount,
-                displayOrder: price.displayOrder
-            })) ?? []
-
-    } catch (error) {
-        console.error(
-            'Unable to populate previous recipe details.',
-            error
-        )
-    }
+function startAddingItem() {
+    editingItem.value = null
+    showAddItemForm.value = true
 }
 
-function addPrice() {
-    newItem.value.prices.push({
-        label: '',
-        amount: null,
-        displayOrder: newItem.value.prices.length
-    })
+function startEditingItem(item) {
+    editingItem.value = item
+    showAddItemForm.value = true
 }
 
-function removePrice(index) {
-    newItem.value.prices.splice(index, 1)
-
-    newItem.value.prices.forEach((price, priceIndex) => {
-        price.displayOrder = priceIndex
-    })
-}
-
-function resetNewItem() {
-    newItem.value = {
-        recipeId: null,
-        offeringType: '',
-        publicTitle: '',
-        publicDescription: '',
-        includesHouseSalad: false,
-        includesHomemadeBread: false,
-        prices: [
-            {
-                label: '',
-                amount: null,
-                displayOrder: 0
-            }
-        ]
-    }
-}
-
-function cancelAddItem() {
-    editingItemId.value = null
-    resetNewItem()
+function cancelItemForm() {
+    editingItem.value = null
     showAddItemForm.value = false
 }
 
-async function saveItem() {
+async function saveItem(payload) {
     savingItem.value = true
 
     try {
-        const isDinner =
-            newItem.value.offeringType === 'DINNER'
+        payload.displayOrder =
+            getDisplayOrder(payload.offeringType)
 
-        const payload = {
-            recipeId: newItem.value.recipeId,
-            offeringType: newItem.value.offeringType,
-            publicTitle: newItem.value.publicTitle,
-            publicDescription:
-                newItem.value.publicDescription || null,
-
-            imageUrl: null,
-            imageAlt: null,
-
-            includesHouseSalad:
-                isDinner
-                    ? newItem.value.includesHouseSalad
-                    : false,
-
-            includesHomemadeBread:
-                isDinner
-                    ? newItem.value.includesHomemadeBread
-                    : false,
-
-            displayOrder:
-                weeklyOfferings.currentOffering.items.length,
-
-            prices: newItem.value.prices.map(
-                (price, index) => ({
-                    label:
-                        price.label?.trim()
-                            ? price.label.trim()
-                            : null,
-
-                    amount: Number(price.amount),
-
-                    displayOrder: index
-                })
-            )
-        }
-
-        const saved = editingItemId.value
+        const saved = editingItem.value
             ? await weeklyOfferings.updateItem(
                 route.params.id,
-                editingItemId.value,
+                editingItem.value.id,
                 payload
             )
             : await weeklyOfferings.addItem(
@@ -396,16 +165,70 @@ async function saveItem() {
             )
 
             weeklyOfferings.clearError()
-            resetNewItem()
+            itemForm.value?.resetForm()
 
             return
         }
-        editingItemId.value = null
-        resetNewItem()
+        editingItem.value = null
         showAddItemForm.value = false
 
     } finally {
         savingItem.value = false
+    }
+}
+
+async function updateOfferingDates(formData) {
+    savingDates.value = true
+
+    try {
+        const updated =
+            await weeklyOfferings.updateOfferingDates(
+                route.params.id,
+                formData.startDate,
+                formData.endDate
+            )
+
+        if (!updated) {
+            window.alert(
+                weeklyOfferings.error
+                ?? 'Unable to update weekly offering dates.'
+            )
+
+            weeklyOfferings.clearError()
+
+            return
+        }
+
+        showDateForm.value = false
+
+    } finally {
+        savingDates.value = false
+    }
+}
+
+async function scheduleOffering() {
+    const confirmed = window.confirm(
+        'Are you sure you want to schedule this weekly offering?'
+    )
+
+    if (!confirmed) {
+        return
+    }
+
+    const scheduled =
+        await weeklyOfferings.scheduleOffering(
+            route.params.id
+        )
+
+    if (!scheduled) {
+        window.alert(
+            weeklyOfferings.error
+            ?? 'Unable to schedule weekly offering.'
+        )
+
+        weeklyOfferings.clearError()
+
+        return
     }
 }
 
@@ -418,30 +241,41 @@ async function deleteItem(itemId) {
         return
     }
 
-    await weeklyOfferings.deleteItem(
+    const deleted = await weeklyOfferings.deleteItem(
         route.params.id,
         itemId
     )
-}
 
-function startEditingItem(item) {
-    editingItemId.value = item.id
+    if (!deleted) {
+        window.alert(
+            weeklyOfferings.error
+            ?? 'Unable to delete weekly offering item.'
+        )
 
-    newItem.value = {
-        recipeId: item.recipeId,
-        offeringType: item.offeringType,
-        publicTitle: item.publicTitle,
-        publicDescription: item.publicDescription ?? '',
-        includesHouseSalad: item.includesHouseSalad ?? false,
-        includesHomemadeBread: item.includesHomemadeBread ?? false,
-        prices: item.prices.map((price, index) => ({
-            label: price.label ?? '',
-            amount: price.amount,
-            displayOrder: index
-        }))
+        weeklyOfferings.clearError()
+
+        return
     }
 
-    showAddItemForm.value = true
+    // If the deleted item was currently being edited,
+    // close and clear the form.
+    if (editingItem.value?.id === itemId) {
+        editingItem.value = null
+        showAddItemForm.value = false
+    }
+}
+
+function getDisplayOrder(offeringType) {
+    switch (offeringType) {
+        case 'DINNER':
+            return 0
+        case 'SOUP':
+            return 1
+        case 'DESSERT':
+            return 2
+        default:
+            return 99
+    }
 }
 
 </script>

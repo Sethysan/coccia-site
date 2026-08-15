@@ -75,7 +75,6 @@ class PublicWeeklyOfferingControllerIntegrationTest {
 
         dinner.setRecipe(dinnerRecipe);
         dinner.setOfferingType(OfferingType.DINNER);
-        dinner.setPublicTitle("Test Chicken Cacciatore");
         dinner.setIncludesHouseSalad(true);
         dinner.setIncludesHomemadeBread(true);
         dinner.setDisplayOrder(0);
@@ -96,7 +95,6 @@ class PublicWeeklyOfferingControllerIntegrationTest {
 
         soup.setRecipe(soupRecipe);
         soup.setOfferingType(OfferingType.SOUP);
-        soup.setPublicTitle("Test Italian Wedding Soup");
         soup.setDisplayOrder(1);
 
         soup.addPrice(
@@ -123,7 +121,6 @@ class PublicWeeklyOfferingControllerIntegrationTest {
 
         dessert.setRecipe(dessertRecipe);
         dessert.setOfferingType(OfferingType.DESSERT);
-        dessert.setPublicTitle("Test Cannoli");
         dessert.setDisplayOrder(2);
 
         dessert.addPrice(

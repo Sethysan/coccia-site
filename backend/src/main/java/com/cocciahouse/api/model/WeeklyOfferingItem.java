@@ -39,9 +39,6 @@ public class WeeklyOfferingItem {
     @Column(name = "offering_type", nullable = false, length = 20)
     private OfferingType offeringType;
 
-    @Column(name = "public_title", nullable = false, length = 150)
-    private String publicTitle;
-
     @Column(name = "public_description")
     private String publicDescription;
 
@@ -103,14 +100,6 @@ public class WeeklyOfferingItem {
 
     public void setOfferingType(OfferingType offeringType) {
         this.offeringType = offeringType;
-    }
-
-    public String getPublicTitle() {
-        return publicTitle;
-    }
-
-    public void setPublicTitle(String publicTitle) {
-        this.publicTitle = publicTitle;
     }
 
     public String getPublicDescription() {

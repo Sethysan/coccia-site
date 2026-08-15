@@ -137,7 +137,6 @@ class RecipeControllerTest {
                         1L,
                         "Chicken Cacciatore",
                         OfferingType.DINNER,
-                        "Chicken Cacciatore Dinner",
                         "Slow-cooked chicken.",
                         null,
                         null,
@@ -165,8 +164,6 @@ class RecipeControllerTest {
                 .andExpect(jsonPath("$.recipeId").value(1))
                 .andExpect(jsonPath("$.recipeName").value("Chicken Cacciatore"))
                 .andExpect(jsonPath("$.offeringType").value("DINNER"))
-                .andExpect(jsonPath("$.publicTitle")
-                        .value("Chicken Cacciatore Dinner"))
                 .andExpect(jsonPath("$.prices.length()").value(1))
                 .andExpect(jsonPath("$.prices[0].amount").value(21.95));
 

@@ -38,6 +38,21 @@ public class WeeklyOfferingController {
                 .body(response);
     }
 
+    @PutMapping("/{offeringId}")
+    public ResponseEntity<WeeklyOfferingResponse> updateOfferingDates(
+            @PathVariable Long offeringId,
+            @Valid @RequestBody WeeklyOfferingCreateRequest request
+    ) {
+
+        WeeklyOfferingResponse response =
+                weeklyOfferingService.updateOfferingDates(
+                        offeringId,
+                        request
+                );
+
+        return ResponseEntity.ok(response);
+    }
+
     @PostMapping("/{offeringId}/items")
     public ResponseEntity<WeeklyOfferingResponse> addItem(
             @PathVariable Long offeringId,

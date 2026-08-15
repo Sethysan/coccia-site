@@ -9,7 +9,6 @@ public record WeeklyOfferingItemResponse(
         Long recipeId,
         String recipeName,
         OfferingType offeringType,
-        String publicTitle,
         String publicDescription,
         String imageUrl,
         String imageAlt,

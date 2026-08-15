@@ -14,6 +14,13 @@
             </button>
         </header>
 
+        <button v-if="!showCreateForm" @click="showCreateForm = true">
+            Create Weekly Offering
+        </button>
+
+        <WeeklyOfferingForm v-if="showCreateForm" :saving="creatingOffering" submit-label="Create Draft"
+            @submit="createOffering" @cancel="showCreateForm = false" />
+
         <p v-if="weeklyOfferings.loading">
             Loading weekly offerings...
         </p>
@@ -51,14 +58,17 @@
 </template>
 
 <script setup>
-import { onMounted } from 'vue'
+import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import { useWeeklyOfferingStore } from '@/stores/weeklyOfferingStore'
+import WeeklyOfferingForm from '@/components/admin/WeeklyOfferingForm.vue'
 
 const router = useRouter()
 const auth = useAuthStore()
 const weeklyOfferings = useWeeklyOfferingStore()
+const showCreateForm = ref(false)
+const creatingOffering = ref(false)
 
 onMounted(() => {
     weeklyOfferings.fetchOfferings()
@@ -68,6 +78,39 @@ async function handleLogout() {
     await auth.logout()
     await router.push('/admin/login')
 }
+
+async function createOffering(formData) {
+    creatingOffering.value = true
+
+    try {
+        const created =
+            await weeklyOfferings.createOffering(
+                formData.startDate,
+                formData.endDate
+            )
+
+        if (!created) {
+            window.alert(
+                weeklyOfferings.error
+                ?? 'Unable to create weekly offering.'
+            )
+
+            weeklyOfferings.clearError()
+
+            return
+        }
+
+        showCreateForm.value = false
+
+        await router.push(
+            `/admin/weekly-offerings/${created.id}`
+        )
+
+    } finally {
+        creatingOffering.value = false
+    }
+}
+
 </script>
 
 <style scoped></style>

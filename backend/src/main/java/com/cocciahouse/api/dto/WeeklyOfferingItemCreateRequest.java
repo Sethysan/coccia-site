@@ -16,9 +16,6 @@ public record WeeklyOfferingItemCreateRequest(
         @NotNull
         OfferingType offeringType,
 
-        @NotBlank
-        String publicTitle,
-
         String publicDescription,
 
         String imageUrl,

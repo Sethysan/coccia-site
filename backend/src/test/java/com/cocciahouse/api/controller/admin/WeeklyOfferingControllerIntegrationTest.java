@@ -253,7 +253,6 @@ class WeeklyOfferingControllerIntegrationTest {
                 {
                     "recipeId": %d,
                     "offeringType": "DINNER",
-                    "publicTitle": "Chicken Parmesan",
                     "publicDescription": "Breaded chicken with sauce and cheese.",
                     "imageUrl": null,
                     "imageAlt": null,
@@ -285,16 +284,8 @@ class WeeklyOfferingControllerIntegrationTest {
                 .andExpect(jsonPath("$.status").value("DRAFT"))
                 .andExpect(jsonPath("$.items.length()").value(1))
                 .andExpect(
-                        jsonPath("$.items[0].recipeName")
-                                .value("Test Chicken Parmesan")
-                )
-                .andExpect(
                         jsonPath("$.items[0].offeringType")
                                 .value("DINNER")
-                )
-                .andExpect(
-                        jsonPath("$.items[0].publicTitle")
-                                .value("Chicken Parmesan")
                 )
                 .andExpect(
                         jsonPath("$.items[0].includedSidesText")
@@ -322,7 +313,6 @@ class WeeklyOfferingControllerIntegrationTest {
                 {
                     "recipeId": 999999,
                     "offeringType": "DINNER",
-                    "publicTitle": "Test Dinner",
                     "includesHouseSalad": true,
                     "includesHomemadeBread": true,
                     "displayOrder": 0,
@@ -366,7 +356,6 @@ class WeeklyOfferingControllerIntegrationTest {
                 {
                     "recipeId": 999999,
                     "offeringType": "DINNER",
-                    "publicTitle": "Test Dinner",
                     "includesHouseSalad": true,
                     "includesHomemadeBread": true,
                     "displayOrder": 0,
@@ -418,7 +407,6 @@ class WeeklyOfferingControllerIntegrationTest {
                 {
                     "recipeId": %d,
                     "offeringType": "DINNER",
-                    "publicTitle": "Test Published Dinner",
                     "includesHouseSalad": true,
                     "includesHomemadeBread": true,
                     "displayOrder": 0,
@@ -496,7 +484,6 @@ class WeeklyOfferingControllerIntegrationTest {
                 {
                     "recipeId": %d,
                     "offeringType": "DINNER",
-                    "publicTitle": "Test Dinner",
                     "includesHouseSalad": true,
                     "includesHomemadeBread": true,
                     "displayOrder": 0,
@@ -546,7 +533,6 @@ class WeeklyOfferingControllerIntegrationTest {
         WeeklyOfferingItem item = new WeeklyOfferingItem();
         item.setRecipe(recipe);
         item.setOfferingType(OfferingType.DINNER);
-        item.setPublicTitle("Pork Chop");
         item.setIncludesHouseSalad(true);
         item.setIncludesHomemadeBread(true);
         item.setDisplayOrder(0);
@@ -571,7 +557,6 @@ class WeeklyOfferingControllerIntegrationTest {
                 {
                     "recipeId": %d,
                     "offeringType": "DINNER",
-                    "publicTitle": "Center Cut Pork Chop",
                     "publicDescription": "Available as a single or double.",
                     "imageUrl": null,
                     "imageAlt": null,
@@ -614,10 +599,6 @@ class WeeklyOfferingControllerIntegrationTest {
                                 .value(1)
                 )
                 .andExpect(
-                        jsonPath("$.items[0].publicTitle")
-                                .value("Center Cut Pork Chop")
-                )
-                .andExpect(
                         jsonPath("$.items[0].prices.length()")
                                 .value(2)
                 )
@@ -656,7 +637,6 @@ class WeeklyOfferingControllerIntegrationTest {
         WeeklyOfferingItem item = new WeeklyOfferingItem();
         item.setRecipe(recipe);
         item.setOfferingType(OfferingType.DINNER);
-        item.setPublicTitle("Test Delete Dinner");
         item.setDisplayOrder(0);
 
         item.addPrice(
@@ -708,7 +688,6 @@ class WeeklyOfferingControllerIntegrationTest {
         WeeklyOfferingItem item = new WeeklyOfferingItem();
         item.setRecipe(recipe);
         item.setOfferingType(OfferingType.DINNER);
-        item.setPublicTitle("Test Published Delete Dinner");
         item.setDisplayOrder(0);
 
         item.addPrice(
@@ -776,7 +755,6 @@ class WeeklyOfferingControllerIntegrationTest {
         WeeklyOfferingItem item = new WeeklyOfferingItem();
         item.setRecipe(recipe);
         item.setOfferingType(OfferingType.DINNER);
-        item.setPublicTitle("Test Wrong Offering Dinner");
         item.setDisplayOrder(0);
 
         item.addPrice(
@@ -836,7 +814,6 @@ class WeeklyOfferingControllerIntegrationTest {
         WeeklyOfferingItem item = new WeeklyOfferingItem();
         item.setRecipe(recipe);
         item.setOfferingType(OfferingType.DINNER);
-        item.setPublicTitle("Test Scheduled Dinner");
         item.setIncludesHouseSalad(true);
         item.setIncludesHomemadeBread(true);
         item.setDisplayOrder(0);
@@ -950,7 +927,6 @@ class WeeklyOfferingControllerIntegrationTest {
         WeeklyOfferingItem item = new WeeklyOfferingItem();
         item.setRecipe(recipe);
         item.setOfferingType(OfferingType.DINNER);
-        item.setPublicTitle("Test Dinner Without Price");
         item.setDisplayOrder(0);
 
         offering.addItem(item);
@@ -1130,7 +1106,6 @@ class WeeklyOfferingControllerIntegrationTest {
         WeeklyOfferingItem item = new WeeklyOfferingItem();
         item.setRecipe(recipe);
         item.setOfferingType(OfferingType.DINNER);
-        item.setPublicTitle("Test Get Offering Dinner");
         item.setPublicDescription("Test description");
         item.setIncludesHouseSalad(true);
         item.setIncludesHomemadeBread(true);
@@ -1185,10 +1160,6 @@ class WeeklyOfferingControllerIntegrationTest {
                                 .value("Test Get Offering Recipe")
                 )
                 .andExpect(
-                        jsonPath("$.items[0].publicTitle")
-                                .value("Test Get Offering Dinner")
-                )
-                .andExpect(
                         jsonPath("$.items[0].prices.length()")
                                 .value(1)
                 )
@@ -1224,6 +1195,120 @@ class WeeklyOfferingControllerIntegrationTest {
                         jsonPath("$.message")
                                 .value("Weekly offering not found.")
                 );
+    }
+
+    @Test
+    void authenticatedAdminCanUpdateDraftOfferingDates()
+            throws Exception {
+
+        WeeklyOffering offering = new WeeklyOffering();
+        offering.setStartDate(LocalDate.of(2026, 8, 26));
+        offering.setEndDate(LocalDate.of(2026, 8, 29));
+        offering.setStatus(WeeklyOfferingStatus.DRAFT);
+
+        offering = weeklyOfferingRepository.save(offering);
+
+        MockHttpSession session = loginAsTestAdmin();
+
+        String requestJson = """
+                {
+                    "startDate": "2026-08-27",
+                    "endDate": "2026-08-30"
+                }
+                """;
+
+        mockMvc.perform(
+                        put(
+                                "/api/admin/weekly-offerings/{offeringId}",
+                                offering.getId()
+                        )
+                                .session(session)
+                                .with(csrf())
+                                .contentType("application/json")
+                                .content(requestJson)
+                )
+                .andExpect(status().isOk())
+                .andExpect(
+                        jsonPath("$.startDate")
+                                .value("2026-08-27")
+                )
+                .andExpect(
+                        jsonPath("$.endDate")
+                                .value("2026-08-30")
+                )
+                .andExpect(
+                        jsonPath("$.status")
+                                .value("DRAFT")
+                );
+
+        WeeklyOffering updated =
+                weeklyOfferingRepository
+                        .findById(offering.getId())
+                        .orElseThrow();
+
+        assertEquals(
+                LocalDate.of(2026, 8, 27),
+                updated.getStartDate()
+        );
+
+        assertEquals(
+                LocalDate.of(2026, 8, 30),
+                updated.getEndDate()
+        );
+    }
+
+    @Test
+    void publishedOfferingCannotHaveDatesChanged()
+            throws Exception {
+
+        WeeklyOffering offering = new WeeklyOffering();
+        offering.setStartDate(LocalDate.of(2026, 8, 5));
+        offering.setEndDate(LocalDate.of(2026, 8, 12));
+        offering.setStatus(WeeklyOfferingStatus.PUBLISHED);
+
+        offering = weeklyOfferingRepository.save(offering);
+
+        MockHttpSession session = loginAsTestAdmin();
+
+        String requestJson = """
+                {
+                    "startDate": "2026-08-06",
+                    "endDate": "2026-08-13"
+                }
+                """;
+
+        mockMvc.perform(
+                        put(
+                                "/api/admin/weekly-offerings/{offeringId}",
+                                offering.getId()
+                        )
+                                .session(session)
+                                .with(csrf())
+                                .contentType("application/json")
+                                .content(requestJson)
+                )
+                .andExpect(status().isBadRequest())
+                .andExpect(
+                        jsonPath("$.message")
+                                .value(
+                                        "Only draft offerings can have their dates changed."
+                                )
+                );
+
+        WeeklyOffering unchanged =
+                weeklyOfferingRepository
+                        .findById(offering.getId())
+                        .orElseThrow();
+
+        assertEquals(
+                LocalDate.of(2026, 8, 5),
+                unchanged.getStartDate()
+        );
+
+        assertEquals(
+                LocalDate.of(2026, 8, 12),
+                unchanged.getEndDate()
+        );
     }
 
 }

@@ -86,6 +86,38 @@ public class WeeklyOfferingService {
     }
 
     @Transactional
+    public WeeklyOfferingResponse updateOfferingDates(
+            Long offeringId,
+            WeeklyOfferingCreateRequest request
+    ) {
+
+        WeeklyOffering offering = weeklyOfferingRepository
+                .findById(offeringId)
+                .orElseThrow(() ->
+                        new IllegalArgumentException(
+                                "Weekly offering not found."
+                        )
+                );
+
+        if (offering.getStatus() != WeeklyOfferingStatus.DRAFT) {
+            throw new IllegalArgumentException(
+                    "Only draft offerings can have their dates changed."
+            );
+        }
+
+        if (request.startDate().isAfter(request.endDate())) {
+            throw new IllegalArgumentException(
+                    "Start date cannot be after end date."
+            );
+        }
+
+        offering.setStartDate(request.startDate());
+        offering.setEndDate(request.endDate());
+
+        return weeklyOfferingMapper.toResponse(offering);
+    }
+
+    @Transactional
     public WeeklyOfferingResponse addItem(
             Long offeringId,
             WeeklyOfferingItemCreateRequest request
@@ -132,7 +164,6 @@ public class WeeklyOfferingService {
 
         item.setRecipe(recipe);
         item.setOfferingType(request.offeringType());
-        item.setPublicTitle(request.publicTitle().trim());
         item.setPublicDescription(request.publicDescription());
         item.setImageUrl(request.imageUrl());
         item.setImageAlt(request.imageAlt());
@@ -204,7 +235,6 @@ public class WeeklyOfferingService {
 
         item.setRecipe(recipe);
         item.setOfferingType(request.offeringType());
-        item.setPublicTitle(request.publicTitle().trim());
         item.setPublicDescription(request.publicDescription());
         item.setImageUrl(request.imageUrl());
         item.setImageAlt(request.imageAlt());

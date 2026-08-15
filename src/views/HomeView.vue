@@ -20,7 +20,7 @@
       <p class="today-hours">
         {{ todayHours.hours }}
       </p>
- <!-- todo -->
+      <!-- todo -->
       <!-- <p class="today-message">
         {{ todayHours.note }}
       </p> -->
@@ -30,6 +30,12 @@
       </p>
     </section>
 
+
+    <!-- ========================================================
+         Weekly Offering
+         ======================================================== -->
+
+    <WeeklyOffering />
 
     <!-- ========================================================
          QUICK ACTIONS
@@ -112,7 +118,7 @@
          LATEST NEWS
          ======================================================== -->
     <section class="news-card">
- <!-- todo -->
+      <!-- todo -->
       <!-- <article class="news-item">
         <h3>Live Music Tonight – Thursday, July 23</h3>
 
@@ -209,6 +215,7 @@
 import { RouterLink } from 'vue-router'
 import { useRestaurantHours } from '@/composables/useRestaurantHours'
 import { homeContent } from '@/content/homeContent.js'
+import WeeklyOffering from '@/components/WeeklyOffering.vue'
 import HomeGallery from '@/components/HomeGallery.vue'
 import { trackPhoneClick } from "@/utils/analytics"
 import { trackDirectionsClick } from "@/utils/analytics"
@@ -224,7 +231,7 @@ const {
 /* ==========================================================
    HOME PAGE
    ========================================================== */
-   /* TODO */
+/* TODO */
 /* .news-flyer {
   display: block;
   width: 100%;
