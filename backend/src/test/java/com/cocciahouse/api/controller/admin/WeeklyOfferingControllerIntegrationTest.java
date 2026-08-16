@@ -386,7 +386,7 @@ class WeeklyOfferingControllerIntegrationTest {
     }
 
     @Test
-    void addItemToPublishedOfferingReturnsBadRequest()
+    void addItemToPublishedOfferingReturnsCreated()
             throws Exception {
 
         Recipe recipe =
@@ -429,12 +429,12 @@ class WeeklyOfferingControllerIntegrationTest {
                                 .contentType("application/json")
                                 .content(requestJson)
                 )
-                .andExpect(status().isBadRequest())
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.status").value("PUBLISHED"))
+                .andExpect(jsonPath("$.items.length()").value(1))
                 .andExpect(
-                        jsonPath("$.message")
-                                .value(
-                                        "Items can only be added to draft offerings."
-                                )
+                        jsonPath("$.items[0].recipeName")
+                                .value("Test Published Recipe")
                 );
     }
 
@@ -621,6 +621,82 @@ class WeeklyOfferingControllerIntegrationTest {
     }
 
     @Test
+    void archivedOfferingItemCannotBeUpdated()
+            throws Exception {
+
+        Recipe recipe =
+                recipeRepository.save(
+                        new Recipe("Test Archived Pork Chop")
+                );
+
+        WeeklyOffering offering = new WeeklyOffering();
+        offering.setStartDate(LocalDate.of(2026, 8, 19));
+        offering.setEndDate(LocalDate.of(2026, 8, 25));
+        offering.setStatus(WeeklyOfferingStatus.ARCHIVED);
+
+        WeeklyOfferingItem item = new WeeklyOfferingItem();
+        item.setRecipe(recipe);
+        item.setOfferingType(OfferingType.DINNER);
+        item.setIncludesHouseSalad(true);
+        item.setIncludesHomemadeBread(true);
+        item.setDisplayOrder(0);
+
+        item.addPrice(
+                new WeeklyOfferingItemPrice(
+                        null,
+                        new BigDecimal("21.95"),
+                        0
+                )
+        );
+
+        offering.addItem(item);
+
+        offering = weeklyOfferingRepository.save(offering);
+
+        Long itemId = offering.getItems().getFirst().getId();
+
+        MockHttpSession session = loginAsTestAdmin();
+
+        String requestJson = """
+                {
+                    "recipeId": %d,
+                    "offeringType": "DINNER",
+                    "publicDescription": "Attempted archived update.",
+                    "imageUrl": null,
+                    "imageAlt": null,
+                    "includesHouseSalad": true,
+                    "includesHomemadeBread": true,
+                    "displayOrder": 0,
+                    "prices": [
+                        {
+                            "amount": 24.95,
+                            "displayOrder": 0
+                        }
+                    ]
+                }
+                """.formatted(recipe.getId());
+
+        mockMvc.perform(
+                        put(
+                                "/api/admin/weekly-offerings/{offeringId}/items/{itemId}",
+                                offering.getId(),
+                                itemId
+                        )
+                                .session(session)
+                                .with(csrf())
+                                .contentType("application/json")
+                                .content(requestJson)
+                )
+                .andExpect(status().isBadRequest())
+                .andExpect(
+                        jsonPath("$.message")
+                                .value(
+                                        "Archived weekly offerings cannot be edited."
+                                )
+                );
+    }
+
+    @Test
     void authenticatedAdminCanDeleteItemFromDraftOffering()
             throws Exception {
 
@@ -672,7 +748,7 @@ class WeeklyOfferingControllerIntegrationTest {
     }
 
     @Test
-    void deleteItemFromPublishedOfferingReturnsBadRequest()
+    void deleteItemFromPublishedOfferingReturnsNoContent()
             throws Exception {
 
         Recipe recipe =
@@ -715,16 +791,9 @@ class WeeklyOfferingControllerIntegrationTest {
                                 .session(session)
                                 .with(csrf())
                 )
-                .andExpect(status().isBadRequest())
-                .andExpect(
-                        jsonPath("$.message")
-                                .value(
-                                        "Items can only be removed from draft offerings."
-                                )
-                );
+                .andExpect(status().isNoContent());
 
-        // Make sure the rejected request did NOT delete anything.
-        assertTrue(
+        assertFalse(
                 weeklyOfferingItemRepository.existsById(itemId)
         );
     }
@@ -794,6 +863,324 @@ class WeeklyOfferingControllerIntegrationTest {
 
         assertTrue(
                 weeklyOfferingItemRepository.existsById(itemId)
+        );
+    }
+
+    @Test
+    void archiveOffering_whenScheduled_returns200AndArchivesOffering()
+            throws Exception {
+
+        WeeklyOffering offering = new WeeklyOffering();
+        offering.setStartDate(LocalDate.of(2026, 8, 19));
+        offering.setEndDate(LocalDate.of(2026, 8, 25));
+        offering.setStatus(WeeklyOfferingStatus.SCHEDULED);
+
+        offering = weeklyOfferingRepository.save(offering);
+
+        MockHttpSession session = loginAsTestAdmin();
+
+        mockMvc.perform(
+                        put("/api/admin/weekly-offerings/{offeringId}/archive",
+                                offering.getId())
+                                .session(session)
+                                .with(csrf())
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("ARCHIVED"));
+
+        WeeklyOffering archived =
+                weeklyOfferingRepository
+                        .findById(offering.getId())
+                        .orElseThrow();
+
+        assertEquals(
+                WeeklyOfferingStatus.ARCHIVED,
+                archived.getStatus()
+        );
+    }
+
+    @Test
+    void archiveOffering_whenPublished_returns200AndArchivesOffering()
+            throws Exception {
+
+        WeeklyOffering offering = new WeeklyOffering();
+        offering.setStartDate(LocalDate.of(2026, 8, 19));
+        offering.setEndDate(LocalDate.of(2026, 8, 25));
+        offering.setStatus(WeeklyOfferingStatus.PUBLISHED);
+
+        offering = weeklyOfferingRepository.save(offering);
+
+        MockHttpSession session = loginAsTestAdmin();
+
+        mockMvc.perform(
+                        put("/api/admin/weekly-offerings/{offeringId}/archive",
+                                offering.getId())
+                                .session(session)
+                                .with(csrf())
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("ARCHIVED"));
+    }
+
+    @Test
+    void archiveOffering_whenDraft_returns400()
+            throws Exception {
+
+        WeeklyOffering offering = new WeeklyOffering();
+        offering.setStartDate(LocalDate.of(2026, 8, 19));
+        offering.setEndDate(LocalDate.of(2026, 8, 25));
+        offering.setStatus(WeeklyOfferingStatus.DRAFT);
+
+        offering = weeklyOfferingRepository.save(offering);
+
+        MockHttpSession session = loginAsTestAdmin();
+
+        mockMvc.perform(
+                        put("/api/admin/weekly-offerings/{offeringId}/archive",
+                                offering.getId())
+                                .session(session)
+                                .with(csrf())
+                )
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message")
+                        .value(
+                                "Draft offerings should be deleted rather than archived."
+                        ));
+    }
+
+    @Test
+    void addItemToArchivedOfferingReturnsBadRequest()
+            throws Exception {
+
+        Recipe recipe =
+                recipeRepository.save(
+                        new Recipe("Test Archived Recipe")
+                );
+
+        WeeklyOffering offering = new WeeklyOffering();
+        offering.setStartDate(LocalDate.of(2026, 8, 19));
+        offering.setEndDate(LocalDate.of(2026, 8, 25));
+        offering.setStatus(WeeklyOfferingStatus.ARCHIVED);
+
+        offering = weeklyOfferingRepository.save(offering);
+
+        MockHttpSession session = loginAsTestAdmin();
+
+        String requestJson = """
+                {
+                    "recipeId": %d,
+                    "offeringType": "DINNER",
+                    "includesHouseSalad": true,
+                    "includesHomemadeBread": true,
+                    "displayOrder": 0,
+                    "prices": [
+                        {
+                            "amount": 20.00,
+                            "displayOrder": 0
+                        }
+                    ]
+                }
+                """.formatted(recipe.getId());
+
+        mockMvc.perform(
+                        post(
+                                "/api/admin/weekly-offerings/{offeringId}/items",
+                                offering.getId()
+                        )
+                                .session(session)
+                                .with(csrf())
+                                .contentType("application/json")
+                                .content(requestJson)
+                )
+                .andExpect(status().isBadRequest())
+                .andExpect(
+                        jsonPath("$.message")
+                                .value(
+                                        "Archived weekly offerings cannot be edited."
+                                )
+                );
+    }
+
+    @Test
+    void deleteItemFromArchivedOfferingReturnsBadRequest()
+            throws Exception {
+
+        Recipe recipe =
+                recipeRepository.save(
+                        new Recipe("Test Archived Delete Recipe")
+                );
+
+        WeeklyOffering offering = new WeeklyOffering();
+        offering.setStartDate(LocalDate.of(2026, 8, 19));
+        offering.setEndDate(LocalDate.of(2026, 8, 25));
+        offering.setStatus(WeeklyOfferingStatus.ARCHIVED);
+
+        WeeklyOfferingItem item = new WeeklyOfferingItem();
+        item.setRecipe(recipe);
+        item.setOfferingType(OfferingType.DINNER);
+        item.setDisplayOrder(0);
+
+        item.addPrice(
+                new WeeklyOfferingItemPrice(
+                        null,
+                        new BigDecimal("19.95"),
+                        0
+                )
+        );
+
+        offering.addItem(item);
+
+        offering = weeklyOfferingRepository.save(offering);
+
+        Long itemId = offering.getItems().getFirst().getId();
+
+        MockHttpSession session = loginAsTestAdmin();
+
+        mockMvc.perform(
+                        delete(
+                                "/api/admin/weekly-offerings/{offeringId}/items/{itemId}",
+                                offering.getId(),
+                                itemId
+                        )
+                                .session(session)
+                                .with(csrf())
+                )
+                .andExpect(status().isBadRequest())
+                .andExpect(
+                        jsonPath("$.message")
+                                .value(
+                                        "Archived weekly offerings cannot be edited."
+                                )
+                );
+
+        assertTrue(
+                weeklyOfferingItemRepository.existsById(itemId)
+        );
+    }
+
+    @Test
+    void deleteOffering_whenDraft_returns204AndDeletesOffering()
+            throws Exception {
+
+        WeeklyOffering offering = new WeeklyOffering();
+        offering.setStartDate(LocalDate.of(2026, 8, 19));
+        offering.setEndDate(LocalDate.of(2026, 8, 25));
+        offering.setStatus(WeeklyOfferingStatus.DRAFT);
+
+        offering = weeklyOfferingRepository.save(offering);
+
+        Long offeringId = offering.getId();
+
+        MockHttpSession session = loginAsTestAdmin();
+
+        mockMvc.perform(
+                        delete(
+                                "/api/admin/weekly-offerings/{offeringId}",
+                                offeringId
+                        )
+                                .session(session)
+                                .with(csrf())
+                )
+                .andExpect(status().isNoContent());
+
+        assertFalse(
+                weeklyOfferingRepository.existsById(offeringId)
+        );
+    }
+
+    @Test
+    void deleteOffering_whenScheduled_returns400()
+            throws Exception {
+
+        WeeklyOffering offering = new WeeklyOffering();
+        offering.setStartDate(LocalDate.of(2026, 8, 19));
+        offering.setEndDate(LocalDate.of(2026, 8, 25));
+        offering.setStatus(WeeklyOfferingStatus.SCHEDULED);
+
+        offering = weeklyOfferingRepository.save(offering);
+
+        MockHttpSession session = loginAsTestAdmin();
+
+        mockMvc.perform(
+                        delete(
+                                "/api/admin/weekly-offerings/{offeringId}",
+                                offering.getId()
+                        )
+                                .session(session)
+                                .with(csrf())
+                )
+                .andExpect(status().isBadRequest())
+                .andExpect(
+                        jsonPath("$.message")
+                                .value(
+                                        "Only draft offerings can be deleted."
+                                )
+                );
+
+        assertTrue(
+                weeklyOfferingRepository.existsById(
+                        offering.getId()
+                )
+        );
+    }
+
+    @Test
+    void deleteOffering_whenPublished_returns400()
+            throws Exception {
+
+        WeeklyOffering offering = new WeeklyOffering();
+        offering.setStartDate(LocalDate.of(2026, 8, 19));
+        offering.setEndDate(LocalDate.of(2026, 8, 25));
+        offering.setStatus(WeeklyOfferingStatus.PUBLISHED);
+
+        offering = weeklyOfferingRepository.save(offering);
+
+        MockHttpSession session = loginAsTestAdmin();
+
+        mockMvc.perform(
+                        delete(
+                                "/api/admin/weekly-offerings/{offeringId}",
+                                offering.getId()
+                        )
+                                .session(session)
+                                .with(csrf())
+                )
+                .andExpect(status().isBadRequest());
+
+        assertTrue(
+                weeklyOfferingRepository.existsById(
+                        offering.getId()
+                )
+        );
+    }
+
+    @Test
+    void deleteOffering_whenArchived_returns400()
+            throws Exception {
+
+        WeeklyOffering offering = new WeeklyOffering();
+        offering.setStartDate(LocalDate.of(2026, 8, 19));
+        offering.setEndDate(LocalDate.of(2026, 8, 25));
+        offering.setStatus(WeeklyOfferingStatus.ARCHIVED);
+
+        offering = weeklyOfferingRepository.save(offering);
+
+        MockHttpSession session = loginAsTestAdmin();
+
+        mockMvc.perform(
+                        delete(
+                                "/api/admin/weekly-offerings/{offeringId}",
+                                offering.getId()
+                        )
+                                .session(session)
+                                .with(csrf())
+                )
+                .andExpect(status().isBadRequest());
+
+        assertTrue(
+                weeklyOfferingRepository.existsById(
+                        offering.getId()
+                )
         );
     }
 
@@ -1258,7 +1645,7 @@ class WeeklyOfferingControllerIntegrationTest {
     }
 
     @Test
-    void publishedOfferingCannotHaveDatesChanged()
+    void publishedOfferingCanHaveDatesChanged()
             throws Exception {
 
         WeeklyOffering offering = new WeeklyOffering();
@@ -1287,11 +1674,61 @@ class WeeklyOfferingControllerIntegrationTest {
                                 .contentType("application/json")
                                 .content(requestJson)
                 )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.startDate").value("2026-08-06"))
+                .andExpect(jsonPath("$.endDate").value("2026-08-13"));
+
+        WeeklyOffering updated =
+                weeklyOfferingRepository
+                        .findById(offering.getId())
+                        .orElseThrow();
+
+        assertEquals(
+                LocalDate.of(2026, 8, 6),
+                updated.getStartDate()
+        );
+
+        assertEquals(
+                LocalDate.of(2026, 8, 13),
+                updated.getEndDate()
+        );
+    }
+
+    @Test
+    void archivedOfferingCannotHaveDatesChanged()
+            throws Exception {
+
+        WeeklyOffering offering = new WeeklyOffering();
+        offering.setStartDate(LocalDate.of(2026, 8, 5));
+        offering.setEndDate(LocalDate.of(2026, 8, 12));
+        offering.setStatus(WeeklyOfferingStatus.ARCHIVED);
+
+        offering = weeklyOfferingRepository.save(offering);
+
+        MockHttpSession session = loginAsTestAdmin();
+
+        String requestJson = """
+                {
+                    "startDate": "2026-08-06",
+                    "endDate": "2026-08-13"
+                }
+                """;
+
+        mockMvc.perform(
+                        put(
+                                "/api/admin/weekly-offerings/{offeringId}",
+                                offering.getId()
+                        )
+                                .session(session)
+                                .with(csrf())
+                                .contentType("application/json")
+                                .content(requestJson)
+                )
                 .andExpect(status().isBadRequest())
                 .andExpect(
                         jsonPath("$.message")
                                 .value(
-                                        "Only draft offerings can have their dates changed."
+                                        "Archived weekly offerings cannot be edited."
                                 )
                 );
 

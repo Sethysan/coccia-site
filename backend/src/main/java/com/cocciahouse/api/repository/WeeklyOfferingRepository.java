@@ -38,4 +38,7 @@ public interface WeeklyOfferingRepository
     List<WeeklyOffering> findAllByStatusOrderByStartDateDesc(
             WeeklyOfferingStatus status
     );
+    List<WeeklyOffering> findAllByStatusNotOrderByStartDateDesc(
+            WeeklyOfferingStatus status
+    );
 }

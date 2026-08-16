@@ -2,7 +2,9 @@
     <main>
         <header>
             <div>
-                <h1>Weekly Offerings</h1>
+                <h1>
+                    {{ viewingArchived ? 'Archived Weekly Offerings' : 'Weekly Offerings'}}
+                </h1>
 
                 <p v-if="auth.username">
                     Signed in as {{ auth.username }}
@@ -14,7 +16,11 @@
             </button>
         </header>
 
-        <button v-if="!showCreateForm" @click="showCreateForm = true">
+        <button type="button" @click="toggleArchived">
+            {{ viewingArchived ? '← Back to Weekly Offerings': 'View Archived Offerings'}}
+        </button>
+
+        <button v-if="!showCreateForm && !viewingArchived" @click="showCreateForm = true">
             Create Weekly Offering
         </button>
 
@@ -30,7 +36,7 @@
         </p>
 
         <p v-else-if="weeklyOfferings.offerings.length === 0">
-            No weekly offerings found.
+            {{ viewingArchived ? 'No archived weekly offerings.': 'No weekly offerings found.'}}
         </p>
 
         <section v-else>
@@ -69,6 +75,7 @@ const auth = useAuthStore()
 const weeklyOfferings = useWeeklyOfferingStore()
 const showCreateForm = ref(false)
 const creatingOffering = ref(false)
+const viewingArchived = ref(false)
 
 onMounted(() => {
     weeklyOfferings.fetchOfferings()
@@ -77,6 +84,16 @@ onMounted(() => {
 async function handleLogout() {
     await auth.logout()
     await router.push('/admin/login')
+}
+
+async function toggleArchived() {
+    viewingArchived.value = !viewingArchived.value
+
+    if (viewingArchived.value) {
+        await weeklyOfferings.fetchOfferings('ARCHIVED')
+    } else {
+        await weeklyOfferings.fetchOfferings()
+    }
 }
 
 async function createOffering(formData) {

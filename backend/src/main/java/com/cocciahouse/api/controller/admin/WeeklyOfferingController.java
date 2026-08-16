@@ -101,6 +101,27 @@ public class WeeklyOfferingController {
         return ResponseEntity.noContent().build();
     }
 
+    @PutMapping("/{offeringId}/archive")
+    public ResponseEntity<WeeklyOfferingResponse> archiveOffering(
+            @PathVariable Long offeringId
+    ) {
+
+        WeeklyOfferingResponse response =
+                weeklyOfferingService.archiveOffering(offeringId);
+
+        return ResponseEntity.ok(response);
+    }
+
+    @DeleteMapping("/{offeringId}")
+    public ResponseEntity<Void> deleteOffering(
+            @PathVariable Long offeringId
+    ) {
+
+        weeklyOfferingService.deleteOffering(offeringId);
+
+        return ResponseEntity.noContent().build();
+    }
+
     @PutMapping("/{offeringId}/schedule")
     public ResponseEntity<WeeklyOfferingResponse> scheduleOffering(
             @PathVariable Long offeringId

@@ -28,7 +28,18 @@
             <p>
                 Status: {{ offering.status }}
             </p>
-            <button v-if="offering.status === 'DRAFT' && !showDateForm" type="button" @click="showDateForm = true">
+            <button v-if="offering.status === 'DRAFT'" type="button" @click="deleteOffering">
+                Delete Offering
+            </button>
+
+            <button v-if="
+                offering.status === 'SCHEDULED'
+                || offering.status === 'PUBLISHED'
+            " type="button" @click="archiveOffering">
+                Archive Offering
+            </button>
+
+            <button v-if="offering.status !== 'ARCHIVED' && !showDateForm" type="button" @click="showDateForm = true">
                 Edit Dates
             </button>
             <WeeklyOfferingForm v-if="showDateForm" :saving="savingDates" submit-label="Save Dates"
@@ -41,7 +52,7 @@
 
             <h2>Items</h2>
 
-            <button v-if="offering.status === 'DRAFT' && !showAddItemForm" @click="startAddingItem">
+            <button v-if="offering.status !== 'ARCHIVED' && !showAddItemForm" @click="startAddingItem">
                 Add Item
             </button>
 
@@ -53,16 +64,14 @@
             </p>
 
             <article v-for="item in offering.items" :key="item.id">
-                <h3>{{ item.publicTitle }}</h3>
-
-                <p>{{ item.offeringType }}</p>
+                <h3>
+                    Featured {{ formatOfferingType(item.offeringType) }}
+                </h3>
+                
+                <h4>{{ item.recipeName }}</h4>
 
                 <p v-if="item.publicDescription">
                     {{ item.publicDescription }}
-                </p>
-
-                <p>
-                    Recipe: {{ item.recipeName }}
                 </p>
 
                 <p v-if="item.includedSidesText">
@@ -79,11 +88,11 @@
                     </li>
                 </ul>
 
-                <button v-if="offering.status === 'DRAFT'" type="button" @click="startEditingItem(item)">
+                <button v-if="offering.status !== 'ARCHIVED'" type="button" @click="startEditingItem(item)">
                     Edit
                 </button>
 
-                <button v-if="offering.status === 'DRAFT'" type="button" @click="deleteItem(item.id)">
+                <button v-if="offering.status !== 'ARCHIVED'" type="button" @click="deleteItem(item.id)">
                     Delete
                 </button>
 
@@ -276,6 +285,69 @@ function getDisplayOrder(offeringType) {
         default:
             return 99
     }
+}
+
+async function deleteOffering() {
+    const confirmed = window.confirm(
+        'Are you sure you want to permanently delete this draft weekly offering?'
+    )
+
+    if (!confirmed) {
+        return
+    }
+
+    const deleted =
+        await weeklyOfferings.deleteOffering(
+            route.params.id
+        )
+
+    if (!deleted) {
+        window.alert(
+            weeklyOfferings.error
+            ?? 'Unable to delete weekly offering.'
+        )
+
+        weeklyOfferings.clearError()
+
+        return
+    }
+
+    await router.push('/admin/weekly-offerings')
+}
+
+async function archiveOffering() {
+    const confirmed = window.confirm(
+        'Are you sure you want to archive this weekly offering?'
+    )
+
+    if (!confirmed) {
+        return
+    }
+
+    const archived =
+        await weeklyOfferings.archiveOffering(
+            route.params.id
+        )
+
+    if (!archived) {
+        window.alert(
+            weeklyOfferings.error
+            ?? 'Unable to archive weekly offering.'
+        )
+
+        weeklyOfferings.clearError()
+
+        return
+    }
+}
+
+function formatOfferingType(type) {
+    if (!type) {
+        return ''
+    }
+
+    return type.charAt(0).toUpperCase()
+        + type.slice(1).toLowerCase()
 }
 
 </script>

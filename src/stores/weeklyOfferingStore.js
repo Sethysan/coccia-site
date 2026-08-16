@@ -344,6 +344,99 @@ export const useWeeklyOfferingStore = defineStore(
             }
         }
 
+        async function deleteOffering(offeringId) {
+            error.value = null
+
+            try {
+                const csrfToken = getCsrfToken()
+
+                const response = await fetch(
+                    `/api/admin/weekly-offerings/${offeringId}`,
+                    {
+                        method: 'DELETE',
+                        headers: {
+                            'X-XSRF-TOKEN': csrfToken
+                        },
+                        credentials: 'include'
+                    }
+                )
+
+                if (!response.ok) {
+                    const errorResponse =
+                        await response.json().catch(() => null)
+
+                    throw new Error(
+                        errorResponse?.message
+                        ?? 'Unable to delete weekly offering.'
+                    )
+                }
+
+                offerings.value = offerings.value.filter(
+                    offering => offering.id !== Number(offeringId)
+                )
+
+                if (currentOffering.value?.id === Number(offeringId)) {
+                    currentOffering.value = null
+                }
+
+                return true
+
+            } catch (err) {
+                console.error(err)
+                error.value = err.message
+
+                return false
+            }
+        }
+
+        async function archiveOffering(offeringId) {
+            error.value = null
+
+            try {
+                const csrfToken = getCsrfToken()
+
+                const response = await fetch(
+                    `/api/admin/weekly-offerings/${offeringId}/archive`,
+                    {
+                        method: 'PUT',
+                        headers: {
+                            'X-XSRF-TOKEN': csrfToken
+                        },
+                        credentials: 'include'
+                    }
+                )
+
+                if (!response.ok) {
+                    const errorResponse =
+                        await response.json().catch(() => null)
+
+                    throw new Error(
+                        errorResponse?.message
+                        ?? 'Unable to archive weekly offering.'
+                    )
+                }
+
+                const archivedOffering = await response.json()
+
+                currentOffering.value = archivedOffering
+
+                offerings.value = offerings.value.map(
+                    offering =>
+                        offering.id === archivedOffering.id
+                            ? archivedOffering
+                            : offering
+                )
+
+                return true
+
+            } catch (err) {
+                console.error(err)
+                error.value = err.message
+
+                return false
+            }
+        }
+
         return {
             offerings,
             loading,
@@ -354,6 +447,8 @@ export const useWeeklyOfferingStore = defineStore(
             addItem,
             updateItem,
             deleteItem,
+            deleteOffering,
+            archiveOffering,
             clearError,
             createOffering,
             updateOfferingDates,

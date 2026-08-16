@@ -99,11 +99,7 @@ public class WeeklyOfferingService {
                         )
                 );
 
-        if (offering.getStatus() != WeeklyOfferingStatus.DRAFT) {
-            throw new IllegalArgumentException(
-                    "Only draft offerings can have their dates changed."
-            );
-        }
+        validateOfferingIsEditable(offering);
 
         if (request.startDate().isAfter(request.endDate())) {
             throw new IllegalArgumentException(
@@ -131,11 +127,7 @@ public class WeeklyOfferingService {
                         )
                 );
 
-        if (offering.getStatus() != WeeklyOfferingStatus.DRAFT) {
-            throw new IllegalArgumentException(
-                    "Items can only be added to draft offerings."
-            );
-        }
+        validateOfferingIsEditable(offering);
 
         Recipe recipe = recipeRepository
                 .findById(request.recipeId())
@@ -208,11 +200,7 @@ public class WeeklyOfferingService {
                         )
                 );
 
-        if (offering.getStatus() != WeeklyOfferingStatus.DRAFT) {
-            throw new IllegalArgumentException(
-                    "Items can only be updated on draft offerings."
-            );
-        }
+        validateOfferingIsEditable(offering);
 
         WeeklyOfferingItem item = weeklyOfferingItemRepository
                 .findByIdAndWeeklyOfferingId(
@@ -277,11 +265,7 @@ public class WeeklyOfferingService {
                         )
                 );
 
-        if (offering.getStatus() != WeeklyOfferingStatus.DRAFT) {
-            throw new IllegalArgumentException(
-                    "Items can only be removed from draft offerings."
-            );
-        }
+        validateOfferingIsEditable(offering);
 
         WeeklyOfferingItem item = weeklyOfferingItemRepository
                 .findByIdAndWeeklyOfferingId(
@@ -341,6 +325,54 @@ public class WeeklyOfferingService {
         return weeklyOfferingMapper.toResponse(offering);
     }
 
+    @Transactional
+    public WeeklyOfferingResponse archiveOffering(Long offeringId) {
+
+        WeeklyOffering offering = weeklyOfferingRepository
+                .findById(offeringId)
+                .orElseThrow(() ->
+                        new IllegalArgumentException(
+                                "Weekly offering not found."
+                        )
+                );
+
+        if (offering.getStatus() == WeeklyOfferingStatus.DRAFT) {
+            throw new IllegalArgumentException(
+                    "Draft offerings should be deleted rather than archived."
+            );
+        }
+
+        if (offering.getStatus() == WeeklyOfferingStatus.ARCHIVED) {
+            throw new IllegalArgumentException(
+                    "Weekly offering is already archived."
+            );
+        }
+
+        offering.setStatus(WeeklyOfferingStatus.ARCHIVED);
+
+        return weeklyOfferingMapper.toResponse(offering);
+    }
+
+    @Transactional
+    public void deleteOffering(Long offeringId) {
+
+        WeeklyOffering offering = weeklyOfferingRepository
+                .findById(offeringId)
+                .orElseThrow(() ->
+                        new IllegalArgumentException(
+                                "Weekly offering not found."
+                        )
+                );
+
+        if (offering.getStatus() != WeeklyOfferingStatus.DRAFT) {
+            throw new IllegalArgumentException(
+                    "Only draft offerings can be deleted."
+            );
+        }
+
+        weeklyOfferingRepository.delete(offering);
+    }
+
     @Transactional(readOnly = true)
     public List<WeeklyOfferingResponse> getAdminOfferings(
             WeeklyOfferingStatus status
@@ -351,7 +383,9 @@ public class WeeklyOfferingService {
         if (status == null) {
             offerings =
                     weeklyOfferingRepository
-                            .findAllByOrderByStartDateDesc();
+                            .findAllByStatusNotOrderByStartDateDesc(
+                                    WeeklyOfferingStatus.ARCHIVED
+                            );
         } else {
             offerings =
                     weeklyOfferingRepository
@@ -376,6 +410,17 @@ public class WeeklyOfferingService {
                 );
 
         return weeklyOfferingMapper.toResponse(offering);
+    }
+
+    private void validateOfferingIsEditable(
+            WeeklyOffering offering
+    ) {
+
+        if (offering.getStatus() == WeeklyOfferingStatus.ARCHIVED) {
+            throw new IllegalArgumentException(
+                    "Archived weekly offerings cannot be edited."
+            );
+        }
     }
 
 }
