@@ -17,6 +17,9 @@
                 {{ item.recipeName }}
             </h3>
 
+            <img v-if="item.imageUrl" :src="item.imageUrl" :alt="item.imageAlt || item.recipeName"
+                class="weekly-offering-image" />
+
             <p v-if="item.publicDescription">
                 {{ item.publicDescription }}
             </p>
@@ -74,4 +77,15 @@ function formatOfferingType(type) {
 
 </script>
 
-<style scoped></style>
+<style scoped>
+
+.weekly-offering-image {
+    display: block;
+    width: 100%;
+    max-width: 500px;
+    height: auto;
+    margin: 1rem 0;
+    border-radius: 8px;
+}
+
+</style>

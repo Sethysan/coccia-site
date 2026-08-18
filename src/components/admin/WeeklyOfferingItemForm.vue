@@ -53,6 +53,31 @@
         </div>
 
         <div>
+            <label for="image">
+                Replace Image
+            </label>
+
+            <input id="image" type="file" accept="image/*" @change="handleImageSelected" />
+
+            <p v-if="uploadingImage">
+                Uploading image...
+            </p>
+
+            <div v-if="form.imageUrl">
+                <p>Current image:</p>
+
+                <img :src="form.imageUrl" :alt="form.imageAlt || 'Weekly offering image'"
+                    class="weekly-offering-image-preview" />
+            </div>
+
+            <label for="image-alt">
+                Image description
+            </label>
+
+            <input id="image-alt" v-model="form.imageAlt" type="text" />
+        </div>
+
+        <div>
             <h4>Prices</h4>
 
             <div v-for="(price, index) in form.prices" :key="index">
@@ -109,8 +134,9 @@
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, watch } from 'vue'
+import { computed, onMounted, reactive, watch, ref } from 'vue'
 import { useRecipeStore } from '@/stores/recipeStore'
+import { getCsrfToken } from '@/utils/csrf'
 
 const props = defineProps({
     item: {
@@ -133,6 +159,8 @@ const recipeStore = useRecipeStore()
 
 const editing = computed(() => Boolean(props.item))
 
+const uploadingImage = ref(false)
+
 const form = reactive({
     recipeId: null,
     offeringType: '',
@@ -145,7 +173,9 @@ const form = reactive({
             amount: null,
             displayOrder: 0
         }
-    ]
+    ],
+    imageUrl: null,
+    imageAlt: ''
 })
 
 onMounted(() => {
@@ -170,8 +200,9 @@ function populateForm(item) {
 
     form.recipeId = item.recipeId
     form.offeringType = item.offeringType
-    form.publicTitle = item.publicTitle
     form.publicDescription = item.publicDescription ?? ''
+    form.imageUrl = item.imageUrl ?? null
+    form.imageAlt = item.imageAlt ?? ''
     form.includesHouseSalad =
         item.includesHouseSalad ?? false
     form.includesHomemadeBread =
@@ -189,8 +220,9 @@ function populateForm(item) {
 function resetForm() {
     form.recipeId = null
     form.offeringType = ''
-    form.publicTitle = ''
     form.publicDescription = ''
+    form.imageUrl = null
+    form.imageAlt = ''
     form.includesHouseSalad = false
     form.includesHomemadeBread = false
     form.prices = [
@@ -217,8 +249,9 @@ async function handleRecipeSelected() {
 
     if (!previousItem) {
         form.offeringType = ''
-        form.publicTitle = ''
         form.publicDescription = ''
+        form.imageUrl = null
+        form.imageAlt = ''
         form.includesHouseSalad = false
         form.includesHomemadeBread = false
         form.prices = [
@@ -235,11 +268,14 @@ async function handleRecipeSelected() {
     form.offeringType =
         previousItem.offeringType ?? ''
 
-    form.publicTitle =
-        previousItem.publicTitle ?? ''
-
     form.publicDescription =
         previousItem.publicDescription ?? ''
+
+    form.imageUrl =
+        previousItem.imageUrl ?? null
+
+    form.imageAlt =
+        previousItem.imageAlt ?? ''
 
     form.includesHouseSalad =
         previousItem.includesHouseSalad ?? false
@@ -280,12 +316,11 @@ function submitForm() {
     emit('submit', {
         recipeId: form.recipeId,
         offeringType: form.offeringType,
-        publicTitle: form.publicTitle,
         publicDescription:
             form.publicDescription || null,
 
-        imageUrl: null,
-        imageAlt: null,
+        imageUrl: form.imageUrl || null,
+        imageAlt: form.imageAlt?.trim() || null,
 
         includesHouseSalad:
             isDinner
@@ -310,6 +345,58 @@ function submitForm() {
             })
         )
     })
+}
+
+async function handleImageSelected(event) {
+    const file = event.target.files?.[0]
+
+    if (!file) {
+        return
+    }
+
+    uploadingImage.value = true
+
+    try {
+        const formData = new FormData()
+
+        formData.append('file', file)
+
+        const csrfToken = getCsrfToken()
+
+        const response = await fetch(
+            '/api/admin/weekly-offerings/images',
+            {
+                method: 'POST',
+                headers: {
+                    'X-XSRF-TOKEN': csrfToken
+                },
+                credentials: 'include',
+                body: formData
+            }
+        )
+
+        if (!response.ok) {
+            const errorResponse =
+                await response.json().catch(() => null)
+
+            throw new Error(
+                errorResponse?.message
+                ?? 'Unable to upload image.'
+            )
+        }
+
+        const result = await response.json()
+
+        form.imageUrl = result.imageUrl
+
+    } catch (error) {
+        window.alert(
+            error.message
+            ?? 'Unable to upload image.'
+        )
+    } finally {
+        uploadingImage.value = false
+    }
 }
 </script>
 

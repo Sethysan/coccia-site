@@ -14,6 +14,15 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.context.ActiveProfiles;
 
+import com.cocciahouse.api.service.ImageService;
+import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
+
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -52,6 +61,9 @@ class WeeklyOfferingControllerIntegrationTest {
 
     @Autowired
     private WeeklyOfferingItemRepository weeklyOfferingItemRepository;
+
+    @MockitoBean
+    private ImageService imageService;
 
     private static final String TEST_USERNAME = "testadmin";
     private static final String TEST_PASSWORD = "testpassword";
@@ -1747,5 +1759,44 @@ class WeeklyOfferingControllerIntegrationTest {
                 unchanged.getEndDate()
         );
     }
+
+    @Test
+    void authenticatedAdminCanUploadWeeklyOfferingImage()
+            throws Exception {
+
+        MockHttpSession session = loginAsTestAdmin();
+
+        MockMultipartFile file =
+                new MockMultipartFile(
+                        "file",
+                        "chicken-cacciatore.jpg",
+                        "image/jpeg",
+                        "fake-image-data".getBytes()
+                );
+
+        String imageUrl =
+                "https://res.cloudinary.com/test/image/upload/chicken-cacciatore.jpg";
+
+        when(
+                imageService.uploadWeeklyOfferingImage(any())
+        ).thenReturn(imageUrl);
+
+        mockMvc.perform(
+                        multipart("/api/admin/weekly-offerings/images")
+                                .file(file)
+                                .session(session)
+                                .with(csrf())
+                )
+                .andExpect(status().isOk())
+                .andExpect(
+                        jsonPath("$.imageUrl")
+                                .value(imageUrl)
+                );
+
+        verify(imageService)
+                .uploadWeeklyOfferingImage(any());
+    }
+
+
 
 }

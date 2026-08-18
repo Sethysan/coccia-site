@@ -8,6 +8,11 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import com.cocciahouse.api.service.ImageService;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
+import java.util.Map;
 
 import com.cocciahouse.api.model.WeeklyOfferingStatus;
 
@@ -18,11 +23,13 @@ import java.util.List;
 public class WeeklyOfferingController {
 
     private final WeeklyOfferingService weeklyOfferingService;
+    private final ImageService imageService;
 
     public WeeklyOfferingController(
-            WeeklyOfferingService weeklyOfferingService
+            WeeklyOfferingService weeklyOfferingService, ImageService imageService
     ) {
         this.weeklyOfferingService = weeklyOfferingService;
+        this.imageService = imageService;
     }
 
     @PostMapping
@@ -154,6 +161,19 @@ public class WeeklyOfferingController {
                 weeklyOfferingService.getAdminOfferingById(offeringId);
 
         return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/images")
+    public ResponseEntity<Map<String, String>> uploadImage(
+            @RequestParam("file") MultipartFile file
+    ) throws IOException {
+
+        String imageUrl =
+                imageService.uploadWeeklyOfferingImage(file);
+
+        return ResponseEntity.ok(
+                Map.of("imageUrl", imageUrl)
+        );
     }
 
 }

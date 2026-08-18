@@ -67,12 +67,17 @@
                 <h3>
                     Featured {{ formatOfferingType(item.offeringType) }}
                 </h3>
-                
+
                 <h4>{{ item.recipeName }}</h4>
 
                 <p v-if="item.publicDescription">
                     {{ item.publicDescription }}
                 </p>
+
+                <h3>{{ item.recipeName }}</h3>
+
+                <img v-if="item.imageUrl" :src="item.imageUrl" :alt="item.imageAlt || item.recipeName"
+                    class="weekly-offering-item-image" />
 
                 <p v-if="item.includedSidesText">
                     {{ item.includedSidesText }}
