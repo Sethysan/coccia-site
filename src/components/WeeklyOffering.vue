@@ -1,5 +1,5 @@
 <template>
-    <section v-if="offering" class="weekly-offering" aria-labelledby="weekly-offering-title">
+    <section v-if="displayOffering" class="weekly-offering" aria-labelledby="weekly-offering-title">
         <p class="section-eyebrow">
             This Week at Coccia House
         </p>
@@ -78,10 +78,21 @@
 import { computed, onMounted, ref } from 'vue'
 import { getCurrentWeeklyOffering } from '@/api/weeklyOfferingsApi'
 
-const offering = ref(null)
+const props = defineProps({
+    offering: {
+        type: Object,
+        default: null
+    }
+})
+
+const fetchedOffering = ref(null)
+
+const displayOffering = computed(() =>
+    props.offering ?? fetchedOffering.value
+)
 
 const sortedItems = computed(() => {
-    return [...(offering.value?.items ?? [])]
+    return [...(displayOffering.value?.items ?? [])]
         .sort((a, b) => a.displayOrder - b.displayOrder)
 })
 
@@ -98,8 +109,12 @@ const secondaryItems = computed(() =>
 )
 
 onMounted(async () => {
+    if (props.offering) {
+        return
+    }
+
     try {
-        offering.value =
+        fetchedOffering.value =
             await getCurrentWeeklyOffering()
     } catch (error) {
         console.error(

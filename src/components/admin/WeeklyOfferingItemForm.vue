@@ -79,44 +79,41 @@
 
         <div>
             <h4>Prices</h4>
+            <div v-for="(price, index) in form.prices" :key="index" class="price-row">
+                <div class="price-field">
+                    <label>
+                        Label
+                    </label>
 
-            <div v-for="(price, index) in form.prices" :key="index">
-                <label>
-                    Label
-                </label>
+                    <input v-model="price.label" type="text" placeholder="Optional, e.g. Cup" />
+                </div>
 
-                <input v-model="price.label" type="text" placeholder="Optional, e.g. Cup" />
+                <div class="price-field price-amount">
+                    <label>
+                        Amount
+                    </label>
 
-                <label>
-                    Amount
-                </label>
-
-                <input v-model="price.amount" type="number" min="0.01" step="0.01" required />
+                    <input v-model="price.amount" type="number" min="0.01" step="0.01" required />
+                </div>
 
                 <button v-if="form.prices.length > 1" type="button" @click="removePrice(index)">
                     Remove Price
                 </button>
             </div>
+            <fieldset v-if="form.offeringType === 'DINNER'">
+                <legend>Dinner Includes</legend>
 
-            <button type="button" @click="addPrice">
-                Add Price
-            </button>
+                <label>
+                    <input v-model="form.includesHouseSalad" type="checkbox" />
+                    House Salad
+                </label>
+
+                <label>
+                    <input v-model="form.includesHomemadeBread" type="checkbox" />
+                    Homemade Bread
+                </label>
+            </fieldset>
         </div>
-
-        <fieldset v-if="form.offeringType === 'DINNER'">
-            <legend>Dinner Includes</legend>
-
-            <label>
-                <input v-model="form.includesHouseSalad" type="checkbox" />
-                House Salad
-            </label>
-
-            <label>
-                <input v-model="form.includesHomemadeBread" type="checkbox" />
-                Homemade Bread
-            </label>
-        </fieldset>
-
         <button type="submit" :disabled="saving">
             {{
                 saving
@@ -400,4 +397,234 @@ async function handleImageSelected(event) {
 }
 </script>
 
-<style scoped></style>
+<style scoped>
+form {
+    display: grid;
+    gap: 1.25rem;
+
+    width: 100%;
+}
+
+form h3 {
+    margin: 0 0 0.25rem;
+
+    color: var(--default-color);
+
+    font-size: 1.35rem;
+}
+
+/* Each major form section */
+form>div {
+    display: grid;
+    gap: 0.45rem;
+}
+
+label,
+legend {
+    color: var(--default-dark);
+
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+}
+
+/* ==========================================================
+   INPUTS
+   ========================================================== */
+
+input,
+select,
+textarea {
+    width: 100%;
+    padding: 0.7rem 0.8rem;
+
+    color: var(--default-color);
+    background: var(--background-dark-trans);
+
+    border: 1px solid var(--bronze-color);
+    border-radius: 0.4rem;
+
+    font: inherit;
+}
+
+textarea {
+    min-height: 110px;
+    resize: vertical;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+    outline: 2px solid var(--bronze-bold);
+    outline-offset: 2px;
+}
+
+select option {
+    color: var(--default-color);
+    background: #140f0c;
+}
+
+
+/* ==========================================================
+   IMAGE
+   ========================================================== */
+
+.weekly-offering-image-preview {
+    display: block;
+
+    width: 100%;
+    max-width: 320px;
+    max-height: 240px;
+
+    margin: 0.5rem 0;
+
+    object-fit: contain;
+
+    border: 1px solid var(--bronze-color);
+    border-radius: 0.5rem;
+}
+
+input[type="file"] {
+    padding: 0.5rem;
+}
+
+
+/* ==========================================================
+   PRICES
+   ========================================================== */
+
+form h4 {
+    margin: 0;
+
+    color: var(--bronze-bold);
+
+    font-size: 0.85rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+/* Individual price rows */
+.price-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 130px auto;
+    gap: 0.75rem;
+    align-items: end;
+
+    padding: 0.75rem;
+
+    background: var(--background-dark-trans);
+
+    border: 1px solid var(--bronze-color);
+    border-radius: 0.4rem;
+}
+
+.price-field {
+    display: grid;
+    gap: 0.4rem;
+}
+
+.price-field input {
+    width: 100%;
+}
+
+/* ==========================================================
+   DINNER INCLUDES
+   ========================================================== */
+
+fieldset {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+
+    margin: 0;
+    padding: 1rem;
+
+    border: 1px solid var(--bronze-color);
+    border-radius: 0.4rem;
+}
+
+fieldset label {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+
+    color: var(--default-color);
+
+    cursor: pointer;
+}
+
+fieldset input[type="checkbox"] {
+    width: auto;
+    margin: 0;
+
+    accent-color: var(--bronze-bold);
+}
+
+
+/* ==========================================================
+   BUTTONS
+   ========================================================== */
+
+button {
+    width: fit-content;
+    padding: 0.65rem 1rem;
+
+    color: #140f0c;
+    background: var(--default-color);
+
+    border: 1px solid var(--bronze-color);
+    border-radius: 0.35rem;
+
+    font: inherit;
+    font-weight: 700;
+
+    cursor: pointer;
+}
+
+button:hover:not(:disabled) {
+    background: var(--bronze-hover);
+}
+
+button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Save button */
+button[type="submit"] {
+    margin-top: 0.25rem;
+
+    background: var(--bronze-bold);
+    color: var(--default-color);
+}
+
+
+/* ==========================================================
+   STATUS MESSAGES
+   ========================================================== */
+
+form p {
+    margin: 0.25rem 0;
+
+    color: var(--default-dark);
+}
+
+
+/* ==========================================================
+   MOBILE
+   ========================================================== */
+
+@media (max-width: 600px) {
+    form>div>div {
+        grid-template-columns: 1fr;
+    }
+
+    .weekly-offering-image-preview {
+        max-width: 100%;
+    }
+
+    button {
+        width: 100%;
+    }
+}
+</style>

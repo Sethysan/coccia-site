@@ -1,6 +1,8 @@
 <template>
-    <main>
-        <div v-if="weeklyOfferings.error" role="alert">
+    <main class="admin-page">
+
+        <!-- Error Message -->
+        <div v-if="weeklyOfferings.error" class="admin-alert" role="alert">
             <p>
                 {{ weeklyOfferings.error }}
             </p>
@@ -10,112 +12,284 @@
             </button>
         </div>
 
-        <button @click="router.push('/admin/weekly-offerings')">
-            ← Back to Weekly Offerings
-        </button>
+        <div class="admin-page-container">
 
-        <p v-if="weeklyOfferings.loading">
-            Loading weekly offering...
-        </p>
+            <button class="back-button" type="button" @click="router.push('/admin/weekly-offerings')">
+                ← Back to Weekly Offerings
+            </button>
 
-        <section v-else-if="offering">
-            <h1>Weekly Offering</h1>
-
-            <p>
-                {{ offering.startDate }} – {{ offering.endDate }}
+            <p v-if="weeklyOfferings.loading">
+                Loading weekly offering...
             </p>
 
-            <p>
-                Status: {{ offering.status }}
-            </p>
-            <button v-if="offering.status === 'DRAFT'" type="button" @click="deleteOffering">
-                Delete Offering
-            </button>
+            <div v-else-if="offering" class="admin-offering-layout">
 
-            <button v-if="
-                offering.status === 'SCHEDULED'
-                || offering.status === 'PUBLISHED'
-            " type="button" @click="archiveOffering">
-                Archive Offering
-            </button>
+                <!-- =========================================
+                     LEFT: ADMIN EDITOR
+                ========================================== -->
 
-            <button v-if="offering.status !== 'ARCHIVED' && !showDateForm" type="button" @click="showDateForm = true">
-                Edit Dates
-            </button>
-            <WeeklyOfferingForm v-if="showDateForm" :saving="savingDates" submit-label="Save Dates"
-                :initial-start-date="offering.startDate" :initial-end-date="offering.endDate"
-                @submit="updateOfferingDates" @cancel="showDateForm = false" />
+                <section class="admin-editor-panel">
 
-            <button v-if="offering.status === 'DRAFT'" type="button" @click="scheduleOffering">
-                Schedule Offering
-            </button>
+                    <header class="offering-header">
 
-            <h2>Items</h2>
+                        <div>
+                            <p class="admin-eyebrow">
+                                Weekly Offering
+                            </p>
 
-            <button v-if="offering.status !== 'ARCHIVED' && !showAddItemForm" @click="startAddingItem">
-                Add Item
-            </button>
+                            <h1>
+                                Manage Weekly Offering
+                            </h1>
 
-            <WeeklyOfferingItemForm v-if="showAddItemForm" ref="itemForm" :item="editingItem" :saving="savingItem"
-                @submit="saveItem" @cancel="cancelItemForm" />
+                            <p class="offering-dates">
+                                {{ offering.startDate }}
+                                –
+                                {{ offering.endDate }}
+                            </p>
+                        </div>
 
-            <p v-if="offering.items.length === 0">
-                No items have been added yet.
-            </p>
-
-            <article v-for="item in offering.items" :key="item.id">
-                <h3>
-                    Featured {{ formatOfferingType(item.offeringType) }}
-                </h3>
-
-                <h4>{{ item.recipeName }}</h4>
-
-                <p v-if="item.publicDescription">
-                    {{ item.publicDescription }}
-                </p>
-
-                <h3>{{ item.recipeName }}</h3>
-
-                <img v-if="item.imageUrl" :src="item.imageUrl" :alt="item.imageAlt || item.recipeName"
-                    class="weekly-offering-item-image" />
-
-                <p v-if="item.includedSidesText">
-                    {{ item.includedSidesText }}
-                </p>
-
-                <ul>
-                    <li v-for="price in item.prices" :key="price.id">
-                        <span v-if="price.label">
-                            {{ price.label }}:
+                        <span class="status-badge" :class="`status-${offering.status.toLowerCase()}`">
+                            {{ offering.status }}
                         </span>
 
-                        ${{ price.amount }}
-                    </li>
-                </ul>
+                    </header>
 
-                <button v-if="offering.status !== 'ARCHIVED'" type="button" @click="startEditingItem(item)">
-                    Edit
-                </button>
 
-                <button v-if="offering.status !== 'ARCHIVED'" type="button" @click="deleteItem(item.id)">
-                    Delete
-                </button>
+                    <!-- Offering Actions -->
 
-            </article>
+                    <div class="offering-actions">
 
-        </section>
+                        <button v-if="offering.status === 'DRAFT'" type="button" class="primary-button"
+                            @click="scheduleOffering">
+                            Schedule Offering
+                        </button>
+
+                        <button v-if="
+                            offering.status !== 'ARCHIVED'
+                            && !showDateForm
+                        " type="button" @click="showDateForm = true">
+                            Edit Dates
+                        </button>
+
+                        <button v-if="
+                            offering.status === 'SCHEDULED'
+                            || offering.status === 'PUBLISHED'
+                        " type="button" @click="archiveOffering">
+                            Archive Offering
+                        </button>
+
+                        <button v-if="offering.status === 'DRAFT'" type="button" class="danger-button"
+                            @click="deleteOffering">
+                            Delete Offering
+                        </button>
+
+                    </div>
+
+
+                    <!-- Date Form -->
+
+                    <div v-if="showDateForm" class="admin-form-container">
+                        <WeeklyOfferingForm :saving="savingDates" submit-label="Save Dates"
+                            :initial-start-date="offering.startDate" :initial-end-date="offering.endDate"
+                            @submit="updateOfferingDates" @cancel="showDateForm = false" />
+                    </div>
+
+
+                    <!-- =====================================
+                         ITEMS
+                    ====================================== -->
+
+                    <section class="items-section">
+
+                        <div class="section-heading">
+
+                            <div>
+                                <p class="admin-eyebrow">
+                                    Menu Items
+                                </p>
+
+                                <h2>
+                                    Weekly Features
+                                </h2>
+                            </div>
+
+                            <button v-if="
+                                offering.status !== 'ARCHIVED'
+                                && !showAddItemForm
+                            " type="button" class="primary-button" @click="startAddingItem">
+                                + Add Item
+                            </button>
+
+                        </div>
+
+
+                        <!-- Add / Edit Item Form -->
+
+                        <div v-if="showAddItemForm" ref="itemFormSection" class="item-form-section">
+                            <div class="form-heading">
+
+                                <p class="admin-eyebrow">
+                                    {{
+                                        editingItem
+                                            ? 'Editing Item'
+                                            : 'New Item'
+                                    }}
+                                </p>
+
+                                <h2>
+                                    {{
+                                        editingItem
+                                            ? editingItem.recipeName
+                                            : 'Add Weekly Feature'
+                                    }}
+                                </h2>
+
+                            </div>
+
+                            <WeeklyOfferingItemForm ref="itemForm" :item="editingItem" :saving="savingItem"
+                                @submit="saveItem" @cancel="cancelItemForm" />
+                        </div>
+
+
+                        <p v-if="offering.items.length === 0" class="empty-state">
+                            No items have been added yet.
+                        </p>
+
+
+                        <!-- Item Cards -->
+
+                        <div class="admin-item-list">
+
+                            <article v-for="item in sortedItems" :key="item.id" class="admin-item-card">
+
+                                <img v-if="item.imageUrl" :src="item.imageUrl" :alt="item.imageAlt
+                                    || item.recipeName
+                                    " class="admin-item-image" />
+
+                                <div v-else class="admin-item-image-placeholder">
+                                    No Image
+                                </div>
+
+
+                                <div class="admin-item-content">
+
+                                    <p class="admin-item-type">
+                                        Featured
+                                        {{
+                                            formatOfferingType(
+                                                item.offeringType
+                                            )
+                                        }}
+                                    </p>
+
+                                    <h3>
+                                        {{ item.recipeName }}
+                                    </h3>
+
+                                    <p v-if="item.publicDescription" class="admin-item-description">
+                                        {{ item.publicDescription }}
+                                    </p>
+
+                                    <p v-if="item.includedSidesText" class="admin-item-sides">
+                                        {{ item.includedSidesText }}
+                                    </p>
+
+
+                                    <ul class="admin-price-list">
+
+                                        <li v-for="price in item.prices" :key="price.id">
+                                            <span v-if="price.label">
+                                                {{ price.label }}:
+                                            </span>
+
+                                            ${{ price.amount }}
+                                        </li>
+
+                                    </ul>
+
+
+                                    <div v-if="
+                                        offering.status
+                                        !== 'ARCHIVED'
+                                    " class="admin-item-actions">
+
+                                        <button type="button" @click="
+                                            startEditingItem(
+                                                item
+                                            )
+                                            ">
+                                            Edit
+                                        </button>
+
+                                        <button type="button" class="danger-button" @click="
+                                            deleteItem(
+                                                item.id
+                                            )
+                                            ">
+                                            Delete
+                                        </button>
+
+                                    </div>
+
+                                </div>
+
+                            </article>
+
+                        </div>
+
+                    </section>
+
+                </section>
+
+
+                <!-- =========================================
+                     RIGHT: PUBLIC PREVIEW
+                ========================================== -->
+
+                <aside class="preview-panel">
+
+                    <header class="preview-heading">
+
+                        <p class="admin-eyebrow">
+                            Customer View
+                        </p>
+
+                        <h2>
+                            Public Preview
+                        </h2>
+
+                        <p>
+                            This is how the weekly features
+                            will appear to customers.
+                        </p>
+
+                    </header>
+
+                    <div class="preview-content">
+
+                        <WeeklyOffering :offering="offering" />
+
+                    </div>
+
+                </aside>
+
+            </div>
+
+        </div>
+
     </main>
 </template>
 
 <script setup>
 
-import { computed, onMounted, ref } from 'vue'
+import { computed, nextTick, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useWeeklyOfferingStore } from '@/stores/weeklyOfferingStore'
 import { useRecipeStore } from '@/stores/recipeStore'
 import WeeklyOfferingItemForm
     from '@/components/admin/WeeklyOfferingItemForm.vue'
 import WeeklyOfferingForm from '@/components/admin/WeeklyOfferingForm.vue'
+import WeeklyOffering from '@/components/WeeklyOffering.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -124,6 +298,7 @@ const recipeStore = useRecipeStore()
 const showAddItemForm = ref(false)
 const savingItem = ref(false)
 const itemForm = ref(null)
+const itemFormSection = ref(null)
 const editingItem = ref(null)
 const showDateForm = ref(false)
 const savingDates = ref(false)
@@ -132,6 +307,11 @@ const offering = computed(
     () => weeklyOfferings.currentOffering
 )
 
+const sortedItems = computed(() => {
+    return [...(offering.value?.items ?? [])]
+        .sort((a, b) => a.displayOrder - b.displayOrder)
+})
+
 onMounted(async () => {
     await Promise.all([
         weeklyOfferings.fetchOfferingById(route.params.id),
@@ -139,14 +319,27 @@ onMounted(async () => {
     ])
 })
 
-function startAddingItem() {
-    editingItem.value = null
-    showAddItemForm.value = true
+async function scrollToItemForm() {
+    await nextTick()
+
+    itemFormSection.value?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start'
+    })
 }
 
-function startEditingItem(item) {
+async function startAddingItem() {
+    editingItem.value = null
+    showAddItemForm.value = true
+
+    await scrollToItemForm()
+}
+
+async function startEditingItem(item) {
     editingItem.value = item
     showAddItemForm.value = true
+
+    await scrollToItemForm()
 }
 
 function cancelItemForm() {
@@ -357,4 +550,391 @@ function formatOfferingType(type) {
 
 </script>
 
-<style scoped></style>
+<style scoped>
+/* ==========================================================
+   ADMIN PAGE
+   ========================================================== */
+
+.admin-page {
+    min-height: 100vh;
+    padding: 2rem 0 4rem;
+    color: var(--text-primary);
+}
+
+.admin-page-container {
+    width: min(1500px, 94%);
+    margin: 0 auto;
+}
+
+.back-button {
+    margin-bottom: 1rem;
+}
+
+
+/* ==========================================================
+   MAIN LAYOUT
+   ========================================================== */
+
+.admin-offering-layout {
+    display: grid;
+    grid-template-columns:
+        minmax(500px, 1fr) minmax(400px, 0.9fr);
+
+    gap: 2rem;
+    align-items: start;
+}
+
+.admin-editor-panel,
+.preview-panel {
+    padding: 1.5rem;
+
+    background: var(--background-dark-trans);
+
+    border: 1px solid var(--bronze-color);
+    border-radius: 0.6rem;
+}
+
+
+/* ==========================================================
+   HEADER
+   ========================================================== */
+
+.offering-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    align-items: flex-start;
+
+    padding-bottom: 1.5rem;
+
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.offering-header h1 {
+    margin: 0.2rem 0;
+}
+
+.admin-eyebrow {
+    margin: 0 0 0.3rem;
+
+    color: var(--bronze-bold);
+
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.offering-dates {
+    margin: 0.5rem 0 0;
+    opacity: 0.8;
+}
+
+
+/* ==========================================================
+   STATUS
+   ========================================================== */
+
+.status-badge {
+    padding: 0.4rem 0.7rem;
+
+    border: 1px solid currentColor;
+    border-radius: 999px;
+
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+}
+
+
+/* ==========================================================
+   ACTIONS
+   ========================================================== */
+
+.offering-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+
+    padding: 1.25rem 0;
+}
+
+button {
+    padding: 0.55rem 0.9rem;
+
+    border: 1px solid var(--bronze-color);
+    border-radius: 0.3rem;
+
+    cursor: pointer;
+}
+
+.primary-button {
+    font-weight: 700;
+}
+
+.danger-button {
+    opacity: 0.85;
+}
+
+
+/* ==========================================================
+   ITEMS SECTION
+   ========================================================== */
+
+.items-section {
+    margin-top: 1rem;
+}
+
+.section-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+
+    margin-bottom: 1rem;
+}
+
+.section-heading h2 {
+    margin: 0;
+}
+
+
+/* ==========================================================
+   ITEM FORM
+   ========================================================== */
+
+.item-form-section,
+.admin-form-container {
+    margin: 1rem 0 1.5rem;
+    padding: 1.25rem;
+
+    background: rgba(255, 255, 255, 0.05);
+
+    border: 1px solid var(--bronze-color);
+    border-radius: 0.5rem;
+
+    scroll-margin-top: 2rem;
+}
+
+.form-heading {
+    margin-bottom: 1rem;
+}
+
+.form-heading h2 {
+    margin: 0;
+}
+
+
+/* ==========================================================
+   ITEM CARDS
+   ========================================================== */
+
+.admin-item-list {
+    display: grid;
+    gap: 1rem;
+}
+
+.admin-item-card {
+    display: grid;
+    grid-template-columns: 150px minmax(0, 1fr);
+    gap: 1rem;
+
+    padding: 1rem;
+
+    background: var(--background-dark-trans);
+
+    border: 1px solid rgba(255, 255, 255, 0.12);
+
+    border-radius: 0.5rem;
+}
+
+.admin-item-image,
+.admin-item-image-placeholder {
+    width: 150px;
+    height: 125px;
+
+    border-radius: 0.4rem;
+}
+
+.admin-item-image {
+    display: block;
+
+    object-fit: cover;
+}
+
+.admin-item-image-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    background: rgba(255, 255, 255, 0.06);
+
+    font-size: 0.8rem;
+    opacity: 0.6;
+}
+
+.admin-item-content {
+    min-width: 0;
+}
+
+.admin-item-type {
+    margin: 0 0 0.3rem;
+
+    color: var(--bronze-bold);
+
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+.admin-item-content h3 {
+    margin: 0 0 0.6rem;
+}
+
+.admin-item-description,
+.admin-item-sides {
+    margin: 0.4rem 0;
+
+    line-height: 1.5;
+}
+
+.admin-price-list {
+    margin: 0.75rem 0 0;
+    padding: 0;
+
+    list-style: none;
+}
+
+.admin-price-list li {
+    margin: 0.2rem 0;
+
+    font-weight: 700;
+}
+
+.admin-item-actions {
+    display: flex;
+    gap: 0.5rem;
+
+    margin-top: 1rem;
+}
+
+
+/* ==========================================================
+   PUBLIC PREVIEW
+   ========================================================== */
+
+.preview-panel {
+    position: sticky;
+    top: 1rem;
+}
+
+.preview-heading {
+    padding-bottom: 1rem;
+
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.preview-heading h2 {
+    margin: 0.2rem 0;
+}
+
+.preview-heading>p:last-child {
+    margin-bottom: 0;
+
+    font-size: 0.85rem;
+    opacity: 0.7;
+}
+
+.preview-content {
+    margin-top: 1rem;
+    color: var(--text-primary);
+    font-family: inherit;
+}
+
+
+/*
+   Override the public component's outer sizing ONLY
+   while it is being shown inside the admin preview.
+*/
+
+.preview-content :deep(.weekly-offering) {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    color: var(--text-primary);
+}
+
+
+/* ==========================================================
+   OTHER
+   ========================================================== */
+
+.empty-state {
+    padding: 2rem;
+
+    text-align: center;
+    opacity: 0.7;
+
+    border: 1px dashed rgba(255, 255, 255, 0.2);
+    border-radius: 0.5rem;
+}
+
+.admin-alert {
+    width: min(700px, 90%);
+    margin: 0 auto 1rem;
+    padding: 1rem;
+
+    border: 1px solid var(--bronze-color);
+}
+
+
+/* ==========================================================
+   RESPONSIVE
+   ========================================================== */
+
+@media (max-width: 1100px) {
+
+    .admin-offering-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .preview-panel {
+        position: static;
+    }
+}
+
+
+@media (max-width: 650px) {
+
+    .admin-page-container {
+        width: 94%;
+    }
+
+    .admin-editor-panel,
+    .preview-panel {
+        padding: 1rem;
+    }
+
+    .offering-header,
+    .section-heading {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .admin-item-card {
+        grid-template-columns: 1fr;
+    }
+
+    .admin-item-image,
+    .admin-item-image-placeholder {
+        width: 100%;
+        height: 200px;
+    }
+
+    .offering-actions {
+        align-items: stretch;
+        flex-direction: column;
+    }
+}
+</style>
