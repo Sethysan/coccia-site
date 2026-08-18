@@ -3,7 +3,7 @@
         <header>
             <div>
                 <h1>
-                    {{ viewingArchived ? 'Archived Weekly Offerings' : 'Weekly Offerings'}}
+                    {{ viewingArchived ? 'Archived Weekly Offerings' : 'Weekly Offerings' }}
                 </h1>
 
                 <p v-if="auth.username">
@@ -17,7 +17,7 @@
         </header>
 
         <button type="button" @click="toggleArchived">
-            {{ viewingArchived ? '← Back to Weekly Offerings': 'View Archived Offerings'}}
+            {{ viewingArchived ? '← Back to Weekly Offerings' : 'View Archived Offerings' }}
         </button>
 
         <button v-if="!showCreateForm && !viewingArchived" @click="showCreateForm = true">
@@ -36,7 +36,7 @@
         </p>
 
         <p v-else-if="weeklyOfferings.offerings.length === 0">
-            {{ viewingArchived ? 'No archived weekly offerings.': 'No weekly offerings found.'}}
+            {{ viewingArchived ? 'No archived weekly offerings.' : 'No weekly offerings found.' }}
         </p>
 
         <section v-else>
@@ -46,7 +46,7 @@
                 </h2>
 
                 <p>
-                    Status: {{ offering.status }}
+                    Status: {{ getDisplayStatus(offering) }}
                 </p>
 
                 <p>
@@ -126,6 +126,29 @@ async function createOffering(formData) {
     } finally {
         creatingOffering.value = false
     }
+}
+
+function getDisplayStatus(offering) {
+    if (offering.status === 'ARCHIVED') {
+        return 'ARCHIVED'
+    }
+
+    if (offering.status === 'DRAFT') {
+        return 'DRAFT'
+    }
+
+    const today = new Date()
+        .toISOString()
+        .slice(0, 10)
+
+    if (
+        offering.startDate <= today
+        && offering.endDate >= today
+    ) {
+        return 'CURRENT'
+    }
+
+    return 'SCHEDULED'
 }
 
 </script>
