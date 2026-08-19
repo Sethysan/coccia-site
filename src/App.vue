@@ -1,10 +1,11 @@
 <template>
   <SiteHeader />
 
-  <section v-for="announcement in announcements" :key="announcement.id" class="site-announcement">
+<!-- TODO: DEVELOP ANNOUNCEMENT COMPONENT INTEGRATION -->
+  <!-- <section v-for="announcement in announcements" :key="announcement.id" class="site-announcement">
     <strong>{{ announcement.title }}:</strong>
     {{ announcement.message }}
-  </section>
+  </section> -->
 
   <main class="content">
     <LoadingOverlay :visible="loading.visible" :frame="loading.frame" />
