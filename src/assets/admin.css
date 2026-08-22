@@ -1,0 +1,197 @@
+/* ==========================================================
+   ADMIN PAGE SHELL
+   ========================================================== */
+
+.admin-page {
+    min-height: 100vh;
+    padding: 2rem 0 4rem;
+
+    color: var(--text-primary);
+}
+
+.admin-page-container {
+    width: min(1200px, 94%);
+    margin: 0 auto;
+}
+
+.admin-page-container-wide {
+    width: min(1500px, 94%);
+}
+
+
+/* ==========================================================
+   ADMIN HEADER
+   ========================================================== */
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 2rem;
+
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+
+    background: var(--background-dark-trans);
+
+    border: 1px solid var(--bronze-color);
+    border-radius: 0.6rem;
+}
+
+.page-header h1 {
+    margin: 0.2rem 0;
+}
+
+.admin-eyebrow {
+    margin: 0;
+
+    color: var(--bronze-bold);
+
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.admin-subtext {
+    margin: 0.5rem 0 0;
+
+    color: var(--text-secondary);
+}
+
+
+/* ==========================================================
+   ADMIN ACTION BAR
+   ========================================================== */
+
+.page-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+
+    margin-bottom: 1.5rem;
+}
+
+
+/* ==========================================================
+   ADMIN BUTTONS
+   ========================================================== */
+
+.admin-page button {
+    padding: 0.65rem 1rem;
+
+    color: var(--text-primary);
+    background: var(--background-dark-trans);
+
+    border: 1px solid var(--bronze-color);
+    border-radius: 0.35rem;
+
+    font: inherit;
+    font-weight: 700;
+
+    cursor: pointer;
+
+    transition:
+        background-color 180ms ease,
+        border-color 180ms ease,
+        transform 180ms ease;
+}
+
+.admin-page button:hover:not(:disabled) {
+    background: var(--bronze-bold);
+    border-color: var(--bronze-hover);
+
+    transform: translateY(-1px);
+}
+
+.primary-button {
+    background: var(--bronze-bold) !important;
+}
+
+
+/* ==========================================================
+   ADMIN CARDS
+   ========================================================== */
+
+.admin-card {
+    padding: 1.5rem;
+
+    background: var(--background-dark-trans);
+
+    border: 1px solid var(--bronze-color);
+    border-radius: 0.6rem;
+
+    box-shadow: var(--shadow-soft);
+}
+
+
+/* ==========================================================
+   ADMIN STATUS BADGES
+   ========================================================== */
+
+.status-badge {
+    flex: 0 0 auto;
+
+    padding: 0.4rem 0.65rem;
+
+    border: 1px solid currentColor;
+    border-radius: 999px;
+
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+}
+
+.status-current {
+    color: var(--status-open);
+}
+
+.status-draft {
+    color: var(--bronze-hover);
+}
+
+.status-scheduled {
+    color: var(--status-opening-soon);
+}
+
+.status-archived {
+    color: var(--text-secondary);
+}
+
+
+/* ==========================================================
+   ADMIN STATES
+   ========================================================== */
+
+.state-message,
+.error-message {
+    padding: 1.25rem;
+
+    background: var(--background-dark-trans);
+
+    border: 1px solid var(--bronze-color);
+    border-radius: 0.5rem;
+}
+
+.error-message {
+    border-color: var(--status-closed);
+}
+
+
+/* ==========================================================
+   RESPONSIVE ADMIN SHELL
+   ========================================================== */
+
+@media (max-width: 600px) {
+    .page-header {
+        flex-direction: column;
+    }
+
+    .page-actions {
+        flex-direction: column;
+    }
+
+    .page-actions button {
+        width: 100%;
+    }
+}

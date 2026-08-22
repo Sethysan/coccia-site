@@ -12,7 +12,7 @@
             </button>
         </div>
 
-        <div class="admin-page-container">
+        <div class="admin-page-container admin-page-container-wide">
 
             <button class="back-button" type="button" @click="router.push('/admin/weekly-offerings')">
                 ← Back to Weekly Offerings
@@ -42,9 +42,10 @@
                             </h1>
 
                             <p class="offering-dates">
-                                {{ offering.startDate }}
-                                –
-                                {{ offering.endDate }}
+                                {{ formatDateRange(
+                                    offering.startDate,
+                                offering.endDate
+                                ) }}
                             </p>
                         </div>
 
@@ -290,6 +291,7 @@ import WeeklyOfferingItemForm
     from '@/components/admin/WeeklyOfferingItemForm.vue'
 import WeeklyOfferingForm from '@/components/admin/WeeklyOfferingForm.vue'
 import WeeklyOffering from '@/components/WeeklyOffering.vue'
+import { formatDateRange } from '@/utils/dateFormat'
 
 const route = useRoute()
 const router = useRouter()
@@ -555,17 +557,6 @@ function formatOfferingType(type) {
    ADMIN PAGE
    ========================================================== */
 
-.admin-page {
-    min-height: 100vh;
-    padding: 2rem 0 4rem;
-    color: var(--text-primary);
-}
-
-.admin-page-container {
-    width: min(1500px, 94%);
-    margin: 0 auto;
-}
-
 .back-button {
     margin-bottom: 1rem;
 }
@@ -614,38 +605,11 @@ function formatOfferingType(type) {
     margin: 0.2rem 0;
 }
 
-.admin-eyebrow {
-    margin: 0 0 0.3rem;
-
-    color: var(--bronze-bold);
-
-    font-size: 0.75rem;
-    font-weight: 700;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-}
 
 .offering-dates {
     margin: 0.5rem 0 0;
     opacity: 0.8;
 }
-
-
-/* ==========================================================
-   STATUS
-   ========================================================== */
-
-.status-badge {
-    padding: 0.4rem 0.7rem;
-
-    border: 1px solid currentColor;
-    border-radius: 999px;
-
-    font-size: 0.7rem;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-}
-
 
 /* ==========================================================
    ACTIONS
@@ -657,19 +621,6 @@ function formatOfferingType(type) {
     gap: 0.6rem;
 
     padding: 1.25rem 0;
-}
-
-button {
-    padding: 0.55rem 0.9rem;
-
-    border: 1px solid var(--bronze-color);
-    border-radius: 0.3rem;
-
-    cursor: pointer;
-}
-
-.primary-button {
-    font-weight: 700;
 }
 
 .danger-button {
@@ -906,10 +857,6 @@ button {
 
 
 @media (max-width: 650px) {
-
-    .admin-page-container {
-        width: 94%;
-    }
 
     .admin-editor-panel,
     .preview-panel {

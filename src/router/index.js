@@ -4,6 +4,7 @@ import HomeView from '../views/HomeView.vue'
 import MenuView from '../views/MenuView.vue'
 import AboutView from '../views/AboutView.vue'
 import AdminLoginView from '../views/admin/AdminLoginView.vue'
+import AdminDashboardView from '../views/admin/AdminDashboardView.vue'
 import AdminWeeklyOfferingsView from '../views/admin/AdminWeeklyOfferingsView.vue'
 import { useLoadingStore } from "@/stores/loadingStore"
 import { useAuthStore } from '@/stores/authStore'
@@ -17,6 +18,11 @@ const router = createRouter({
     { path: '/menu', component: MenuView },
     { path: '/about', component: AboutView },
     { path: '/admin/login', component: AdminLoginView },
+    {
+      path: '/admin',
+      component: AdminDashboardView,
+      meta: { requiresAuth: true }
+    },
     {
       path: '/admin/weekly-offerings',
       component: AdminWeeklyOfferingsView, meta: { requiresAuth: true }
