@@ -158,7 +158,7 @@
         </p>
       </article>
 
-      <article class="news-item">
+      <!-- <article class="news-item">
         <h3>Annual Maintenance Closure</h3>
 
         <p>
@@ -166,7 +166,7 @@
           maintenance and deep cleaning. We look forward to serving
           you again on August 19.
         </p>
-      </article>
+      </article> -->
     </section>
 
 
