@@ -22,6 +22,10 @@ export const useWeeklyOfferingStore = defineStore(
         const error = ref(null)
         const currentOffering = ref(null)
 
+        function clearError() {
+            error.value = null
+        }
+
         async function fetchOfferings(status = null) {
             loading.value = true
             error.value = null

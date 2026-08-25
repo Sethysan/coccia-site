@@ -41,6 +41,23 @@
                     @submit="handleCreateAnnouncement" @cancel="showCreateForm = false" />
             </section>
 
+            <div class="announcement-filters">
+                <button type="button" :class="{ active: selectedFilter === 'active' }"
+                    @click="selectedFilter = 'active'">
+                    Active ({{ announcementCounts.active }})
+                </button>
+
+                <button type="button" :class="{ active: selectedFilter === 'drafts' }"
+                    @click="selectedFilter = 'drafts'">
+                    Drafts ({{ announcementCounts.drafts }})
+                </button>
+
+                <button type="button" :class="{ active: selectedFilter === 'archived' }"
+                    @click="selectedFilter = 'archived'">
+                    Archived ({{ announcementCounts.archived }})
+                </button>
+            </div>
+
             <p v-if="announcementStore.loading" class="state-message">
                 Loading announcements...
             </p>
@@ -50,18 +67,19 @@
             </div>
 
             <p v-else-if="
-                announcementStore.adminAnnouncements.length === 0
+                filteredAnnouncements.length === 0
             " class="state-message">
-                No announcements found.
+                No {{ emptyFilterLabel }} announcements.
             </p>
 
             <section v-else class="announcement-grid">
-                <article v-for="announcement in announcementStore.adminAnnouncements" :key="announcement.id"
+
+                <article v-for="announcement in filteredAnnouncements" :key="announcement.id"
                     class="admin-card announcement-card">
                     <div class="announcement-card-header">
                         <div>
                             <p class="announcement-placement">
-                                {{ announcement.placement }}
+                                {{ formatLabel(announcement.placement) }}
                             </p>
 
                             <h2>
@@ -71,7 +89,7 @@
 
                         <span class="status-badge" :class="`status-${announcement.status.toLowerCase()}`
                             ">
-                            {{ announcement.status }}
+                            {{ formatLabel(announcement.status) }}
                         </span>
                     </div>
 
@@ -81,13 +99,30 @@
 
                     <div class="announcement-meta">
                         <span>
-                            Type: {{ announcement.type }}
+                            <strong>Type:</strong>
+                            {{ formatLabel(announcement.type) }}
                         </span>
 
                         <span>
-                            Order: {{ announcement.displayOrder }}
+                            <strong>Starts:</strong>
+                            {{ formatDateTime(announcement.startDateTime) }}
+                        </span>
+
+                        <span>
+                            <strong>Ends:</strong>
+                            {{
+                                announcement.endDateTime
+                                    ? formatDateTime(announcement.endDateTime)
+                                    : "No end date"
+                            }}
+                        </span>
+
+                        <span>
+                            <strong>Display order:</strong>
+                            {{ announcement.displayOrder }}
                         </span>
                     </div>
+
                     <div class="announcement-actions">
 
                         <button v-if="announcement.status === 'draft'" type="button"
@@ -131,7 +166,7 @@
 </template>
 
 <script setup>
-import { onMounted, ref } from "vue"
+import { computed, onMounted, ref } from "vue"
 import AnnouncementForm from "@/components/admin/AnnouncementForm.vue"
 import { useRouter } from "vue-router"
 
@@ -164,6 +199,8 @@ async function handleCreateAnnouncement(data) {
             await announcementStore.createAnnouncement(data)
 
         if (created) {
+
+            selectedFilter.value = "drafts"
             showCreateForm.value = false
         }
 
@@ -173,6 +210,14 @@ async function handleCreateAnnouncement(data) {
 }
 
 async function handleSchedule(id) {
+    const confirmed = window.confirm(
+        "Schedule this announcement? It will appear on the website when its start date and time arrives."
+    )
+
+    if (!confirmed) {
+        return
+    }
+
     const success =
         await announcementStore.scheduleAnnouncement(id)
 
@@ -182,6 +227,14 @@ async function handleSchedule(id) {
 }
 
 async function handleArchive(id) {
+    const confirmed = window.confirm(
+        "Archive this announcement? It will no longer appear on the website."
+    )
+
+    if (!confirmed) {
+        return
+    }
+
     const success =
         await announcementStore.archiveAnnouncement(id)
 
@@ -240,9 +293,99 @@ async function handleDuplicate(announcement) {
         })
 
     if (duplicated) {
+        selectedFilter.value = "drafts"
         editingAnnouncement.value = duplicated
     }
 }
+
+function formatLabel(value) {
+    if (!value) {
+        return ""
+    }
+
+    const labels = {
+        banner: "Site Banner",
+        news: "Latest News",
+        general: "General",
+        info: "Information",
+        event: "Event",
+        closure: "Closure",
+        warning: "Warning",
+        draft: "Draft",
+        scheduled: "Scheduled",
+        archived: "Archived"
+    }
+
+    return labels[value] ?? value
+}
+
+function formatDateTime(value) {
+    if (!value) {
+        return "No date set"
+    }
+
+    return new Intl.DateTimeFormat("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+        hour: "numeric",
+        minute: "2-digit"
+    }).format(new Date(value))
+}
+
+const selectedFilter = ref("active")
+
+const filteredAnnouncements = computed(() => {
+    return announcementStore.adminAnnouncements.filter(
+        announcement => {
+            if (selectedFilter.value === "active") {
+                return announcement.status === "scheduled"
+            }
+
+            if (selectedFilter.value === "drafts") {
+                return announcement.status === "draft"
+            }
+
+            if (selectedFilter.value === "archived") {
+                return announcement.status === "archived"
+            }
+
+            return true
+        }
+    )
+})
+
+const announcementCounts = computed(() => {
+    return {
+        active:
+            announcementStore.adminAnnouncements.filter(
+                announcement =>
+                    announcement.status === "scheduled"
+            ).length,
+
+        drafts:
+            announcementStore.adminAnnouncements.filter(
+                announcement =>
+                    announcement.status === "draft"
+            ).length,
+
+        archived:
+            announcementStore.adminAnnouncements.filter(
+                announcement =>
+                    announcement.status === "archived"
+            ).length
+    }
+})
+
+const emptyFilterLabel = computed(() => {
+    const labels = {
+        active: "active",
+        drafts: "draft",
+        archived: "archived"
+    }
+
+    return labels[selectedFilter.value]
+})
 
 </script>
 
@@ -288,7 +431,7 @@ async function handleDuplicate(announcement) {
 .announcement-meta {
     display: flex;
     flex-wrap: wrap;
-    gap: 1rem;
+    gap: 0.5rem 1.5rem;
 
     font-size: 0.85rem;
     opacity: 0.8;
@@ -317,6 +460,19 @@ async function handleDuplicate(announcement) {
 
 .danger-button {
     margin-left: auto;
+}
+
+.announcement-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+
+    margin-bottom: 1rem;
+}
+
+.announcement-filters button.active {
+    font-weight: 700;
+    text-decoration: underline;
 }
 
 @media (max-width: 600px) {
