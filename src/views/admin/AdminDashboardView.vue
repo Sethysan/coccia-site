@@ -17,20 +17,14 @@
                     </p>
                 </div>
 
-                <button
-                    type="button"
-                    @click="handleLogout"
-                >
+                <button type="button" @click="handleLogout">
                     Log Out
                 </button>
             </header>
 
             <section class="dashboard-grid">
 
-                <RouterLink
-                    to="/admin/weekly-offerings"
-                    class="admin-card dashboard-card"
-                >
+                <RouterLink to="/admin/weekly-offerings" class="admin-card dashboard-card">
                     <h2>Weekly Features</h2>
 
                     <p>
@@ -59,15 +53,13 @@
                     <span>Coming soon</span>
                 </article>
 
-                <article class="admin-card dashboard-card is-coming-soon">
+                <RouterLink to="/admin/announcements" class="admin-card dashboard-card">
                     <h2>Announcements</h2>
 
                     <p>
                         Schedule website notices, closures, and special messages.
                     </p>
-
-                    <span>Coming soon</span>
-                </article>
+                </RouterLink>
 
                 <article class="admin-card dashboard-card is-coming-soon">
                     <h2>Recipes</h2>
@@ -109,7 +101,6 @@ async function handleLogout() {
 </script>
 
 <style scoped>
-
 .dashboard-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));

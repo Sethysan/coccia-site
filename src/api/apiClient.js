@@ -1,4 +1,5 @@
 import { appConfig } from "@/config/appConfig"
+import { getCsrfToken } from "@/utils/csrf"
 
 class ApiError extends Error {
   constructor(message, status = null, details = null) {
@@ -30,13 +31,25 @@ export const apiRequest = async (endpoint, options = {}) => {
 
   const timeout = createTimeoutSignal(appConfig.requestTimeoutMs)
 
+  const method = options.method?.toUpperCase() || "GET"
+
+  const requiresCsrf = !["GET", "HEAD", "OPTIONS"].includes(method)
+
+  const csrfToken = requiresCsrf
+    ? getCsrfToken()
+    : null
+
   try {
     const response = await fetch(`${appConfig.apiUrl}${endpoint}`, {
       ...options,
       signal: timeout.signal,
+      credentials: "include",
       headers: {
         Accept: "application/json",
         "Content-Type": "application/json",
+        ...(csrfToken && {
+          "X-XSRF-TOKEN": csrfToken
+        }),
         ...options.headers
       }
     })
@@ -79,4 +92,3 @@ export const apiRequest = async (endpoint, options = {}) => {
 
 export { ApiError }
 
-//todo credentials: "include"

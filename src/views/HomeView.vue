@@ -117,70 +117,8 @@
     <!-- ========================================================
          LATEST NEWS
          ======================================================== -->
-    <section class="news-card">
-      <!-- todo -->
-      <!-- <article class="news-item">
-        <h3>Live Music Tonight – Thursday, July 23</h3>
 
-        <img class="news-flyer" :src="rolandoFlyer" alt="Rolando Live at Coccia House, Thursday July 23 at 6 PM" />
-
-        <p>
-          Join us in the <strong>Florentine Room tonight at 6:00 PM</strong> as we
-          welcome back house favorite <strong>Rolando</strong> for an evening of
-          live music.
-        </p>
-
-        <p>
-          We anticipate a larger-than-usual crowd, so seating will be limited.
-          Standing room will be available around the bar.
-        </p>
-      </article> -->
-
-      <article class="news-item">
-        <h3>Dining Room Open</h3>
-
-        <p>
-          Join us in our dining room Wednesday through Saturday
-          from 3–9 PM.
-        </p>
-      </article>
-
-      <article class="news-item">
-        <h3>We're Back to Our Full Menu</h3>
-
-        <p>
-          If it's been a while since your last visit, welcome back!
-        </p>
-
-        <p>
-          Our website hasn't been updated since the pandemic, when we
-          temporarily offered only half-baked pizzas. Today,
-          <strong>
-            our full menu is available again for dine-in and carryout
-          </strong>,
-          just like before.
-        </p>
-
-        <p>
-          Prefer to bake your pizza at home?
-          <strong>
-            Half-baked pizzas are still available for pickup,
-          </strong>
-          so you can enjoy a fresh-from-the-oven Coccia House pizza
-          whenever you're ready.
-        </p>
-      </article>
-
-      <!-- <article class="news-item">
-        <h3>Annual Maintenance Closure</h3>
-
-        <p>
-          Coccia House will be closed August 3–18 for our annual
-          maintenance and deep cleaning. We look forward to serving
-          you again on August 19.
-        </p>
-      </article> -->
-    </section>
+      <NewsAnnouncements />
 
 
     <!-- ========================================================
@@ -212,6 +150,7 @@
 </template>
 
 <script setup>
+
 import { RouterLink } from 'vue-router'
 import { useRestaurantHours } from '@/composables/useRestaurantHours'
 import { homeContent } from '@/content/homeContent.js'
@@ -219,27 +158,20 @@ import WeeklyOffering from '@/components/WeeklyOffering.vue'
 import HomeGallery from '@/components/HomeGallery.vue'
 import { trackPhoneClick } from "@/utils/analytics"
 import { trackDirectionsClick } from "@/utils/analytics"
-import rolandoFlyer from '@/assets/rolando-live-july23.png'
+import NewsAnnouncements from '@/components/NewsAnnouncements.vue'
 
 const {
   todayHours,
   restaurantStatus
 } = useRestaurantHours()
+
 </script>
 
 <style scoped>
 /* ==========================================================
    HOME PAGE
    ========================================================== */
-/* TODO */
-/* .news-flyer {
-  display: block;
-  width: 100%;
-  max-width: 420px;
-  margin: 1rem auto 1.25rem;
-  border-radius: 10px;
-  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.25);
-} */
+
 
 .home-page {
   width: 100%;
@@ -511,53 +443,6 @@ const {
   font-size: clamp(1.7rem, 4vw, 2.7rem);
 }
 
-
-/* ==========================================================
-   LATEST NEWS
-   ========================================================== */
-
-.news-card {
-  width: min(100%, 560px);
-  margin: 0 auto 6rem;
-  padding: 1.75rem;
-
-  background-color: var(--background-dark-trans);
-
-  border: 1px solid var(--bronze-color);
-  border-radius: 0.5rem;
-
-  text-align: left;
-}
-
-.news-card>h2 {
-  margin: 0 0 1.5rem;
-  text-align: center;
-}
-
-.news-item+.news-item {
-  margin-top: 1.75rem;
-  padding-top: 1.75rem;
-
-  border-top: 1px solid rgba(255, 255, 255, 0.15);
-}
-
-.news-item h3 {
-  margin: 0 0 0.6rem;
-
-  color: var(--bronze-bold);
-}
-
-.news-item p {
-  margin: 0;
-
-  line-height: 1.65;
-}
-
-.news-item p+p {
-  margin-top: 0.9rem;
-}
-
-
 /* ==========================================================
    MISSION
    ========================================================== */
@@ -618,8 +503,7 @@ const {
   }
 
   .today-card,
-  .story-preview,
-  .news-card {
+  .story-preview {
     padding: 1.25rem;
   }
 
@@ -641,17 +525,12 @@ const {
   }
 
   .story-preview,
-  .family-album,
-  .news-card {
+  .family-album {
     margin-bottom: 4rem;
   }
 
   .family-album {
     width: 100%;
-  }
-
-  .news-card {
-    text-align: left;
   }
 
   .mission-section {

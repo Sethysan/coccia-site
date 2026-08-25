@@ -10,6 +10,8 @@ import { useLoadingStore } from "@/stores/loadingStore"
 import { useAuthStore } from '@/stores/authStore'
 import AdminWeeklyOfferingDetailView
   from '../views/admin/AdminWeeklyOfferingDetailView.vue'
+import AdminAnnouncementsView
+  from '../views/admin/AdminAnnouncementsView.vue'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -30,7 +32,12 @@ const router = createRouter({
     {
       path: '/admin/weekly-offerings/:id',
       component: AdminWeeklyOfferingDetailView, meta: { requiresAuth: true }
-    }
+    },
+    {
+      path: '/admin/announcements',
+      component: AdminAnnouncementsView,
+      meta: { requiresAuth: true }
+    },
   ],
 
   scrollBehavior(to, from, savedPosition) {

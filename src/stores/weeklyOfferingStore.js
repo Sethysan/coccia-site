@@ -1,6 +1,18 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import { getCsrfToken } from '@/utils/csrf'
+
+import {
+    getWeeklyOfferings,
+    getWeeklyOfferingById,
+    createWeeklyOffering,
+    updateWeeklyOfferingDates,
+    addWeeklyOfferingItem,
+    updateWeeklyOfferingItem,
+    deleteWeeklyOfferingItem,
+    scheduleWeeklyOffering,
+    archiveWeeklyOffering,
+    deleteWeeklyOffering
+} from '@/api/weeklyOfferingsApi'
 
 export const useWeeklyOfferingStore = defineStore(
     'weeklyOfferings',
@@ -15,30 +27,7 @@ export const useWeeklyOfferingStore = defineStore(
             error.value = null
 
             try {
-                const params = new URLSearchParams()
-
-                if (status) {
-                    params.set('status', status)
-                }
-
-                const query = params.toString()
-
-                const url = query
-                    ? `/api/admin/weekly-offerings?${query}`
-                    : '/api/admin/weekly-offerings'
-
-                const response = await fetch(url, {
-                    method: 'GET',
-                    credentials: 'include'
-                })
-
-                if (!response.ok) {
-                    throw new Error(
-                        'Unable to load weekly offerings.'
-                    )
-                }
-
-                offerings.value = await response.json()
+                offerings.value = await getWeeklyOfferings(status)
 
             } catch (err) {
                 console.error(err)
@@ -55,31 +44,11 @@ export const useWeeklyOfferingStore = defineStore(
             error.value = null
 
             try {
-                const csrfToken = getCsrfToken()
-
-                const response = await fetch(
-                    `/api/admin/weekly-offerings/${offeringId}/items`,
-                    {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-XSRF-TOKEN': csrfToken
-                        },
-                        credentials: 'include',
-                        body: JSON.stringify(item)
-                    }
-                )
-
-                if (!response.ok) {
-                    const errorResponse = await response.json().catch(() => null)
-
-                    throw new Error(
-                        errorResponse?.message
-                        ?? 'Unable to add weekly offering item.'
+                currentOffering.value =
+                    await addWeeklyOfferingItem(
+                        offeringId,
+                        item
                     )
-                }
-
-                currentOffering.value = await response.json()
 
                 return true
 
@@ -91,31 +60,14 @@ export const useWeeklyOfferingStore = defineStore(
             }
         }
 
-        function clearError() {
-            error.value = null
-        }
-
         async function fetchOfferingById(id) {
             loading.value = true
             error.value = null
             currentOffering.value = null
 
             try {
-                const response = await fetch(
-                    `/api/admin/weekly-offerings/${id}`,
-                    {
-                        method: 'GET',
-                        credentials: 'include'
-                    }
-                )
-
-                if (!response.ok) {
-                    throw new Error(
-                        'Unable to load weekly offering.'
-                    )
-                }
-
-                currentOffering.value = await response.json()
+                currentOffering.value =
+                    await getWeeklyOfferingById(id)
 
             } catch (err) {
                 console.error(err)
@@ -132,28 +84,10 @@ export const useWeeklyOfferingStore = defineStore(
             error.value = null
 
             try {
-                const csrfToken = getCsrfToken()
-
-                const response = await fetch(
-                    `/api/admin/weekly-offerings/${offeringId}/items/${itemId}`,
-                    {
-                        method: 'DELETE',
-                        headers: {
-                            'X-XSRF-TOKEN': csrfToken
-                        },
-                        credentials: 'include'
-                    }
+                await deleteWeeklyOfferingItem(
+                    offeringId,
+                    itemId
                 )
-
-                if (!response.ok) {
-                    const errorResponse =
-                        await response.json().catch(() => null)
-
-                    throw new Error(
-                        errorResponse?.message
-                        ?? 'Unable to delete weekly offering item.'
-                    )
-                }
 
                 await fetchOfferingById(offeringId)
 
@@ -167,36 +101,20 @@ export const useWeeklyOfferingStore = defineStore(
             }
         }
 
-        async function updateItem(offeringId, itemId, item) {
+        async function updateItem(
+            offeringId,
+            itemId,
+            item
+        ) {
             error.value = null
 
             try {
-                const csrfToken = getCsrfToken()
-
-                const response = await fetch(
-                    `/api/admin/weekly-offerings/${offeringId}/items/${itemId}`,
-                    {
-                        method: 'PUT',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-XSRF-TOKEN': csrfToken
-                        },
-                        credentials: 'include',
-                        body: JSON.stringify(item)
-                    }
-                )
-
-                if (!response.ok) {
-                    const errorResponse =
-                        await response.json().catch(() => null)
-
-                    throw new Error(
-                        errorResponse?.message
-                        ?? 'Unable to update weekly offering item.'
+                currentOffering.value =
+                    await updateWeeklyOfferingItem(
+                        offeringId,
+                        itemId,
+                        item
                     )
-                }
-
-                currentOffering.value = await response.json()
 
                 return true
 
@@ -207,40 +125,15 @@ export const useWeeklyOfferingStore = defineStore(
                 return false
             }
         }
-
         async function createOffering(startDate, endDate) {
             error.value = null
 
             try {
-                const csrfToken = getCsrfToken()
-
-                const response = await fetch(
-                    '/api/admin/weekly-offerings',
-                    {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-XSRF-TOKEN': csrfToken
-                        },
-                        credentials: 'include',
-                        body: JSON.stringify({
-                            startDate,
-                            endDate
-                        })
-                    }
-                )
-
-                if (!response.ok) {
-                    const errorResponse =
-                        await response.json().catch(() => null)
-
-                    throw new Error(
-                        errorResponse?.message
-                        ?? 'Unable to create weekly offering.'
-                    )
-                }
-
-                const createdOffering = await response.json()
+                const createdOffering =
+                    await createWeeklyOffering({
+                        startDate,
+                        endDate
+                    })
 
                 offerings.value = [
                     createdOffering,
@@ -265,35 +158,14 @@ export const useWeeklyOfferingStore = defineStore(
             error.value = null
 
             try {
-                const csrfToken = getCsrfToken()
-
-                const response = await fetch(
-                    `/api/admin/weekly-offerings/${offeringId}`,
-                    {
-                        method: 'PUT',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-XSRF-TOKEN': csrfToken
-                        },
-                        credentials: 'include',
-                        body: JSON.stringify({
+                currentOffering.value =
+                    await updateWeeklyOfferingDates(
+                        offeringId,
+                        {
                             startDate,
                             endDate
-                        })
-                    }
-                )
-
-                if (!response.ok) {
-                    const errorResponse =
-                        await response.json().catch(() => null)
-
-                    throw new Error(
-                        errorResponse?.message
-                        ?? 'Unable to update weekly offering dates.'
+                        }
                     )
-                }
-
-                currentOffering.value = await response.json()
 
                 return true
 
@@ -304,35 +176,12 @@ export const useWeeklyOfferingStore = defineStore(
                 return false
             }
         }
-
         async function scheduleOffering(offeringId) {
             error.value = null
 
             try {
-                const csrfToken = getCsrfToken()
-
-                const response = await fetch(
-                    `/api/admin/weekly-offerings/${offeringId}/schedule`,
-                    {
-                        method: 'PUT',
-                        headers: {
-                            'X-XSRF-TOKEN': csrfToken
-                        },
-                        credentials: 'include'
-                    }
-                )
-
-                if (!response.ok) {
-                    const errorResponse =
-                        await response.json().catch(() => null)
-
-                    throw new Error(
-                        errorResponse?.message
-                        ?? 'Unable to schedule weekly offering.'
-                    )
-                }
-
-                currentOffering.value = await response.json()
+                currentOffering.value =
+                    await scheduleWeeklyOffering(offeringId)
 
                 return true
 
@@ -343,39 +192,19 @@ export const useWeeklyOfferingStore = defineStore(
                 return false
             }
         }
-
         async function deleteOffering(offeringId) {
             error.value = null
 
             try {
-                const csrfToken = getCsrfToken()
-
-                const response = await fetch(
-                    `/api/admin/weekly-offerings/${offeringId}`,
-                    {
-                        method: 'DELETE',
-                        headers: {
-                            'X-XSRF-TOKEN': csrfToken
-                        },
-                        credentials: 'include'
-                    }
-                )
-
-                if (!response.ok) {
-                    const errorResponse =
-                        await response.json().catch(() => null)
-
-                    throw new Error(
-                        errorResponse?.message
-                        ?? 'Unable to delete weekly offering.'
-                    )
-                }
+                await deleteWeeklyOffering(offeringId)
 
                 offerings.value = offerings.value.filter(
                     offering => offering.id !== Number(offeringId)
                 )
 
-                if (currentOffering.value?.id === Number(offeringId)) {
+                if (
+                    currentOffering.value?.id === Number(offeringId)
+                ) {
                     currentOffering.value = null
                 }
 
@@ -393,30 +222,8 @@ export const useWeeklyOfferingStore = defineStore(
             error.value = null
 
             try {
-                const csrfToken = getCsrfToken()
-
-                const response = await fetch(
-                    `/api/admin/weekly-offerings/${offeringId}/archive`,
-                    {
-                        method: 'PUT',
-                        headers: {
-                            'X-XSRF-TOKEN': csrfToken
-                        },
-                        credentials: 'include'
-                    }
-                )
-
-                if (!response.ok) {
-                    const errorResponse =
-                        await response.json().catch(() => null)
-
-                    throw new Error(
-                        errorResponse?.message
-                        ?? 'Unable to archive weekly offering.'
-                    )
-                }
-
-                const archivedOffering = await response.json()
+                const archivedOffering =
+                    await archiveWeeklyOffering(offeringId)
 
                 currentOffering.value = archivedOffering
 
