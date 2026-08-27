@@ -34,17 +34,13 @@
                 {{ hoursStore.error.message }}
             </div>
 
-            <p v-if="successMessage" class="success-message" role="status">
-                {{ successMessage }}
-            </p>
-
             <section v-if="!hoursStore.loading" class="hours-grid">
                 <article v-for="day in editingHours" :key="day.day" class="admin-card hours-card">
                     <div class="hours-card-header">
                         <h2>{{ day.name }}</h2>
 
                         <label class="closed-control">
-                            <input v-model="day.closed" type="checkbox">
+                            <input v-model="day.closed" type="checkbox" @change="handleClosedChange(day)">
 
                             Closed
                         </label>
@@ -69,6 +65,10 @@
 
                         <input v-model="day.note" type="text" maxlength="255" placeholder="Optional">
                     </label>
+
+                    <p v-if="dayErrors[day.day]" class="day-error" role="alert">
+                        {{ dayErrors[day.day] }}
+                    </p>
 
                     <div class="save-row">
                         <button type="button" :disabled="savingDay !== null" @click="saveDay(day)">
@@ -100,6 +100,9 @@ import { useHoursStore } from '@/stores/hoursStore'
 const editingHours = ref([])
 const savingDay = ref(null)
 const savedDay = ref(null)
+const dayErrors = ref({})
+const DEFAULT_OPEN_TIME = '15:00'
+const DEFAULT_CLOSE_TIME = '21:00'
 
 const router = useRouter()
 const auth = useAuthStore()
@@ -135,6 +138,13 @@ function formatTime(time) {
         : `${displayHour}:${String(minutes).padStart(2, '0')} ${suffix}`
 }
 
+function handleClosedChange(day) {
+    if (!day.closed) {
+        day.openTime ||= DEFAULT_OPEN_TIME
+        day.closeTime ||= DEFAULT_CLOSE_TIME
+    }
+}
+
 function formatHours(day) {
     return `${formatTime(day.openTime)} - ${formatTime(day.closeTime)}`
 }
@@ -142,7 +152,32 @@ function formatHours(day) {
 async function saveDay(day) {
     savingDay.value = day.day
     savedDay.value = null
+    dayErrors.value[day.day] = ""
     hoursStore.clearError()
+    if (!day.closed) {
+        if (!day.openTime || !day.closeTime) {
+            dayErrors.value[day.day] =
+                `${day.name} needs both an opening and closing time. Times were reset to the default.`
+
+            day.openTime = DEFAULT_OPEN_TIME
+            day.closeTime = DEFAULT_CLOSE_TIME
+
+            savingDay.value = null
+            return
+        }
+
+        if (day.closeTime <= day.openTime) {
+            dayErrors.value[day.day] =
+                "Closing time must be after opening time. Times were reset to the default."
+
+            day.openTime = DEFAULT_OPEN_TIME
+            day.closeTime = DEFAULT_CLOSE_TIME
+
+            savingDay.value = null
+            return
+        }
+
+    }
 
     try {
         await hoursStore.updateHours(day)
@@ -154,6 +189,11 @@ async function saveDay(day) {
                 savedDay.value = null
             }
         }, 3000)
+    } catch (error) {
+        dayErrors.value[day.day] =
+            error.message || `Unable to save ${day.name}.`
+
+        hoursStore.clearError()
 
     } finally {
         savingDay.value = null
@@ -163,6 +203,15 @@ async function saveDay(day) {
 </script>
 
 <style scoped>
+.day-error {
+    margin: 0;
+
+    color: var(--status-closed, #b3261e);
+
+    font-size: 0.9rem;
+    font-weight: 700;
+}
+
 .hours-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));

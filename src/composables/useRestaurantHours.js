@@ -163,6 +163,40 @@ export function useRestaurantHours() {
     return 'closed'
   }
 
+  function getNextOpenDay() {
+    const hours = hoursStore.hours
+    const today = currentDay.value
+
+    for (let offset = 1; offset <= 7; offset++) {
+      const dayNumber = (today + offset) % 7
+
+      const nextDay = hours.find(
+        day => day.day === dayNumber
+      )
+
+      if (
+        nextDay &&
+        !nextDay.closed &&
+        nextDay.openTime
+      ) {
+        return nextDay
+      }
+    }
+
+    return null
+  }
+
+  function getReopenMessage() {
+    const nextOpenDay = getNextOpenDay()
+
+    if (!nextOpenDay) {
+      return "Please call us for upcoming hours."
+    }
+
+    return `We’ll reopen ${nextOpenDay.name} at ${formatTime(
+      nextOpenDay.openTime
+    )}.`
+  }
 
   // ----------------------------------------------------------
   // Current restaurant status
@@ -177,11 +211,8 @@ export function useRestaurantHours() {
   // closing-soon
   // closed
   //
-  // NOTE:
-  // Reopening messages are still temporarily hard-coded to the
-  // current Wednesday schedule. These will be made dynamic once
-  // database-controlled hours are fully integrated.
-  // ----------------------------------------------------------
+  // Reopening messages are derived from the current weekly schedule,
+  // so admin changes automatically affect public status messaging.
 
   const restaurantStatus = computed(() => {
     const day = todayHours.value
@@ -198,7 +229,7 @@ export function useRestaurantHours() {
       return {
         state: 'closed',
         label: 'Closed Today',
-        message: 'We’ll reopen Wednesday at 3 PM.'
+        message: getReopenMessage()
       }
     }
 
@@ -269,10 +300,7 @@ export function useRestaurantHours() {
     return {
       state: 'closed',
       label: 'Closed for Today',
-      message:
-        day.day === 0
-          ? 'We’ll reopen Wednesday at 3 PM.'
-          : 'Thank you for visiting. We hope to see you again soon!'
+      message: getReopenMessage()
     }
   })
 
