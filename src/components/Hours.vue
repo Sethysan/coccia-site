@@ -8,9 +8,11 @@
       <span v-if="!showAll && isToday(day)" class="current-status" :class="`is-${restaurantStatus.state}`">
         {{ restaurantStatus.label }}
       </span>
+
       <span class="day-hours">
-        {{ day.hours }}
+        {{ formatHours(day) }}
       </span>
+
       <span v-if="day.note" class="hours-note">
         {{ day.note }}
       </span>
@@ -21,13 +23,16 @@
 <script setup>
 import { computed } from 'vue'
 
-import { hours } from '@/data/hours'
+import { useHoursStore } from '@/stores/hoursStore'
 import { useTimeStore } from '@/stores/timeStore'
 import { useRestaurantHours } from '@/composables/useRestaurantHours'
 
 
 // -----------------------------------------------------------------------------
 // Component options
+//
+// Compact mode shows only today's hours.
+// Expanded mode shows the full seven-day schedule.
 // -----------------------------------------------------------------------------
 
 const props = defineProps({
@@ -39,8 +44,14 @@ const props = defineProps({
 
 
 // -----------------------------------------------------------------------------
-// Restaurant helpers
+// Stores and restaurant-status helpers
+//
+// Hours come from hoursStore so this component does not need to know whether
+// the schedule came from the API or the static fallback.
 // -----------------------------------------------------------------------------
+
+const timeStore = useTimeStore()
+const hoursStore = useHoursStore()
 
 const {
   restaurantStatus,
@@ -48,13 +59,13 @@ const {
   getDayClass
 } = useRestaurantHours()
 
-const timeStore = useTimeStore()
-
 
 // -----------------------------------------------------------------------------
-// Put today first, followed by the remaining days in calendar order
+// Ordered schedule
 //
-// Example when today is Friday:
+// Rotates the weekly schedule so today appears first.
+//
+// Example on Friday:
 //
 // Friday
 // Saturday
@@ -67,6 +78,7 @@ const timeStore = useTimeStore()
 
 const orderedHours = computed(() => {
   const currentDayNumber = timeStore.currentTime.day()
+  const hours = hoursStore.hours
 
   const currentDayIndex = hours.findIndex(day => {
     return day.day === currentDayNumber
@@ -84,7 +96,10 @@ const orderedHours = computed(() => {
 
 
 // -----------------------------------------------------------------------------
-// Choose the compact or complete schedule
+// Displayed schedule
+//
+// Expanded mode returns the full ordered week.
+// Compact mode returns only today's row.
 // -----------------------------------------------------------------------------
 
 const displayedHours = computed(() => {
@@ -94,6 +109,45 @@ const displayedHours = computed(() => {
 
   return orderedHours.value.slice(0, 1)
 })
+
+
+// -----------------------------------------------------------------------------
+// Display formatting
+//
+// Stored/API times use 24-hour "HH:mm" strings.
+//
+// Examples:
+// "15:00" -> "3 PM"
+// "15:30" -> "3:30 PM"
+//
+// The human-readable hours string is derived here instead of being stored
+// separately so displayed hours cannot drift out of sync with the real times.
+// -----------------------------------------------------------------------------
+
+function formatTime(time) {
+  if (!time) {
+    return ""
+  }
+
+  const [hours, minutes] = time
+    .split(':')
+    .map(Number)
+
+  const suffix = hours >= 12 ? 'PM' : 'AM'
+  const displayHour = hours % 12 || 12
+
+  return minutes === 0
+    ? `${displayHour} ${suffix}`
+    : `${displayHour}:${String(minutes).padStart(2, '0')} ${suffix}`
+}
+
+function formatHours(day) {
+  if (day.closed) {
+    return "Closed"
+  }
+
+  return `${formatTime(day.openTime)} - ${formatTime(day.closeTime)}`
+}
 </script>
 
 <style scoped>
@@ -115,13 +169,7 @@ const displayedHours = computed(() => {
 }
 
 
-/* Weekly dropdown list */
 
-.hours-display.expanded {
-  display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
-}
 
 
 /* ==========================================================
@@ -151,15 +199,17 @@ const displayedHours = computed(() => {
 .hours-note {
   display: block;
   margin-top: 0.15rem;
+
   font-size: 0.8rem;
   font-style: italic;
   opacity: 0.8;
 }
 
-/* ==========================================================
-   OPEN NOW
 
+/* ==========================================================
+   CURRENT STATUS
    ========================================================== */
+
 .current-status {
   display: inline-block;
   margin: 0.15rem 0;
@@ -192,11 +242,13 @@ const displayedHours = computed(() => {
   color: var(--status-closed);
 }
 
+
 /* ==========================================================
-   ANIMATION
+   STATUS ANIMATION
    ========================================================== */
 
 @keyframes status-pulse {
+
   0%,
   100% {
     opacity: 1;
@@ -206,6 +258,11 @@ const displayedHours = computed(() => {
     opacity: 0.55;
   }
 }
+
+
+/* ==========================================================
+   MOBILE
+   ========================================================== */
 
 @media (max-width: 700px) {
   .hours-display.expanded {

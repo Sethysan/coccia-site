@@ -122,7 +122,6 @@ import {
 } from "vue";
 import { RouterLink, useRoute } from 'vue-router'
 import Hours from './Hours.vue'
-import { useRestaurantHours } from '@/composables/useRestaurantHours'
 import {
   trackPhoneClick,
   trackDirectionsClick,
@@ -185,11 +184,8 @@ const toggleMobileHours = () => {
 // -----------------------------------------------------------------------------
 // Restaurant-hours helpers
 //
-// compactHoursMessage is displayed inside the mobile hours trigger.
 // -----------------------------------------------------------------------------
-const {
-  compactHoursMessage
-} = useRestaurantHours()
+
 
 const route = useRoute()
 

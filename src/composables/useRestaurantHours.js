@@ -1,226 +1,188 @@
-// Import Vue's computed() so values automatically update whenever
-// the underlying time in the store changes.
 import { computed } from 'vue'
-import { useTimeStore } from '@/stores/timeStore'
-import { hours } from '@/data/hours'
 
-// =======================================================
-// Restaurant Hours Composable
+import { useTimeStore } from '@/stores/timeStore'
+import { useHoursStore } from '@/stores/hoursStore'
+
+
+// ==========================================================
+// RESTAURANT HOURS
 //
-// Purpose:
-// Contains ALL business logic related to determining whether
-// the restaurant is open, closed, or what today's status is.
+// Central business logic for interpreting the restaurant's
+// weekly schedule.
 //
-// This keeps the Vue component focused ONLY on displaying data.
-// =======================================================
+// Schedule data comes from hoursStore. The store will
+// eventually prefer API/database data and fall back to the
+// bundled static schedule when the API is unavailable.
+//
+// Components should use this composable instead of duplicating
+// open/closed calculations.
+// ==========================================================
 
 export function useRestaurantHours() {
 
-  // Get access to the global time store.
   const timeStore = useTimeStore()
+  const hoursStore = useHoursStore()
 
 
-  // -------------------------------------------------------
-  // CURRENT DAY
+  // ----------------------------------------------------------
+  // Current day and time
   //
-  // Returns today's day number.
+  // Day numbers follow JavaScript / DayJS:
+  // 0 = Sunday through 6 = Saturday.
   //
-  // JavaScript / DayJS numbering:
-  //
-  // 0 = Sunday
-  // 1 = Monday
-  // 2 = Tuesday
-  // ...
-  // 6 = Saturday
-  //
-  // This value automatically updates whenever the store updates.
-  // -------------------------------------------------------
+  // Minutes since midnight make schedule comparisons simple.
+  // Example: 3:30 PM = 930 minutes.
+  // ----------------------------------------------------------
 
-  const currentDay = computed(() => timeStore.currentTime.day())
-
-
-  // -------------------------------------------------------
-  // CURRENT TIME
-  //
-  // Converts the current time into "minutes since midnight."
-  //
-  // Why?
-  //
-  // Comparing minutes is much easier than comparing separate
-  // hours and minutes.
-  //
-  // Example:
-  //
-  // 3:30 PM
-  //
-  // becomes
-  //
-  // 15 * 60 + 30 = 930 minutes
-  //
-  // Now opening and closing comparisons become simple numbers.
-  // -------------------------------------------------------
+  const currentDay = computed(() =>
+    timeStore.currentTime.day()
+  )
 
   const currentMinutes = computed(() => {
-    return timeStore.currentTime.hour() * 60 +
+    return (
+      timeStore.currentTime.hour() * 60 +
       timeStore.currentTime.minute()
+    )
   })
 
-  // -------------------------------------------------------
-  // TODAY'S HOURS
+
+  // ----------------------------------------------------------
+  // Today's schedule
   //
-  // Returns the hours object for the current day.
-  //
-  // Example:
-  //
-  // {
-  //   day: 4,
-  //   name: "Thursday",
-  //   hours: "3 PM - 9 PM",
-  //   ...
-  // }
-  //
-  // Components can use this instead of searching the
-  // hours array themselves.
-  // -------------------------------------------------------
+  // Finds today's entry from the current hoursStore schedule,
+  // regardless of whether that schedule came from the API or
+  // the fallback file.
+  // ----------------------------------------------------------
 
   const todayHours = computed(() => {
-    return hours.find(day => day.day === currentDay.value)
+    return hoursStore.hours.find(
+      day => day.day === currentDay.value
+    )
   })
 
-  // -------------------------------------------------------
-  // Is this card representing TODAY?
+
+  // ----------------------------------------------------------
+  // Time helpers
   //
-  // Returns true if the day from the hours array matches
-  // today's day.
+  // Schedule times use 24-hour "HH:mm" strings.
   //
-  // Example:
+  // timeToMinutes:
+  // "15:30" -> 930
   //
-  // Wednesday card
-  // Wednesday today
-  //
-  // returns true
-  // -------------------------------------------------------
+  // formatTime:
+  // "15:00" -> "3 PM"
+  // "15:30" -> "3:30 PM"
+  // ----------------------------------------------------------
+
+  function timeToMinutes(time) {
+    if (!time) {
+      return null
+    }
+
+    const [hours, minutes] = time
+      .split(':')
+      .map(Number)
+
+    return hours * 60 + minutes
+  }
+
+  function formatTime(time) {
+    if (!time) {
+      return ""
+    }
+
+    const [hours, minutes] = time
+      .split(':')
+      .map(Number)
+
+    const suffix = hours >= 12 ? 'PM' : 'AM'
+    const displayHour = hours % 12 || 12
+
+    if (minutes === 0) {
+      return `${displayHour} ${suffix}`
+    }
+
+    return `${displayHour}:${String(minutes).padStart(2, '0')} ${suffix}`
+  }
+
+
+  // ----------------------------------------------------------
+  // Day-state helpers
+  // ----------------------------------------------------------
 
   function isToday(day) {
     return day.day === currentDay.value
   }
 
-
-  // -------------------------------------------------------
-  // Is the restaurant open RIGHT NOW?
-  //
-  // Returns true only when:
-  //
-  // 1. Today is an operating day.
-  // 2. The current time falls between opening and closing.
-  //
-  // Example:
-  //
-  // Wednesday
-  // Open: 3 PM
-  // Close: 9 PM
-  // Current: 5:15 PM
-  //
-  // returns true
-  // -------------------------------------------------------
-
   function isOpenNow(day) {
+    if (day.closed) {
+      return false
+    }
 
-    // Restaurant closed all day.
-    if (day.closed) return false
+    if (!isToday(day)) {
+      return false
+    }
 
-    // Ignore every day except today.
-    if (!isToday(day)) return false
+    const openMinutes =
+      timeToMinutes(day.openTime)
 
-    // Convert opening and closing times into minutes.
-    const openMinutes = day.open * 60
-    const closeMinutes = day.close * 60
+    const closeMinutes =
+      timeToMinutes(day.closeTime)
 
-    // Is the current time between open and close?
-    return currentMinutes.value >= openMinutes &&
+    return (
+      currentMinutes.value >= openMinutes &&
       currentMinutes.value < closeMinutes
+    )
   }
 
 
-  // -------------------------------------------------------
-  // Determines which CSS class should be applied.
+  // ----------------------------------------------------------
+  // Day styling state
   //
-  // The Vue component doesn't need to know WHY.
-  // It simply asks this function.
+  // Used by Hours.vue to highlight today's schedule.
   //
   // Returns:
-  //
-  // "normal"
-  // "closed"
-  // "open"
-  // -------------------------------------------------------
+  // normal
+  // open
+  // closed
+  // ----------------------------------------------------------
 
   function getDayClass(day) {
+    if (!isToday(day)) {
+      return 'normal'
+    }
 
-    // Not today's card.
-    if (!isToday(day)) return 'normal'
+    if (day.closed) {
+      return 'closed'
+    }
 
-    // Today, but restaurant is closed all day.
-    if (day.closed) return 'closed'
+    if (isOpenNow(day)) {
+      return 'open'
+    }
 
-    // Today and currently open.
-    if (isOpenNow(day)) return 'open'
-
-    // Today, but before opening or after closing.
     return 'closed'
   }
 
-  // -------------------------------------------------------
-  // FORMAT HOUR
-  //
-  // Converts a 24-hour value into a user-friendly time.
-  //
-  // Example:
-  //
-  // 15
-  //
-  // becomes
-  //
-  // 3 PM
-  //
-  // This helper keeps all displayed times consistent
-  // throughout the website.
-  // -------------------------------------------------------
 
-  function formatHour(hour) {
-    const suffix = hour >= 12 ? 'PM' : 'AM'
-    const displayHour = hour % 12 || 12
-
-    return `${displayHour} ${suffix}`
-  }
-
-  // -------------------------------------------------------
-  // CURRENT RESTAURANT STATUS
+  // ----------------------------------------------------------
+  // Current restaurant status
   //
-  // Determines the restaurant's current operating state.
-  //
-  // This is the primary source of truth used throughout
-  // the website.
+  // Produces the public-facing operating state used throughout
+  // the site.
   //
   // Possible states:
-  //
   // open
   // opening-soon
   // opening-later
   // closing-soon
   // closed
   //
-  // Returns:
-  //
-  // {
-  //   state,
-  //   label,
-  //   message
-  // }
-  //
-  // Components should use this instead of duplicating
-  // business logic.
-  // -------------------------------------------------------
+  // NOTE:
+  // Reopening messages are still temporarily hard-coded to the
+  // current Wednesday schedule. These will be made dynamic once
+  // database-controlled hours are fully integrated.
+  // ----------------------------------------------------------
+
   const restaurantStatus = computed(() => {
     const day = todayHours.value
 
@@ -240,10 +202,17 @@ export function useRestaurantHours() {
       }
     }
 
-    const openMinutes = day.open * 60
-    const closeMinutes = day.close * 60
-    const openingSoonMinutes = openMinutes - 90
-    const closingSoonMinutes = closeMinutes - 90
+    const openMinutes =
+      timeToMinutes(day.openTime)
+
+    const closeMinutes =
+      timeToMinutes(day.closeTime)
+
+    const openingSoonMinutes =
+      openMinutes - 90
+
+    const closingSoonMinutes =
+      closeMinutes - 90
 
     const openingSoon =
       currentMinutes.value >= openingSoonMinutes &&
@@ -259,8 +228,8 @@ export function useRestaurantHours() {
         label: 'Opening Soon',
         message:
           day.day === 0
-            ? `Sunday carryout begins at ${formatHour(day.open)}.`
-            : `We open at ${formatHour(day.open)}.`
+            ? `Sunday carryout begins at ${formatTime(day.openTime)}.`
+            : `We open at ${formatTime(day.openTime)}.`
       }
     }
 
@@ -270,8 +239,8 @@ export function useRestaurantHours() {
         label: 'Closing Soon',
         message:
           day.day === 0
-            ? `Sunday carryout ends at ${formatHour(day.close)}.`
-            : `We close at ${formatHour(day.close)}.`
+            ? `Sunday carryout ends at ${formatTime(day.closeTime)}.`
+            : `We close at ${formatTime(day.closeTime)}.`
       }
     }
 
@@ -281,8 +250,8 @@ export function useRestaurantHours() {
         label: 'Open Now',
         message:
           day.day === 0
-            ? `Sunday carryout is available until ${formatHour(day.close)}.`
-            : `Dine in or order carryout until ${formatHour(day.close)}.`
+            ? `Sunday carryout is available until ${formatTime(day.closeTime)}.`
+            : `Dine in or order carryout until ${formatTime(day.closeTime)}.`
       }
     }
 
@@ -292,8 +261,8 @@ export function useRestaurantHours() {
         label: 'Opens Today',
         message:
           day.day === 0
-            ? `Sunday carryout begins at ${formatHour(day.open)}.`
-            : `We open at ${formatHour(day.open)}.`
+            ? `Sunday carryout begins at ${formatTime(day.openTime)}.`
+            : `We open at ${formatTime(day.openTime)}.`
       }
     }
 
@@ -305,59 +274,45 @@ export function useRestaurantHours() {
           ? 'We’ll reopen Wednesday at 3 PM.'
           : 'Thank you for visiting. We hope to see you again soon!'
     }
-  }
-  )
+  })
 
-   // -------------------------------------------------------
-  // COMPACT HEADER STATUS
+
+  // ----------------------------------------------------------
+  // Compact header status
   //
-  // Returns a short version of the restaurant status
-  // for use in compact UI elements such as the mobile
-  // header hours button.
-  //
-  // Examples:
-  //
-  // Open Now
-  // Opening Soon
-  // Closing Soon
-  // Opens 3 PM - 9 PM
-  // Closed Today
-  //
-  // This intentionally omits the longer explanatory
-  // messages used elsewhere on the website.
-  // -------------------------------------------------------
+  // Short status used where the longer restaurantStatus message
+  // would not fit, such as the site's compact hours control.
+  // ----------------------------------------------------------
 
   const compactHoursMessage = computed(() => {
     switch (restaurantStatus.value.state) {
-      case "open":
-        return "Open Now"
+      case 'open':
+        return 'Open Now'
 
-      case "opening-soon":
-        return "Opening Soon"
+      case 'opening-soon':
+        return 'Opening Soon'
 
-      case "closing-soon":
-        return "Closing Soon"
+      case 'closing-soon':
+        return 'Closing Soon'
 
-      case "opening-later":
-        return `Opens at ${formatHour(todayHours.value.open)}`
+      case 'opening-later':
+        return `Opens at ${formatTime(
+          todayHours.value.openTime
+        )}`
 
-      case "closed":
-        return "Closed Today"
+      case 'closed':
+        return 'Closed Today'
 
       default:
-        return "Restaurant Hours"
+        return 'Restaurant Hours'
     }
   })
 
-   // -------------------------------------------------------
-  // PUBLIC API
-  //
-  // Export everything components need.
-  //
-  // Components should rely on these helpers rather than
-  // implementing restaurant-hour logic themselves.
-  // -------------------------------------------------------
-  
+
+  // ----------------------------------------------------------
+  // Public API
+  // ----------------------------------------------------------
+
   return {
     todayHours,
     restaurantStatus,

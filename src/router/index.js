@@ -12,6 +12,8 @@ import AdminWeeklyOfferingDetailView
   from '../views/admin/AdminWeeklyOfferingDetailView.vue'
 import AdminAnnouncementsView
   from '../views/admin/AdminAnnouncementsView.vue'
+import AdminHoursView
+  from '../views/admin/AdminHoursView.vue'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -38,6 +40,11 @@ const router = createRouter({
       component: AdminAnnouncementsView,
       meta: { requiresAuth: true }
     },
+    {
+      path: '/admin/hours',
+      component: AdminHoursView,
+      meta: { requiresAuth: true }
+    }
   ],
 
   scrollBehavior(to, from, savedPosition) {

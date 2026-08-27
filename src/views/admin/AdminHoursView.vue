@@ -1,0 +1,254 @@
+<template>
+    <main class="admin-page">
+        <div class="admin-page-container">
+
+            <header class="page-header">
+                <div>
+                    <p class="admin-eyebrow">
+                        Coccia House Admin
+                    </p>
+
+                    <h1>Store Hours</h1>
+
+                    <p v-if="auth.username" class="admin-subtext">
+                        Signed in as {{ auth.username }}
+                    </p>
+                </div>
+
+                <button type="button" @click="handleLogout">
+                    Log Out
+                </button>
+            </header>
+
+            <div class="page-actions">
+                <button type="button" @click="router.push('/admin')">
+                    ← Dashboard
+                </button>
+            </div>
+
+            <p v-if="hoursStore.loading" class="state-message">
+                Loading store hours...
+            </p>
+
+            <div v-if="hoursStore.error" class="error-message" role="alert">
+                {{ hoursStore.error.message }}
+            </div>
+
+            <p v-if="successMessage" class="success-message" role="status">
+                {{ successMessage }}
+            </p>
+
+            <section v-if="!hoursStore.loading" class="hours-grid">
+                <article v-for="day in editingHours" :key="day.day" class="admin-card hours-card">
+                    <div class="hours-card-header">
+                        <h2>{{ day.name }}</h2>
+
+                        <label class="closed-control">
+                            <input v-model="day.closed" type="checkbox">
+
+                            Closed
+                        </label>
+                    </div>
+
+                    <div v-if="!day.closed" class="time-fields">
+                        <label>
+                            Opens
+
+                            <input v-model="day.openTime" type="time" required>
+                        </label>
+
+                        <label>
+                            Closes
+
+                            <input v-model="day.closeTime" type="time" required>
+                        </label>
+                    </div>
+
+                    <label class="note-field">
+                        Note
+
+                        <input v-model="day.note" type="text" maxlength="255" placeholder="Optional">
+                    </label>
+
+                    <div class="save-row">
+                        <button type="button" :disabled="savingDay !== null" @click="saveDay(day)">
+                            {{
+                                savingDay === day.day
+                                    ? 'Saving...'
+                                    : `Save ${day.name}`
+                            }}
+                        </button>
+
+                        <span v-if="savedDay === day.day" class="save-success" role="status">
+                            ✓ Saved
+                        </span>
+                    </div>
+                </article>
+            </section>
+
+        </div>
+    </main>
+</template>
+
+<script setup>
+import { onMounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
+
+import { useAuthStore } from '@/stores/authStore'
+import { useHoursStore } from '@/stores/hoursStore'
+
+const editingHours = ref([])
+const savingDay = ref(null)
+const savedDay = ref(null)
+
+const router = useRouter()
+const auth = useAuthStore()
+const hoursStore = useHoursStore()
+
+onMounted(async () => {
+    await hoursStore.loadHours()
+
+    editingHours.value = hoursStore.hours.map(day => ({
+        ...day
+    }))
+})
+
+async function handleLogout() {
+    await auth.logout()
+    await router.push('/admin/login')
+}
+
+function formatTime(time) {
+    if (!time) {
+        return ''
+    }
+
+    const [hours, minutes] = time
+        .split(':')
+        .map(Number)
+
+    const suffix = hours >= 12 ? 'PM' : 'AM'
+    const displayHour = hours % 12 || 12
+
+    return minutes === 0
+        ? `${displayHour} ${suffix}`
+        : `${displayHour}:${String(minutes).padStart(2, '0')} ${suffix}`
+}
+
+function formatHours(day) {
+    return `${formatTime(day.openTime)} - ${formatTime(day.closeTime)}`
+}
+
+async function saveDay(day) {
+    savingDay.value = day.day
+    savedDay.value = null
+    hoursStore.clearError()
+
+    try {
+        await hoursStore.updateHours(day)
+
+        savedDay.value = day.day
+
+        setTimeout(() => {
+            if (savedDay.value === day.day) {
+                savedDay.value = null
+            }
+        }, 3000)
+
+    } finally {
+        savingDay.value = null
+    }
+}
+
+</script>
+
+<style scoped>
+.hours-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+}
+
+.hours-card {
+    display: grid;
+    gap: 0.75rem;
+}
+
+.hours-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+}
+
+.hours-card-header h2 {
+    margin: 0;
+}
+
+.hours-card p {
+    margin: 0;
+}
+
+.hours-note {
+    font-style: italic;
+    opacity: 0.8;
+}
+
+.closed-control {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+
+    font-weight: 700;
+}
+
+.closed-control input {
+    width: auto;
+}
+
+.time-fields {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+}
+
+.time-fields label,
+.note-field {
+    display: grid;
+    gap: 0.4rem;
+
+    font-weight: 700;
+}
+
+.time-fields input,
+.note-field input {
+    width: 100%;
+}
+
+.hours-card button {
+    justify-self: start;
+}
+
+.save-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.save-success {
+    font-weight: 700;
+    color: var(--status-open, #4caf50);
+}
+
+@media (max-width: 500px) {
+    .time-fields {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 700px) {
+    .hours-grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>

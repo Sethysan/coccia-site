@@ -16,6 +16,7 @@ import { RouterView } from 'vue-router'
 import SiteHeader from './components/SiteHeader.vue'
 import SiteFooter from './components/SiteFooter.vue'
 
+import { useHoursStore } from '@/stores/hoursStore'
 import { useTimeStore } from '@/stores/timeStore'
 
 import LoadingOverlay from "@/components/LoadingOverlay.vue"
@@ -25,16 +26,18 @@ const loading = useLoadingStore()
 import SiteAnnouncementBanner from './components/SiteAnnouncementBanner.vue'
 import { useAnnouncementStore } from '@/stores/announcementStore'
 
+const announcementStore = useAnnouncementStore() 
+const hoursStore = useHoursStore()
 // -----------------------------------------------------------------------------
 // Start the site clock
 // -----------------------------------------------------------------------------
 
 const timeStore = useTimeStore()
-const announcementStore = useAnnouncementStore()
 
 onMounted(() => {
   timeStore.startClock()
   announcementStore.loadAnnouncements()
+  hoursStore.loadHours()
 })
 </script>
 

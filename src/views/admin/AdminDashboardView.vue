@@ -43,15 +43,13 @@
                     <span>Coming soon</span>
                 </article>
 
-                <article class="admin-card dashboard-card is-coming-soon">
+                <RouterLink to="/admin/hours" class="admin-card dashboard-card">
                     <h2>Store Hours</h2>
 
                     <p>
                         Manage regular hours and the public open/closed status.
                     </p>
-
-                    <span>Coming soon</span>
-                </article>
+                </RouterLink>
 
                 <RouterLink to="/admin/announcements" class="admin-card dashboard-card">
                     <h2>Announcements</h2>
