@@ -13,11 +13,13 @@ import com.cocciahouse.api.exception.DuplicateRecipeException;
 
 import java.util.List;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
 import com.cocciahouse.api.dto.recipe.OfferingItemPriceResponse;
 import com.cocciahouse.api.dto.weeklyOffering.WeeklyOfferingItemResponse;
 import com.cocciahouse.api.model.OfferingType;
@@ -37,16 +39,18 @@ class RecipeControllerTest {
 
 
     @Test
-    void getRecipes_returnsAllActiveRecipes() throws Exception {
+    void getRecipes_returnsAllRecipes() throws Exception {
 
         Recipe bakedZiti = new Recipe("Baked Ziti");
+
         Recipe chickenMarsala = new Recipe("Chicken Marsala");
+        chickenMarsala.setActive(false);
 
-        when(recipeService.getActiveRecipes()).thenReturn(List.of(bakedZiti, chickenMarsala));
+        when(recipeService.getAllRecipes()).thenReturn(List.of(bakedZiti, chickenMarsala));
 
-        mockMvc.perform(get("/api/admin/recipes")).andExpect(status().isOk()).andExpect(content().contentTypeCompatibleWith("application/json")).andExpect(jsonPath("$[0].name").value("Baked Ziti")).andExpect(jsonPath("$[0].active").value(true)).andExpect(jsonPath("$[1].name").value("Chicken Marsala")).andExpect(jsonPath("$[1].active").value(true));
+        mockMvc.perform(get("/api/admin/recipes")).andExpect(status().isOk()).andExpect(content().contentTypeCompatibleWith("application/json")).andExpect(jsonPath("$[0].name").value("Baked Ziti")).andExpect(jsonPath("$[0].active").value(true)).andExpect(jsonPath("$[1].name").value("Chicken Marsala")).andExpect(jsonPath("$[1].active").value(false));
 
-        verify(recipeService).getActiveRecipes();
+        verify(recipeService).getAllRecipes();
     }
 
 
@@ -55,11 +59,11 @@ class RecipeControllerTest {
 
         Recipe bakedZiti = new Recipe("Baked Ziti");
 
-        when(recipeService.searchActiveRecipes("ziti")).thenReturn(List.of(bakedZiti));
+        when(recipeService.searchRecipes("ziti")).thenReturn(List.of(bakedZiti));
 
         mockMvc.perform(get("/api/admin/recipes").param("search", "ziti")).andExpect(status().isOk()).andExpect(content().contentTypeCompatibleWith("application/json")).andExpect(jsonPath("$.length()").value(1)).andExpect(jsonPath("$[0].name").value("Baked Ziti")).andExpect(jsonPath("$[0].active").value(true));
 
-        verify(recipeService).searchActiveRecipes("ziti");
+        verify(recipeService).searchRecipes("ziti");
     }
 
 
@@ -102,28 +106,13 @@ class RecipeControllerTest {
     @Test
     void createRecipe_whenDuplicate_returns409Conflict() throws Exception {
 
-        when(recipeService.createRecipe("Baked Ziti"))
-                .thenThrow(
-                        new DuplicateRecipeException(
-                                "A recipe with that name already exists."
-                        )
-                );
+        when(recipeService.createRecipe("Baked Ziti")).thenThrow(new DuplicateRecipeException("A recipe with that name already exists."));
 
-        mockMvc.perform(
-                        post("/api/admin/recipes")
-                                .contentType("application/json")
-                                .content("""
-                                        {
-                                          "name": "Baked Ziti"
-                                        }
-                                        """)
-                )
-                .andExpect(status().isConflict())
-                .andExpect(content().contentTypeCompatibleWith("application/json"))
-                .andExpect(jsonPath("$.status").value(409))
-                .andExpect(jsonPath("$.error").value("Conflict"))
-                .andExpect(jsonPath("$.message")
-                        .value("A recipe with that name already exists."));
+        mockMvc.perform(post("/api/admin/recipes").contentType("application/json").content("""
+                {
+                  "name": "Baked Ziti"
+                }
+                """)).andExpect(status().isConflict()).andExpect(content().contentTypeCompatibleWith("application/json")).andExpect(jsonPath("$.status").value(409)).andExpect(jsonPath("$.error").value("Conflict")).andExpect(jsonPath("$.message").value("A recipe with that name already exists."));
 
         verify(recipeService).createRecipe("Baked Ziti");
     }
@@ -131,58 +120,67 @@ class RecipeControllerTest {
     @Test
     void getLatestOfferingItem_returnsPreviousUsage() throws Exception {
 
-        WeeklyOfferingItemResponse response =
-                new WeeklyOfferingItemResponse(
-                        10L,
-                        1L,
-                        "Chicken Cacciatore",
-                        OfferingType.DINNER,
-                        "Slow-cooked chicken.",
-                        null,
-                        null,
-                        true,
-                        true,
-                        "Served with house salad and homemade bread.",
-                        0,
-                        List.of(
-                                new OfferingItemPriceResponse(
-                                        20L,
-                                        null,
-                                        new BigDecimal("21.95"),
-                                        0
-                                )
-                        )
-                );
+        WeeklyOfferingItemResponse response = new WeeklyOfferingItemResponse(10L, 1L, "Chicken Cacciatore", OfferingType.DINNER, "Slow-cooked chicken.", null, null, true, true, "Served with house salad and homemade bread.", 0, List.of(new OfferingItemPriceResponse(20L, null, new BigDecimal("21.95"), 0)));
 
-        when(recipeService.getLatestOfferingItem(1L))
-                .thenReturn(Optional.of(response));
+        when(recipeService.getLatestOfferingItem(1L)).thenReturn(Optional.of(response));
 
-        mockMvc.perform(
-                        get("/api/admin/recipes/{recipeId}/latest-offering-item", 1L)
-                )
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.recipeId").value(1))
-                .andExpect(jsonPath("$.recipeName").value("Chicken Cacciatore"))
-                .andExpect(jsonPath("$.offeringType").value("DINNER"))
-                .andExpect(jsonPath("$.prices.length()").value(1))
-                .andExpect(jsonPath("$.prices[0].amount").value(21.95));
+        mockMvc.perform(get("/api/admin/recipes/{recipeId}/latest-offering-item", 1L)).andExpect(status().isOk()).andExpect(jsonPath("$.recipeId").value(1)).andExpect(jsonPath("$.recipeName").value("Chicken Cacciatore")).andExpect(jsonPath("$.offeringType").value("DINNER")).andExpect(jsonPath("$.prices.length()").value(1)).andExpect(jsonPath("$.prices[0].amount").value(21.95));
 
         verify(recipeService).getLatestOfferingItem(1L);
     }
 
     @Test
-    void getLatestOfferingItem_whenNoPreviousUsage_returns204()
-            throws Exception {
+    void getLatestOfferingItem_whenNoPreviousUsage_returns204() throws Exception {
 
-        when(recipeService.getLatestOfferingItem(1L))
-                .thenReturn(Optional.empty());
+        when(recipeService.getLatestOfferingItem(1L)).thenReturn(Optional.empty());
 
-        mockMvc.perform(
-                        get("/api/admin/recipes/{recipeId}/latest-offering-item", 1L)
-                )
-                .andExpect(status().isNoContent());
+        mockMvc.perform(get("/api/admin/recipes/{recipeId}/latest-offering-item", 1L)).andExpect(status().isNoContent());
 
         verify(recipeService).getLatestOfferingItem(1L);
+    }
+
+    @Test
+    void updateRecipe_withBlankName_returns400() throws Exception {
+
+        mockMvc.perform(put("/api/admin/recipes/{id}", 1L).contentType("application/json").content("""
+                {
+                  "name": "",
+                  "active": true
+                }
+                """)).andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void updateRecipe_returns200AndUpdatedRecipe() throws Exception {
+
+        Recipe updatedRecipe = new Recipe("Chicken Parm");
+        updatedRecipe.setActive(false);
+
+        when(recipeService.updateRecipe(1L, "Chicken Parm", false)).thenReturn(updatedRecipe);
+
+        mockMvc.perform(put("/api/admin/recipes/{id}", 1L).contentType("application/json").content("""
+                {
+                  "name": "Chicken Parm",
+                  "active": false
+                }
+                """)).andExpect(status().isOk()).andExpect(content().contentTypeCompatibleWith("application/json")).andExpect(jsonPath("$.name").value("Chicken Parm")).andExpect(jsonPath("$.active").value(false));
+
+        verify(recipeService).updateRecipe(1L, "Chicken Parm", false);
+    }
+
+    @Test
+    void updateRecipe_whenDuplicate_returns409Conflict() throws Exception {
+
+        when(recipeService.updateRecipe(1L, "Baked Ziti", true)).thenThrow(new DuplicateRecipeException("A recipe with that name already exists."));
+
+        mockMvc.perform(put("/api/admin/recipes/{id}", 1L).contentType("application/json").content("""
+                {
+                  "name": "Baked Ziti",
+                  "active": true
+                }
+                """)).andExpect(status().isConflict()).andExpect(content().contentTypeCompatibleWith("application/json")).andExpect(jsonPath("$.status").value(409)).andExpect(jsonPath("$.error").value("Conflict")).andExpect(jsonPath("$.message").value("A recipe with that name already exists."));
+
+        verify(recipeService).updateRecipe(1L, "Baked Ziti", true);
     }
 
 }

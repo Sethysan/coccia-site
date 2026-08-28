@@ -9,6 +9,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import com.cocciahouse.api.mapper.WeeklyOfferingMapper;
 import com.cocciahouse.api.repository.WeeklyOfferingItemRepository;
+
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -244,6 +245,57 @@ class RecipeServiceTest {
 
         verify(weeklyOfferingMapper, never())
                 .toItemResponse(any());
+    }
+
+    @Test
+    void updateRecipeUpdatesNameAndActiveStatus() {
+        Recipe recipe = new Recipe("Chicken Parmesan");
+
+        when(recipeRepository.findById(1L))
+                .thenReturn(Optional.of(recipe));
+
+        when(recipeRepository.findByNameIgnoreCase("Chicken Parm"))
+                .thenReturn(Optional.empty());
+
+        when(recipeRepository.save(recipe))
+                .thenReturn(recipe);
+
+        Recipe updatedRecipe =
+                recipeService.updateRecipe(
+                        1L,
+                        "Chicken Parm",
+                        false
+                );
+
+        assertEquals("Chicken Parm", updatedRecipe.getName());
+        assertFalse(updatedRecipe.isActive());
+
+        verify(recipeRepository).save(recipe);
+    }
+
+    @Test
+    void updateRecipeRejectsDuplicateNameFromAnotherRecipe() {
+        Recipe recipe = mock(Recipe.class);
+        Recipe existingRecipe = mock(Recipe.class);
+
+        when(existingRecipe.getId()).thenReturn(2L);
+
+        when(recipeRepository.findById(1L))
+                .thenReturn(Optional.of(recipe));
+
+        when(recipeRepository.findByNameIgnoreCase("Chicken Parm"))
+                .thenReturn(Optional.of(existingRecipe));
+
+        assertThrows(
+                DuplicateRecipeException.class,
+                () -> recipeService.updateRecipe(
+                        1L,
+                        "Chicken Parm",
+                        true
+                )
+        );
+
+        verify(recipeRepository, never()).save(any());
     }
 
 }

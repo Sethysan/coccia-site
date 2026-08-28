@@ -14,6 +14,10 @@ import AdminAnnouncementsView
   from '../views/admin/AdminAnnouncementsView.vue'
 import AdminHoursView
   from '../views/admin/AdminHoursView.vue'
+import AdminUsersView
+  from '@/views/admin/AdminUsersView.vue'
+import AdminRecipesView
+  from '../views/admin/AdminRecipesView.vue'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -44,6 +48,20 @@ const router = createRouter({
       path: '/admin/hours',
       component: AdminHoursView,
       meta: { requiresAuth: true }
+    },
+    {
+      path: '/admin/users',
+      name: 'admin-users',
+      component: AdminUsersView,
+      meta: {
+        requiresAuth: true,
+        requiresAdmin: true
+      }
+    },
+    {
+      path: '/admin/recipes',
+      component: AdminRecipesView,
+      meta: { requiresAuth: true }
     }
   ],
 
@@ -66,12 +84,11 @@ const router = createRouter({
 
 router.beforeEach(async (to) => {
   const loading = useLoadingStore()
+  const auth = useAuthStore()
 
   await loading.play()
 
   if (to.meta.requiresAuth) {
-    const auth = useAuthStore()
-
     if (!auth.sessionChecked) {
       await auth.checkSession()
     }
@@ -86,6 +103,13 @@ router.beforeEach(async (to) => {
     }
   }
 
+  if (to.meta.requiresAdmin && !auth.isAdmin) {
+    return {
+      path: '/admin'
+    }
+  }
+
   return true
 })
+
 export default router

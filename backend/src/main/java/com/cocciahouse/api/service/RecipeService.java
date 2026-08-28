@@ -70,4 +70,44 @@ public class RecipeService {
                 )
                 .map(weeklyOfferingMapper::toItemResponse);
     }
+
+    @Transactional(readOnly = true)
+    public List<Recipe> getAllRecipes() {
+        return recipeRepository.findAllByOrderByNameAsc();
+    }
+
+    @Transactional(readOnly = true)
+    public List<Recipe> searchRecipes(String search) {
+        return recipeRepository.findByNameContainingIgnoreCaseOrderByNameAsc(search);
+    }
+
+    @Transactional
+    public Recipe updateRecipe(
+            Long id,
+            String name,
+            boolean active
+    ) {
+        Recipe recipe = recipeRepository.findById(id)
+                .orElseThrow(() ->
+                        new IllegalArgumentException("Recipe not found.")
+                );
+
+        String cleanedName = name.trim();
+
+        recipeRepository.findByNameIgnoreCase(cleanedName)
+                .filter(existingRecipe ->
+                        !existingRecipe.getId().equals(id)
+                )
+                .ifPresent(existingRecipe -> {
+                    throw new DuplicateRecipeException(
+                            "A recipe with that name already exists."
+                    );
+                });
+
+        recipe.setName(cleanedName);
+        recipe.setActive(active);
+
+        return recipeRepository.save(recipe);
+    }
+
 }

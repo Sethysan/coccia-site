@@ -4,6 +4,7 @@ import com.cocciahouse.api.dto.recipe.RecipeRequest;
 import com.cocciahouse.api.dto.recipe.RecipeResponse;
 import com.cocciahouse.api.model.Recipe;
 import com.cocciahouse.api.service.RecipeService;
+import com.cocciahouse.api.dto.recipe.UpdateRecipeRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -28,11 +29,10 @@ public class RecipeController {
         List<Recipe> recipes;
 
         if (search == null || search.isBlank()) {
-            recipes = recipeService.getActiveRecipes();
+            recipes = recipeService.getAllRecipes();
         } else {
-            recipes = recipeService.searchActiveRecipes(search.trim());
+            recipes = recipeService.searchRecipes(search.trim());
         }
-
         return recipes.stream().map(this::toResponse).toList();
     }
 
@@ -56,6 +56,20 @@ public class RecipeController {
         RecipeResponse response = toResponse(recipe);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<RecipeResponse> updateRecipe(
+            @PathVariable Long id,
+            @Valid @RequestBody UpdateRecipeRequest request
+    ) {
+        Recipe recipe = recipeService.updateRecipe(
+                id,
+                request.name(),
+                request.active()
+        );
+
+        return ResponseEntity.ok(toResponse(recipe));
     }
 
     private RecipeResponse toResponse(Recipe recipe) {

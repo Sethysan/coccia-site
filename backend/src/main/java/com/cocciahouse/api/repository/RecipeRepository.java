@@ -14,5 +14,9 @@ public interface RecipeRepository extends JpaRepository<Recipe, Long> {
 
     List<Recipe> findByActiveTrueAndNameContainingIgnoreCaseOrderByNameAsc(String search);
 
+    List<Recipe> findAllByOrderByNameAsc();
+
+    List<Recipe> findByNameContainingIgnoreCaseOrderByNameAsc(String search);
+
     boolean existsByNameIgnoreCase(String name);
 }

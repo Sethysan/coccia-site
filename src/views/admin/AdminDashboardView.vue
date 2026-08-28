@@ -13,6 +13,7 @@
                     </h1>
 
                     <p class="admin-subtext">
+                        Welcome{{ auth.displayName ? `, ${auth.displayName}` : '' }}.
                         Manage the content that appears on the public website.
                     </p>
                 </div>
@@ -59,25 +60,21 @@
                     </p>
                 </RouterLink>
 
-                <article class="admin-card dashboard-card is-coming-soon">
+                <RouterLink to="/admin/recipes" class="admin-card dashboard-card">
                     <h2>Recipes</h2>
 
                     <p>
                         Manage reusable dishes used by weekly features.
                     </p>
-
-                    <span>Coming soon</span>
-                </article>
-
-                <article class="admin-card dashboard-card is-coming-soon">
-                    <h2>Staff</h2>
+                </RouterLink>
+                
+                <RouterLink v-if="auth.isAdmin" to="/admin/users" class="admin-card dashboard-card">
+                    <h2>Users & Access</h2>
 
                     <p>
-                        Manage staff and recipe knowledge.
+                        Manage website users, roles, and access.
                     </p>
-
-                    <span>Coming soon</span>
-                </article>
+                </RouterLink>
 
             </section>
 

@@ -1,20 +1,23 @@
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 
 export const useAuthStore = defineStore('auth', () => {
-    const authenticated = ref(false)
+
     const username = ref(null)
+    const displayName = ref(null)
+    const role = ref(null)
     const sessionChecked = ref(false)
+    const authenticated = ref(false)
 
-    function getCookie(name) {
-        const match = document.cookie
-            .split('; ')
-            .find(cookie => cookie.startsWith(`${name}=`))
+    // function getCookie(name) {
+    //     const match = document.cookie
+    //         .split('; ')
+    //         .find(cookie => cookie.startsWith(`${name}=`))
 
-        return match
-            ? decodeURIComponent(match.split('=').slice(1).join('='))
-            : null
-    }
+    //     return match
+    //         ? decodeURIComponent(match.split('=').slice(1).join('='))
+    //         : null
+    // }
 
     async function checkSession() {
         try {
@@ -24,8 +27,11 @@ export const useAuthStore = defineStore('auth', () => {
             })
 
             if (!response.ok) {
+
                 authenticated.value = false
                 username.value = null
+                displayName.value = null
+                role.value = null
                 return false
             }
 
@@ -33,6 +39,8 @@ export const useAuthStore = defineStore('auth', () => {
 
             authenticated.value = session.authenticated
             username.value = session.username
+            displayName.value = session.displayName
+            role.value = session.role
 
             return session.authenticated
         } catch (error) {
@@ -40,6 +48,8 @@ export const useAuthStore = defineStore('auth', () => {
 
             authenticated.value = false
             username.value = null
+            displayName.value = null
+            role.value = null
 
             return false
         } finally {
@@ -61,8 +71,14 @@ export const useAuthStore = defineStore('auth', () => {
         })
 
         if (!response.ok) {
-            authenticated.value = false
-            username.value = null
+            if (!response.ok) {
+                authenticated.value = false
+                username.value = null
+                displayName.value = null
+                role.value = null
+
+                return false
+            }
             return false
         }
 
@@ -70,6 +86,8 @@ export const useAuthStore = defineStore('auth', () => {
 
         authenticated.value = session.authenticated
         username.value = session.username
+        displayName.value = session.displayName
+        role.value = session.role
         sessionChecked.value = true
 
         await fetch('/api/auth/csrf', {
@@ -93,16 +111,25 @@ export const useAuthStore = defineStore('auth', () => {
         } finally {
             authenticated.value = false
             username.value = null
+            displayName.value = null
+            role.value = null
             sessionChecked.value = true
         }
     }
 
+    const isAdmin = computed(() => role.value === 'ADMIN')
+    const isStaff = computed(() => role.value === 'STAFF')
+
     return {
         authenticated,
         username,
+        displayName,
+        role,
         sessionChecked,
         checkSession,
         login,
-        logout
+        logout,
+        isAdmin,
+        isStaff
     }
 })
