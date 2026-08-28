@@ -18,8 +18,8 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-import com.cocciahouse.api.dto.OfferingItemPriceResponse;
-import com.cocciahouse.api.dto.WeeklyOfferingItemResponse;
+import com.cocciahouse.api.dto.recipe.OfferingItemPriceResponse;
+import com.cocciahouse.api.dto.weeklyOffering.WeeklyOfferingItemResponse;
 import com.cocciahouse.api.model.OfferingType;
 
 import java.math.BigDecimal;

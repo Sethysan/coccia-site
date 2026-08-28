@@ -1,8 +1,8 @@
 package com.cocciahouse.api.mapper;
 
-import com.cocciahouse.api.dto.OfferingItemPriceResponse;
-import com.cocciahouse.api.dto.WeeklyOfferingItemResponse;
-import com.cocciahouse.api.dto.WeeklyOfferingResponse;
+import com.cocciahouse.api.dto.recipe.OfferingItemPriceResponse;
+import com.cocciahouse.api.dto.weeklyOffering.WeeklyOfferingItemResponse;
+import com.cocciahouse.api.dto.weeklyOffering.WeeklyOfferingResponse;
 import com.cocciahouse.api.model.OfferingType;
 import com.cocciahouse.api.model.WeeklyOffering;
 import com.cocciahouse.api.model.WeeklyOfferingItem;

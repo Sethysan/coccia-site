@@ -1,6 +1,6 @@
 package com.cocciahouse.api.service;
 
-import com.cocciahouse.api.dto.WeeklyOfferingItemResponse;
+import com.cocciahouse.api.dto.weeklyOffering.WeeklyOfferingItemResponse;
 import com.cocciahouse.api.mapper.WeeklyOfferingMapper;
 import com.cocciahouse.api.model.Recipe;
 import com.cocciahouse.api.model.WeeklyOfferingStatus;

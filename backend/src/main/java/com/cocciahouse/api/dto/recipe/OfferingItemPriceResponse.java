@@ -1,4 +1,4 @@
-package com.cocciahouse.api.dto;
+package com.cocciahouse.api.dto.recipe;
 
 import java.math.BigDecimal;
 

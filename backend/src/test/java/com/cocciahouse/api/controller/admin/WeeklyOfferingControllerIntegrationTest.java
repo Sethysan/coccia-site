@@ -67,6 +67,8 @@ class WeeklyOfferingControllerIntegrationTest {
 
     private static final String TEST_USERNAME = "testadmin";
     private static final String TEST_PASSWORD = "testpassword";
+    private static final String TEST_DISPLAY_NAME = "Test Admin";
+    private static final AdminUserRole TEST_ROLE = AdminUserRole.ADMIN;
 
     @BeforeEach
     void setUpTestAdmin() {
@@ -77,7 +79,9 @@ class WeeklyOfferingControllerIntegrationTest {
 
         AdminUser testAdmin = new AdminUser(
                 TEST_USERNAME,
-                passwordEncoder.encode(TEST_PASSWORD)
+                passwordEncoder.encode(TEST_PASSWORD),
+                TEST_DISPLAY_NAME,
+                TEST_ROLE
         );
 
         adminUserRepository.save(testAdmin);
@@ -1796,7 +1800,6 @@ class WeeklyOfferingControllerIntegrationTest {
         verify(imageService)
                 .uploadWeeklyOfferingImage(any());
     }
-
 
 
 }

@@ -34,6 +34,11 @@ public class SecurityConfig {
                                 "/api/auth/session",
                                 "/api/auth/csrf"
                         ).permitAll()
+
+                        .requestMatchers(
+                                "/api/admin/users/**"
+                        ).hasRole("ADMIN")
+
                         .anyRequest().authenticated()
                 )
                 .csrf(csrf -> csrf

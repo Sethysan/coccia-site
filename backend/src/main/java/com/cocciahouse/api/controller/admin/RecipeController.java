@@ -1,14 +1,14 @@
 package com.cocciahouse.api.controller.admin;
 
-import com.cocciahouse.api.dto.RecipeRequest;
-import com.cocciahouse.api.dto.RecipeResponse;
+import com.cocciahouse.api.dto.recipe.RecipeRequest;
+import com.cocciahouse.api.dto.recipe.RecipeResponse;
 import com.cocciahouse.api.model.Recipe;
 import com.cocciahouse.api.service.RecipeService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import com.cocciahouse.api.dto.WeeklyOfferingItemResponse;
+import com.cocciahouse.api.dto.weeklyOffering.WeeklyOfferingItemResponse;
 
 import java.util.List;
 

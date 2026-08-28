@@ -1,4 +1,4 @@
-package com.cocciahouse.api.dto;
+package com.cocciahouse.api.dto.weeklyOffering;
 
 import jakarta.validation.constraints.NotNull;
 

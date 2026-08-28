@@ -2,6 +2,8 @@ package com.cocciahouse.api.controller.auth;
 
 import com.cocciahouse.api.dto.AuthSessionResponse;
 import com.cocciahouse.api.dto.LoginRequest;
+import com.cocciahouse.api.model.AdminUser;
+import com.cocciahouse.api.repository.AdminUserRepository;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -32,9 +34,14 @@ public class AuthController {
     private final SecurityContextRepository securityContextRepository =
             new HttpSessionSecurityContextRepository();
 
+    private final AdminUserRepository adminUserRepository;
 
-    public AuthController(AuthenticationManager authenticationManager) {
+    public AuthController(
+            AuthenticationManager authenticationManager,
+            AdminUserRepository adminUserRepository
+    ) {
         this.authenticationManager = authenticationManager;
+        this.adminUserRepository = adminUserRepository;
     }
 
 
@@ -68,8 +75,7 @@ public class AuthController {
         );
 
         return ResponseEntity.ok(
-                new AuthSessionResponse(
-                        true,
+                buildAuthenticatedSession(
                         authentication.getName()
                 )
         );
@@ -81,20 +87,22 @@ public class AuthController {
             Authentication authentication
     ) {
 
-        if (authentication == null ||
-                !authentication.isAuthenticated()) {
-
+        if (
+                authentication == null ||
+                        !authentication.isAuthenticated()
+        ) {
             return ResponseEntity.ok(
                     new AuthSessionResponse(
                             false,
+                            null,
+                            null,
                             null
                     )
             );
         }
 
         return ResponseEntity.ok(
-                new AuthSessionResponse(
-                        true,
+                buildAuthenticatedSession(
                         authentication.getName()
                 )
         );
@@ -116,6 +124,8 @@ public class AuthController {
         return ResponseEntity.ok(
                 new AuthSessionResponse(
                         false,
+                        null,
+                        null,
                         null
                 )
         );
@@ -127,6 +137,23 @@ public class AuthController {
     ) {
 
         return ResponseEntity.ok().build();
+    }
+
+    private AuthSessionResponse buildAuthenticatedSession(
+            String username
+    ) {
+
+        AdminUser adminUser =
+                adminUserRepository
+                        .findByUsernameIgnoreCase(username)
+                        .orElseThrow();
+
+        return new AuthSessionResponse(
+                true,
+                adminUser.getUsername(),
+                adminUser.getDisplayName(),
+                adminUser.getRole().name()
+        );
     }
 
 }

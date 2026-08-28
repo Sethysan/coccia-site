@@ -1,9 +1,9 @@
 package com.cocciahouse.api.service;
 
-import com.cocciahouse.api.dto.WeeklyOfferingCreateRequest;
+import com.cocciahouse.api.dto.weeklyOffering.WeeklyOfferingCreateRequest;
 import com.cocciahouse.api.exception.DuplicateOfferingItemException;
 import com.cocciahouse.api.model.WeeklyOffering;
-import com.cocciahouse.api.dto.WeeklyOfferingResponse;
+import com.cocciahouse.api.dto.weeklyOffering.WeeklyOfferingResponse;
 import com.cocciahouse.api.mapper.WeeklyOfferingMapper;
 import com.cocciahouse.api.model.WeeklyOfferingStatus;
 import com.cocciahouse.api.repository.WeeklyOfferingItemRepository;
@@ -11,8 +11,8 @@ import com.cocciahouse.api.repository.WeeklyOfferingRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.cocciahouse.api.dto.OfferingItemPriceRequest;
-import com.cocciahouse.api.dto.WeeklyOfferingItemCreateRequest;
+import com.cocciahouse.api.dto.recipe.OfferingItemPriceRequest;
+import com.cocciahouse.api.dto.weeklyOffering.WeeklyOfferingItemCreateRequest;
 import com.cocciahouse.api.model.Recipe;
 import com.cocciahouse.api.model.WeeklyOfferingItem;
 import com.cocciahouse.api.model.WeeklyOfferingItemPrice;

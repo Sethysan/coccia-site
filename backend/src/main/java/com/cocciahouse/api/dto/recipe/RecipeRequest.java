@@ -1,4 +1,4 @@
-package com.cocciahouse.api.dto;
+package com.cocciahouse.api.dto.recipe;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;

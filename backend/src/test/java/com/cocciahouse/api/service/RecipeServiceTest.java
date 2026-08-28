@@ -16,7 +16,7 @@ import static org.mockito.Mockito.*;
 
 import com.cocciahouse.api.exception.DuplicateRecipeException;
 
-import com.cocciahouse.api.dto.WeeklyOfferingItemResponse;
+import com.cocciahouse.api.dto.weeklyOffering.WeeklyOfferingItemResponse;
 import com.cocciahouse.api.model.WeeklyOfferingItem;
 import com.cocciahouse.api.model.WeeklyOfferingStatus;
 

@@ -1,6 +1,7 @@
 package com.cocciahouse.api.config;
 
 import com.cocciahouse.api.model.AdminUser;
+import com.cocciahouse.api.model.AdminUserRole;
 import com.cocciahouse.api.repository.AdminUserRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
@@ -42,7 +43,12 @@ public class AdminUserInitializer implements CommandLineRunner {
                 passwordEncoder.encode(adminPassword);
 
         AdminUser adminUser =
-                new AdminUser(adminUsername, passwordHash);
+                new AdminUser(
+                        adminUsername,
+                        passwordHash,
+                        adminUsername,
+                        AdminUserRole.ADMIN
+                );
 
         adminUserRepository.save(adminUser);
     }

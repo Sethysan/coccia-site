@@ -1,4 +1,4 @@
-package com.cocciahouse.api.dto;
+package com.cocciahouse.api.dto.recipe;
 
 public record RecipeResponse(
         Long id,

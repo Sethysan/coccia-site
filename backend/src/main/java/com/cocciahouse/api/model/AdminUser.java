@@ -2,6 +2,8 @@ package com.cocciahouse.api.model;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -17,11 +19,32 @@ public class AdminUser {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true, length = 100)
+    @Column(
+            nullable = false,
+            unique = true,
+            length = 100
+    )
     private String username;
 
-    @Column(name = "password_hash", nullable = false)
+    @Column(
+            name = "password_hash",
+            nullable = false
+    )
     private String passwordHash;
+
+    @Column(
+            name = "display_name",
+            nullable = false,
+            length = 100
+    )
+    private String displayName;
+
+    @Enumerated(EnumType.STRING)
+    @Column(
+            nullable = false,
+            length = 20
+    )
+    private AdminUserRole role = AdminUserRole.ADMIN;
 
     @Column(nullable = false)
     private boolean active = true;
@@ -34,12 +57,26 @@ public class AdminUser {
     )
     private Instant createdAt;
 
+    @Column(
+            name = "updated_at",
+            nullable = false,
+            insertable = false
+    )
+    private Instant updatedAt;
+
     public AdminUser() {
     }
 
-    public AdminUser(String username, String passwordHash) {
+    public AdminUser(
+            String username,
+            String passwordHash,
+            String displayName,
+            AdminUserRole role
+    ) {
         this.username = username;
         this.passwordHash = passwordHash;
+        this.displayName = displayName;
+        this.role = role;
     }
 
     public Long getId() {
@@ -62,6 +99,22 @@ public class AdminUser {
         this.passwordHash = passwordHash;
     }
 
+    public String getDisplayName() {
+        return displayName;
+    }
+
+    public void setDisplayName(String displayName) {
+        this.displayName = displayName;
+    }
+
+    public AdminUserRole getRole() {
+        return role;
+    }
+
+    public void setRole(AdminUserRole role) {
+        this.role = role;
+    }
+
     public boolean isActive() {
         return active;
     }
@@ -72,5 +125,9 @@ public class AdminUser {
 
     public Instant getCreatedAt() {
         return createdAt;
+    }
+
+    public Instant getUpdatedAt() {
+        return updatedAt;
     }
 }

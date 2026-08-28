@@ -1,10 +1,6 @@
 package com.cocciahouse.api.controller.admin;
 
-import com.cocciahouse.api.model.AdminUser;
-import com.cocciahouse.api.model.Announcement;
-import com.cocciahouse.api.model.AnnouncementPlacement;
-import com.cocciahouse.api.model.AnnouncementStatus;
-import com.cocciahouse.api.model.AnnouncementType;
+import com.cocciahouse.api.model.*;
 import com.cocciahouse.api.repository.AdminUserRepository;
 import com.cocciahouse.api.repository.AnnouncementRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -49,6 +45,8 @@ class AnnouncementControllerIntegrationTest {
 
     private static final String TEST_USERNAME = "testadmin";
     private static final String TEST_PASSWORD = "testpassword";
+    private static final String TEST_DISPLAY_NAME = "Test Admin";
+    private static final AdminUserRole TEST_ROLE = AdminUserRole.ADMIN;
 
     @BeforeEach
     void setUpTestAdmin() {
@@ -59,7 +57,9 @@ class AnnouncementControllerIntegrationTest {
 
         AdminUser testAdmin = new AdminUser(
                 TEST_USERNAME,
-                passwordEncoder.encode(TEST_PASSWORD)
+                passwordEncoder.encode(TEST_PASSWORD),
+                TEST_DISPLAY_NAME,
+                TEST_ROLE
         );
 
         adminUserRepository.save(testAdmin);

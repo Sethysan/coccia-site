@@ -1,6 +1,7 @@
 package com.cocciahouse.api.controller.admin;
 
 import com.cocciahouse.api.model.AdminUser;
+import com.cocciahouse.api.model.AdminUserRole;
 import com.cocciahouse.api.repository.AdminUserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -36,6 +37,8 @@ class RestaurantHoursControllerIntegrationTest {
 
     private static final String TEST_USERNAME = "testadmin";
     private static final String TEST_PASSWORD = "testpassword";
+    private static final String TEST_DISPLAY_NAME= "testdisplayname";
+    private static final AdminUserRole TEST_ROLE = AdminUserRole.ADMIN;
 
     @BeforeEach
     void setUpTestAdmin() {
@@ -46,7 +49,9 @@ class RestaurantHoursControllerIntegrationTest {
 
         AdminUser testAdmin = new AdminUser(
                 TEST_USERNAME,
-                passwordEncoder.encode(TEST_PASSWORD)
+                passwordEncoder.encode(TEST_PASSWORD),
+                TEST_DISPLAY_NAME,
+                TEST_ROLE
         );
 
         adminUserRepository.save(testAdmin);

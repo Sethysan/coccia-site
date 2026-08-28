@@ -1,8 +1,8 @@
 package com.cocciahouse.api.controller.admin;
 
-import com.cocciahouse.api.dto.WeeklyOfferingCreateRequest;
-import com.cocciahouse.api.dto.WeeklyOfferingItemCreateRequest;
-import com.cocciahouse.api.dto.WeeklyOfferingResponse;
+import com.cocciahouse.api.dto.weeklyOffering.WeeklyOfferingCreateRequest;
+import com.cocciahouse.api.dto.weeklyOffering.WeeklyOfferingItemCreateRequest;
+import com.cocciahouse.api.dto.weeklyOffering.WeeklyOfferingResponse;
 import com.cocciahouse.api.service.WeeklyOfferingService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;

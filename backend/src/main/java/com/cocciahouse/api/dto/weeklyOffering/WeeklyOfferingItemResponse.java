@@ -1,5 +1,6 @@
-package com.cocciahouse.api.dto;
+package com.cocciahouse.api.dto.weeklyOffering;
 
+import com.cocciahouse.api.dto.recipe.OfferingItemPriceResponse;
 import com.cocciahouse.api.model.OfferingType;
 
 import java.util.List;

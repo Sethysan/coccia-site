@@ -1,5 +1,6 @@
 package com.cocciahouse.api.controller.auth;
 
+import com.cocciahouse.api.model.AdminUserRole;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -37,6 +38,8 @@ class AuthControllerIntegrationTest {
 
     private static final String TEST_USERNAME = "testadmin";
     private static final String TEST_PASSWORD = "testpassword";
+    private static final String TEST_DISPLAY_NAME = "Test Admin";
+    private static final AdminUserRole TEST_ROLE = AdminUserRole.ADMIN;
 
 
     @BeforeEach
@@ -48,7 +51,9 @@ class AuthControllerIntegrationTest {
 
         AdminUser testAdmin = new AdminUser(
                 TEST_USERNAME,
-                passwordEncoder.encode(TEST_PASSWORD)
+                passwordEncoder.encode(TEST_PASSWORD),
+                TEST_DISPLAY_NAME,
+                TEST_ROLE
         );
 
         adminUserRepository.save(testAdmin);

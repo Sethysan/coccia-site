@@ -1,6 +1,6 @@
 package com.cocciahouse.api.controller.publicapi;
 
-import com.cocciahouse.api.dto.WeeklyOfferingResponse;
+import com.cocciahouse.api.dto.weeklyOffering.WeeklyOfferingResponse;
 import com.cocciahouse.api.service.WeeklyOfferingService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
