@@ -16,12 +16,6 @@ public record WeeklyOfferingItemCreateRequest(
         @NotNull
         OfferingType offeringType,
 
-        String publicDescription,
-
-        String imageUrl,
-
-        String imageAlt,
-
         boolean includesHouseSalad,
 
         boolean includesHomemadeBread,

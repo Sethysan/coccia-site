@@ -1509,7 +1509,7 @@ class WeeklyOfferingControllerIntegrationTest {
         WeeklyOfferingItem item = new WeeklyOfferingItem();
         item.setRecipe(recipe);
         item.setOfferingType(OfferingType.DINNER);
-        item.setPublicDescription("Test description");
+        item.getRecipe().setDescription("Test description");
         item.setIncludesHouseSalad(true);
         item.setIncludesHomemadeBread(true);
         item.setDisplayOrder(0);

@@ -1,7 +1,5 @@
 package com.cocciahouse.api.model;
 
-
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -25,20 +23,39 @@ public class Recipe {
     @Column(nullable = false, unique = true, length = 150)
     private String name;
 
+    @Column(columnDefinition = "TEXT")
+    private String description;
+
+    @Column(name = "image_url", columnDefinition = "TEXT")
+    private String imageUrl;
+
+    @Column(name = "image_public_id", length = 255)
+    private String imagePublicId;
+
+    @Column(name = "image_alt", length = 255)
+    private String imageAlt;
+
     @Column(nullable = false)
     private boolean active = true;
 
-    @Column(name = "created_at", nullable = false, insertable = false, updatable = false)
+    @Column(
+            name = "created_at",
+            nullable = false,
+            insertable = false,
+            updatable = false
+    )
     private Instant createdAt;
 
-    @Column(name = "updated_at", nullable = false, insertable = false)
+    @Column(
+            name = "updated_at",
+            nullable = false,
+            insertable = false
+    )
     private Instant updatedAt;
 
     @OneToMany(mappedBy = "recipe")
-    private List<StaffMemberRecipe> staffRelationships = new ArrayList<>();
-
-    @OneToMany(mappedBy = "recipe")
-    private List<WeeklyOfferingItem> offeringItems = new ArrayList<>();
+    private List<WeeklyOfferingItem> offeringItems =
+            new ArrayList<>();
 
     public Recipe() {
     }
@@ -59,6 +76,38 @@ public class Recipe {
         this.name = name;
     }
 
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public String getImageUrl() {
+        return imageUrl;
+    }
+
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
+    }
+
+    public String getImagePublicId() {
+        return imagePublicId;
+    }
+
+    public void setImagePublicId(String imagePublicId) {
+        this.imagePublicId = imagePublicId;
+    }
+
+    public String getImageAlt() {
+        return imageAlt;
+    }
+
+    public void setImageAlt(String imageAlt) {
+        this.imageAlt = imageAlt;
+    }
+
     public boolean isActive() {
         return active;
     }
@@ -73,10 +122,6 @@ public class Recipe {
 
     public Instant getUpdatedAt() {
         return updatedAt;
-    }
-
-    public List<StaffMemberRecipe> getStaffRelationships() {
-        return staffRelationships;
     }
 
     public List<WeeklyOfferingItem> getOfferingItems() {

@@ -156,9 +156,6 @@ public class WeeklyOfferingService {
 
         item.setRecipe(recipe);
         item.setOfferingType(request.offeringType());
-        item.setPublicDescription(request.publicDescription());
-        item.setImageUrl(request.imageUrl());
-        item.setImageAlt(request.imageAlt());
         item.setIncludesHouseSalad(request.includesHouseSalad());
         item.setIncludesHomemadeBread(request.includesHomemadeBread());
         item.setDisplayOrder(request.displayOrder());
@@ -223,9 +220,6 @@ public class WeeklyOfferingService {
 
         item.setRecipe(recipe);
         item.setOfferingType(request.offeringType());
-        item.setPublicDescription(request.publicDescription());
-        item.setImageUrl(request.imageUrl());
-        item.setImageAlt(request.imageAlt());
         item.setIncludesHouseSalad(request.includesHouseSalad());
         item.setIncludesHomemadeBread(
                 request.includesHomemadeBread()

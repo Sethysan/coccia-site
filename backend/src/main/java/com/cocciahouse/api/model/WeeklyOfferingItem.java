@@ -39,15 +39,6 @@ public class WeeklyOfferingItem {
     @Column(name = "offering_type", nullable = false, length = 20)
     private OfferingType offeringType;
 
-    @Column(name = "public_description")
-    private String publicDescription;
-
-    @Column(name = "image_url")
-    private String imageUrl;
-
-    @Column(name = "image_alt", length = 255)
-    private String imageAlt;
-
     @Column(name = "includes_house_salad", nullable = false)
     private boolean includesHouseSalad = false;
 
@@ -100,30 +91,6 @@ public class WeeklyOfferingItem {
 
     public void setOfferingType(OfferingType offeringType) {
         this.offeringType = offeringType;
-    }
-
-    public String getPublicDescription() {
-        return publicDescription;
-    }
-
-    public void setPublicDescription(String publicDescription) {
-        this.publicDescription = publicDescription;
-    }
-
-    public String getImageUrl() {
-        return imageUrl;
-    }
-
-    public void setImageUrl(String imageUrl) {
-        this.imageUrl = imageUrl;
-    }
-
-    public String getImageAlt() {
-        return imageAlt;
-    }
-
-    public void setImageAlt(String imageAlt) {
-        this.imageAlt = imageAlt;
     }
 
     public boolean isIncludesHouseSalad() {
