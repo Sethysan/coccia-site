@@ -39,6 +39,8 @@ export const apiRequest = async (endpoint, options = {}) => {
     ? getCsrfToken()
     : null
 
+  const isFormData = options.body instanceof FormData
+
   try {
     const response = await fetch(`${appConfig.apiUrl}${endpoint}`, {
       ...options,
@@ -46,7 +48,9 @@ export const apiRequest = async (endpoint, options = {}) => {
       credentials: "include",
       headers: {
         Accept: "application/json",
-        "Content-Type": "application/json",
+        ...(!isFormData && {
+          "Content-Type": "application/json"
+        }),
         ...(csrfToken && {
           "X-XSRF-TOKEN": csrfToken
         }),

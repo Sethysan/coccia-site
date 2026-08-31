@@ -16,6 +16,16 @@ export async function getRecipes(search = '') {
     )
 }
 
+export async function getActiveRecipes(search = '') {
+    const query = search.trim()
+        ? `?search=${encodeURIComponent(search.trim())}`
+        : ''
+
+    return apiRequest(
+        `/api/admin/recipes/active-recipes${query}`
+    )
+}
+
 export async function createRecipe(recipe) {
     return apiRequest('/api/admin/recipes', {
         method: 'POST',
@@ -30,24 +40,19 @@ export async function updateRecipe(id, recipe) {
     })
 }
 
+export async function uploadRecipeImage(id, file) {
+    const formData = new FormData()
+
+    formData.append('file', file)
+
+    return apiRequest(`/api/admin/recipes/${id}/image`, {
+        method: 'POST',
+        body: formData
+    })
+}
+
 export async function getLatestRecipeOfferingItem(recipeId) {
-    const response = await fetch(
-        `/api/admin/recipes/${recipeId}/latest-offering-item`,
-        {
-            method: 'GET',
-            credentials: 'include'
-        }
+    return apiRequest(
+        `/api/admin/recipes/${recipeId}/latest-offering-item`
     )
-
-    if (response.status === 204) {
-        return null
-    }
-
-    if (!response.ok) {
-        throw new Error(
-            'Unable to load previous recipe details.'
-        )
-    }
-
-    return response.json()
 }

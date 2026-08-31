@@ -215,7 +215,14 @@
 }
 
 .admin-success-message {
-    margin: 0;
+    margin: 0.25rem 0 0;
+    padding: 0.75rem 1rem;
+
+    color: var(--status-open);
+    background: rgba(255, 255, 255, 0.04);
+
+    border: 1px solid var(--status-open);
+    border-radius: 0.4rem;
 
     font-weight: 600;
 }

@@ -3,8 +3,10 @@ import { ref } from 'vue'
 
 import {
     getRecipes,
+    getActiveRecipes,
     createRecipe,
     updateRecipe,
+    uploadRecipeImage,
     getLatestRecipeOfferingItem
 } from '@/api/recipesApi'
 
@@ -35,12 +37,14 @@ export const useRecipeStore = defineStore('recipes', () => {
         }
     }
 
-    async function addRecipe(name) {
+    async function addRecipe(name, description = '', imageAlt = '') {
         error.value = null
 
         try {
             const createdRecipe = await createRecipe({
-                name
+                name,
+                description,
+                imageAlt
             })
 
             recipes.value = [
@@ -59,8 +63,25 @@ export const useRecipeStore = defineStore('recipes', () => {
             return null
         }
     }
+    function replaceRecipe(updatedRecipe) {
+        recipes.value = recipes.value
+            .map(recipe =>
+                recipe.id === updatedRecipe.id
+                    ? updatedRecipe
+                    : recipe
+            )
+            .sort((a, b) =>
+                a.name.localeCompare(b.name)
+            )
+    }
 
-    async function saveRecipe(id, name, active) {
+    async function saveRecipe(
+        id,
+        name,
+        description,
+        imageAlt,
+        active
+    ) {
         error.value = null
 
         try {
@@ -68,19 +89,32 @@ export const useRecipeStore = defineStore('recipes', () => {
                 id,
                 {
                     name,
+                    description,
+                    imageAlt,
                     active
                 }
             )
 
-            recipes.value = recipes.value
-                .map(recipe =>
-                    recipe.id === updatedRecipe.id
-                        ? updatedRecipe
-                        : recipe
-                )
-                .sort((a, b) =>
-                    a.name.localeCompare(b.name)
-                )
+            replaceRecipe(updatedRecipe)
+
+            return updatedRecipe
+
+        } catch (err) {
+            console.error(err)
+            error.value = err.message
+
+            return null
+        }
+    }
+
+    async function uploadImage(id, file) {
+        error.value = null
+
+        try {
+            const updatedRecipe =
+                await uploadRecipeImage(id, file)
+
+            replaceRecipe(updatedRecipe)
 
             return updatedRecipe
 
@@ -112,6 +146,7 @@ export const useRecipeStore = defineStore('recipes', () => {
         fetchRecipes,
         addRecipe,
         saveRecipe,
+        uploadImage,
         fetchLatestOfferingItem,
         clearError
     }

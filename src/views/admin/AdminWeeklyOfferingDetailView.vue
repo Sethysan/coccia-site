@@ -44,7 +44,7 @@
                             <p class="offering-dates">
                                 {{ formatDateRange(
                                     offering.startDate,
-                                offering.endDate
+                                    offering.endDate
                                 ) }}
                             </p>
                         </div>
@@ -163,41 +163,18 @@
 
                             <article v-for="item in sortedItems" :key="item.id" class="admin-item-card">
 
-                                <img v-if="item.imageUrl" :src="item.imageUrl" :alt="item.imageAlt
-                                    || item.recipeName
-                                    " class="admin-item-image" />
-
-                                <div v-else class="admin-item-image-placeholder">
-                                    No Image
-                                </div>
-
-
-                                <div class="admin-item-content">
-
+                                <RecipeSummary :name="item.recipeName" :description="item.publicDescription"
+                                    :image-url="item.imageUrl" :image-alt="item.imageAlt">
                                     <p class="admin-item-type">
                                         Featured
-                                        {{
-                                            formatOfferingType(
-                                                item.offeringType
-                                            )
-                                        }}
-                                    </p>
-
-                                    <h3>
-                                        {{ item.recipeName }}
-                                    </h3>
-
-                                    <p v-if="item.publicDescription" class="admin-item-description">
-                                        {{ item.publicDescription }}
+                                        {{ formatOfferingType(item.offeringType) }}
                                     </p>
 
                                     <p v-if="item.includedSidesText" class="admin-item-sides">
                                         {{ item.includedSidesText }}
                                     </p>
 
-
                                     <ul class="admin-price-list">
-
                                         <li v-for="price in item.prices" :key="price.id">
                                             <span v-if="price.label">
                                                 {{ price.label }}:
@@ -205,34 +182,18 @@
 
                                             ${{ price.amount }}
                                         </li>
-
                                     </ul>
 
-
-                                    <div v-if="
-                                        offering.status
-                                        !== 'ARCHIVED'
-                                    " class="admin-item-actions">
-
-                                        <button type="button" @click="
-                                            startEditingItem(
-                                                item
-                                            )
-                                            ">
-                                            Edit
+                                    <div v-if="offering.status !== 'ARCHIVED'" class="admin-item-actions">
+                                        <button type="button" @click="startEditingItem(item)">
+                                            Edit Offering Details
                                         </button>
 
-                                        <button type="button" class="danger-button" @click="
-                                            deleteItem(
-                                                item.id
-                                            )
-                                            ">
+                                        <button type="button" class="danger-button" @click="deleteItem(item.id)">
                                             Delete
                                         </button>
-
                                     </div>
-
-                                </div>
+                                </RecipeSummary>
 
                             </article>
 
@@ -292,6 +253,7 @@ import WeeklyOfferingItemForm
 import WeeklyOfferingForm from '@/components/admin/WeeklyOfferingForm.vue'
 import WeeklyOffering from '@/components/WeeklyOffering.vue'
 import { formatDateRange } from '@/utils/dateFormat'
+import RecipeSummary from '@/components/admin/RecipeSummary.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -686,46 +648,12 @@ function formatOfferingType(type) {
 }
 
 .admin-item-card {
-    display: grid;
-    grid-template-columns: 150px minmax(0, 1fr);
-    gap: 1rem;
-
     padding: 1rem;
 
     background: var(--background-dark-trans);
 
     border: 1px solid rgba(255, 255, 255, 0.12);
-
     border-radius: 0.5rem;
-}
-
-.admin-item-image,
-.admin-item-image-placeholder {
-    width: 150px;
-    height: 125px;
-
-    border-radius: 0.4rem;
-}
-
-.admin-item-image {
-    display: block;
-
-    object-fit: cover;
-}
-
-.admin-item-image-placeholder {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    background: rgba(255, 255, 255, 0.06);
-
-    font-size: 0.8rem;
-    opacity: 0.6;
-}
-
-.admin-item-content {
-    min-width: 0;
 }
 
 .admin-item-type {
@@ -739,14 +667,8 @@ function formatOfferingType(type) {
     text-transform: uppercase;
 }
 
-.admin-item-content h3 {
-    margin: 0 0 0.6rem;
-}
-
-.admin-item-description,
 .admin-item-sides {
     margin: 0.4rem 0;
-
     line-height: 1.5;
 }
 
@@ -867,16 +789,6 @@ function formatOfferingType(type) {
     .section-heading {
         align-items: flex-start;
         flex-direction: column;
-    }
-
-    .admin-item-card {
-        grid-template-columns: 1fr;
-    }
-
-    .admin-item-image,
-    .admin-item-image-placeholder {
-        width: 100%;
-        height: 200px;
     }
 
     .offering-actions {

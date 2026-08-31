@@ -21,10 +21,7 @@
             </header>
 
             <div class="page-actions">
-                <button
-                    type="button"
-                    @click="router.push('/admin')"
-                >
+                <button type="button" @click="router.push('/admin')">
                     ← Dashboard
                 </button>
             </div>
@@ -34,31 +31,38 @@
                     <h2>Add Recipe</h2>
                 </div>
 
-                <form
-                    class="admin-form create-form"
-                    @submit.prevent="handleCreate"
-                >
+                <form class="admin-form create-form" @submit.prevent="handleCreate">
                     <label>
                         Recipe name
 
-                        <input
-                            v-model="newRecipeName"
-                            type="text"
-                            maxlength="150"
-                            placeholder="Example: Chicken Marsala"
-                            required
-                        >
+                        <input v-model="newRecipeName" type="text" maxlength="150"
+                            placeholder="Example: Chicken Marsala" required>
+                    </label>
+
+                    <label>
+                        Description
+
+                        <textarea v-model="newDescription" rows="3"
+                            placeholder="Describe the dish for customers."></textarea>
+                    </label>
+
+                    <label>
+                        Image description
+
+                        <input v-model="newImageAlt" type="text" maxlength="255"
+                            placeholder="Example: Chicken Marsala with mushrooms">
                     </label>
 
                     <div class="admin-form-actions">
-                        <button
-                            type="submit"
-                            class="primary-button"
-                            :disabled="creating"
-                        >
+                        <button type="submit" class="primary-button" :disabled="creating">
                             {{ creating ? 'Adding...' : 'Add Recipe' }}
                         </button>
                     </div>
+
+                    <div v-if="successMessage && successRecipeId === null" class="admin-success-message" role="status">
+                        ✓ {{ successMessage }}
+                    </div>
+
                 </form>
             </section>
 
@@ -66,109 +70,76 @@
                 <label class="search-field">
                     Search recipes
 
-                    <input
-                        v-model="search"
-                        type="search"
-                        placeholder="Search by name"
-                        @input="handleSearch"
-                    >
+                    <input v-model="search" type="search" placeholder="Search by name" @input="handleSearch">
                 </label>
 
                 <div class="filter-buttons">
-                    <button
-                        type="button"
-                        :class="{ active: filter === 'all' }"
-                        @click="filter = 'all'"
-                    >
+                    <button type="button" :class="{ active: filter === 'all' }" @click="filter = 'all'">
                         All
                     </button>
 
-                    <button
-                        type="button"
-                        :class="{ active: filter === 'active' }"
-                        @click="filter = 'active'"
-                    >
+                    <button type="button" :class="{ active: filter === 'active' }" @click="filter = 'active'">
                         Active
                     </button>
 
-                    <button
-                        type="button"
-                        :class="{ active: filter === 'inactive' }"
-                        @click="filter = 'inactive'"
-                    >
+                    <button type="button" :class="{ active: filter === 'inactive' }" @click="filter = 'inactive'">
                         Inactive
                     </button>
                 </div>
             </section>
 
-            <div
-                v-if="recipeStore.error"
-                class="error-message"
-                role="alert"
-            >
+            <div v-if="recipeStore.error" class="error-message" role="alert">
                 {{ recipeStore.error }}
             </div>
 
-            <p
-                v-if="recipeStore.loading"
-                class="state-message"
-            >
+            <p v-if="recipeStore.loading" class="state-message">
                 Loading recipes...
             </p>
 
-            <p
-                v-else-if="filteredRecipes.length === 0"
-                class="state-message"
-            >
+            <p v-else-if="filteredRecipes.length === 0" class="state-message">
                 No recipes found.
             </p>
 
-            <section
-                v-else
-                class="recipe-list"
-            >
-                <article
-                    v-for="recipe in filteredRecipes"
-                    :key="recipe.id"
-                    class="admin-card recipe-card"
-                    :class="{ inactive: !recipe.active }"
-                >
-                    <div
-                        v-if="editingId !== recipe.id"
-                        class="recipe-display"
-                    >
-                        <div class="recipe-heading">
-                            <h2>
-                                {{ recipe.name }}
-                            </h2>
+            <section v-else class="recipe-list">
 
-                            <span
-                                class="status-badge"
-                                :class="recipe.active
-                                    ? 'status-current'
-                                    : 'status-archived'"
-                            >
-                                {{
-                                    recipe.active
-                                        ? 'Active'
-                                        : 'Inactive'
-                                }}
+                <article v-for="recipe in filteredRecipes" :key="recipe.id" class="admin-card recipe-card"
+                    :class="{ inactive: !recipe.active }">
+
+                    <RecipeSummary v-if="editingId !== recipe.id" :name="recipe.name" :description="recipe.description"
+                        :image-url="recipe.imageUrl" :image-alt="recipe.imageAlt">
+                        <div v-if="
+                            successMessage &&
+                            successRecipeId === recipe.id
+                        " class="admin-success-message" role="status">
+                            ✓ {{ successMessage }}
+                        </div>
+                        <div class="recipe-meta">
+                            <span class="status-badge" :class="recipe.active
+                                ? 'status-current'
+                                : 'status-archived'">
+                                {{ recipe.active ? 'Active' : 'Inactive' }}
                             </span>
                         </div>
 
                         <div class="recipe-actions">
-                            <button
-                                type="button"
-                                @click="beginEdit(recipe)"
-                            >
-                                Edit
+                            <label class="image-upload-button">
+                                {{
+                                    uploadingId === recipe.id
+                                        ? 'Uploading...'
+                                        : recipe.imageUrl
+                                            ? 'Replace Photo'
+                                            : 'Add Photo'
+                                }}
+
+                                <input type="file" accept="image/*" :disabled="uploadingId === recipe.id"
+                                    @change="handleImageUpload(recipe, $event)">
+                            </label>
+
+                            <button type="button" @click="beginEdit(recipe)">
+                                Edit Details
                             </button>
 
-                            <button
-                                type="button"
-                                :disabled="savingId === recipe.id"
-                                @click="toggleActive(recipe)"
-                            >
+                            <button type="button" :disabled="savingId === recipe.id" @click="toggleActive(recipe)">
                                 {{
                                     savingId === recipe.id
                                         ? 'Saving...'
@@ -178,42 +149,39 @@
                                 }}
                             </button>
                         </div>
-                    </div>
+                    </RecipeSummary>
 
-                    <form
-                        v-else
-                        class="admin-form edit-form"
-                        @submit.prevent="handleSave(recipe)"
-                    >
+                    <form v-else class="admin-form edit-form" @submit.prevent="handleSave(recipe)">
                         <label>
                             Recipe name
 
-                            <input
-                                v-model="editName"
-                                type="text"
-                                maxlength="150"
-                                required
-                            >
+                            <input v-model="editName" type="text" maxlength="150" required>
+                        </label>
+
+                        <label>
+                            Description
+
+                            <textarea v-model="editDescription" rows="4"
+                                placeholder="Describe the dish for customers."></textarea>
+                        </label>
+
+                        <label>
+                            Image description
+
+                            <input v-model="editImageAlt" type="text" maxlength="255"
+                                placeholder="Describe what appears in the photo">
                         </label>
 
                         <div class="admin-form-actions">
-                            <button
-                                type="submit"
-                                class="primary-button"
-                                :disabled="savingId === recipe.id"
-                            >
+                            <button type="submit" class="primary-button" :disabled="savingId === recipe.id">
                                 {{
                                     savingId === recipe.id
                                         ? 'Saving...'
-                                        : 'Save'
+                                        : 'Save Details'
                                 }}
                             </button>
 
-                            <button
-                                type="button"
-                                :disabled="savingId === recipe.id"
-                                @click="cancelEdit"
-                            >
+                            <button type="button" :disabled="savingId === recipe.id" @click="cancelEdit">
                                 Cancel
                             </button>
                         </div>
@@ -233,6 +201,7 @@ import {
     ref
 } from 'vue'
 import { useRouter } from 'vue-router'
+import RecipeSummary from '@/components/admin/RecipeSummary.vue'
 
 import { useAuthStore } from '@/stores/authStore'
 import { useRecipeStore } from '@/stores/recipeStore'
@@ -245,13 +214,22 @@ const search = ref('')
 const filter = ref('all')
 
 const newRecipeName = ref('')
+const newDescription = ref('')
+const newImageAlt = ref('')
 const creating = ref(false)
+const successMessage = ref('')
+const successRecipeId = ref(null)
 
 const editingId = ref(null)
 const editName = ref('')
+const editDescription = ref('')
+const editImageAlt = ref('')
+
 const savingId = ref(null)
+const uploadingId = ref(null)
 
 let searchTimer = null
+let successTimer = null
 
 const filteredRecipes = computed(() => {
     if (filter.value === 'active') {
@@ -275,6 +253,7 @@ onMounted(async () => {
 
 onBeforeUnmount(() => {
     clearTimeout(searchTimer)
+    clearTimeout(successTimer)
 })
 
 async function handleLogout() {
@@ -290,6 +269,18 @@ function handleSearch() {
     }, 300)
 }
 
+function showSuccessMessage(message, recipeId = null) {
+    clearTimeout(successTimer)
+
+    successMessage.value = message
+    successRecipeId.value = recipeId
+
+    successTimer = setTimeout(() => {
+        successMessage.value = ''
+        successRecipeId.value = null
+    }, 4000)
+}
+
 async function handleCreate() {
     const name = newRecipeName.value.trim()
 
@@ -302,10 +293,18 @@ async function handleCreate() {
 
     try {
         const createdRecipe =
-            await recipeStore.addRecipe(name)
+            await recipeStore.addRecipe(
+                name,
+                newDescription.value,
+                newImageAlt.value
+            )
 
         if (createdRecipe) {
             newRecipeName.value = ''
+            newDescription.value = ''
+            newImageAlt.value = ''
+
+            showSuccessMessage('Recipe created successfully.')
         }
 
     } finally {
@@ -316,12 +315,18 @@ async function handleCreate() {
 function beginEdit(recipe) {
     editingId.value = recipe.id
     editName.value = recipe.name
+    editDescription.value = recipe.description || ''
+    editImageAlt.value = recipe.imageAlt || ''
+
     recipeStore.clearError()
 }
 
 function cancelEdit() {
     editingId.value = null
     editName.value = ''
+    editDescription.value = ''
+    editImageAlt.value = ''
+
     recipeStore.clearError()
 }
 
@@ -340,12 +345,20 @@ async function handleSave(recipe) {
             await recipeStore.saveRecipe(
                 recipe.id,
                 name,
+                editDescription.value,
+                editImageAlt.value,
                 recipe.active
             )
 
         if (updatedRecipe) {
             cancelEdit()
+
+            showSuccessMessage(
+                `${updatedRecipe.name} updated successfully.`,
+                updatedRecipe.id
+            )
         }
+
 
     } finally {
         savingId.value = null
@@ -357,16 +370,63 @@ async function toggleActive(recipe) {
     recipeStore.clearError()
 
     try {
-        await recipeStore.saveRecipe(
-            recipe.id,
-            recipe.name,
-            !recipe.active
-        )
+        const updatedRecipe =
+            await recipeStore.saveRecipe(
+                recipe.id,
+                recipe.name,
+                recipe.description || '',
+                recipe.imageAlt || '',
+                !recipe.active
+            )
+
+        if (updatedRecipe) {
+            showSuccessMessage(
+                `${updatedRecipe.name} ${updatedRecipe.active
+                    ? 'reactivated'
+                    : 'deactivated'
+                } successfully.`,
+                updatedRecipe.id
+            )
+        }
 
     } finally {
         savingId.value = null
     }
 }
+async function handleImageUpload(recipe, event) {
+    const input = event.target
+    const file = input.files?.[0]
+
+    if (!file) {
+        return
+    }
+
+    uploadingId.value = recipe.id
+    recipeStore.clearError()
+
+    try {
+        const updatedRecipe =
+            await recipeStore.uploadImage(
+                recipe.id,
+                file
+            )
+
+        if (updatedRecipe) {
+            showSuccessMessage(
+                `${updatedRecipe.name} photo ${recipe.imageUrl
+                    ? 'replaced'
+                    : 'added'
+                } successfully.`,
+                updatedRecipe.id
+            )
+        }
+
+    } finally {
+        uploadingId.value = null
+        input.value = ''
+    }
+}
+
 </script>
 
 <style scoped>
@@ -375,8 +435,7 @@ async function toggleActive(recipe) {
 }
 
 .create-form {
-    grid-template-columns: minmax(0, 1fr) auto;
-    align-items: end;
+    grid-template-columns: 1fr;
 }
 
 .create-form .admin-form-actions {
@@ -424,28 +483,51 @@ async function toggleActive(recipe) {
     opacity: 0.65;
 }
 
-.recipe-display {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 1rem;
-}
+/* ==========================================================
+   RECIPE DETAILS & ACTIONS
+   ========================================================== */
 
-.recipe-heading {
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 0.75rem;
-}
-
-.recipe-heading h2 {
-    margin: 0;
+.recipe-meta {
+    margin: 0.75rem 0;
 }
 
 .recipe-actions {
     display: flex;
     flex-wrap: wrap;
     gap: 0.5rem;
+
+    margin-top: 1rem;
+}
+
+.image-upload-button {
+    display: inline-flex;
+    align-items: center;
+
+    width: fit-content;
+    padding: 0.65rem 1rem;
+
+    color: #140f0c;
+    background: var(--default-color);
+
+    border: 1px solid var(--bronze-color);
+    border-radius: 0.35rem;
+
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.image-upload-button:hover {
+    background: var(--bronze-hover);
+}
+
+.image-upload-button input {
+    position: absolute;
+
+    width: 1px;
+    height: 1px;
+
+    opacity: 0;
+    pointer-events: none;
 }
 
 .edit-form .admin-form-actions {
@@ -457,8 +539,7 @@ async function toggleActive(recipe) {
         grid-template-columns: 1fr;
     }
 
-    .recipe-tools,
-    .recipe-display {
+    .recipe-tools {
         flex-direction: column;
         align-items: stretch;
     }

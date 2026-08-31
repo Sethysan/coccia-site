@@ -14,15 +14,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.context.ActiveProfiles;
 
-import com.cocciahouse.api.service.ImageService;
-import org.springframework.mock.web.MockMultipartFile;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
-
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
-
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -61,9 +52,6 @@ class WeeklyOfferingControllerIntegrationTest {
 
     @Autowired
     private WeeklyOfferingItemRepository weeklyOfferingItemRepository;
-
-    @MockitoBean
-    private ImageService imageService;
 
     private static final String TEST_USERNAME = "testadmin";
     private static final String TEST_PASSWORD = "testpassword";
@@ -269,9 +257,6 @@ class WeeklyOfferingControllerIntegrationTest {
                 {
                     "recipeId": %d,
                     "offeringType": "DINNER",
-                    "publicDescription": "Breaded chicken with sauce and cheese.",
-                    "imageUrl": null,
-                    "imageAlt": null,
                     "includesHouseSalad": true,
                     "includesHomemadeBread": true,
                     "displayOrder": 0,
@@ -573,9 +558,6 @@ class WeeklyOfferingControllerIntegrationTest {
                 {
                     "recipeId": %d,
                     "offeringType": "DINNER",
-                    "publicDescription": "Available as a single or double.",
-                    "imageUrl": null,
-                    "imageAlt": null,
                     "includesHouseSalad": true,
                     "includesHomemadeBread": true,
                     "displayOrder": 0,
@@ -677,9 +659,6 @@ class WeeklyOfferingControllerIntegrationTest {
                 {
                     "recipeId": %d,
                     "offeringType": "DINNER",
-                    "publicDescription": "Attempted archived update.",
-                    "imageUrl": null,
-                    "imageAlt": null,
                     "includesHouseSalad": true,
                     "includesHomemadeBread": true,
                     "displayOrder": 0,
@@ -1763,43 +1742,5 @@ class WeeklyOfferingControllerIntegrationTest {
                 unchanged.getEndDate()
         );
     }
-
-    @Test
-    void authenticatedAdminCanUploadWeeklyOfferingImage()
-            throws Exception {
-
-        MockHttpSession session = loginAsTestAdmin();
-
-        MockMultipartFile file =
-                new MockMultipartFile(
-                        "file",
-                        "chicken-cacciatore.jpg",
-                        "image/jpeg",
-                        "fake-image-data".getBytes()
-                );
-
-        String imageUrl =
-                "https://res.cloudinary.com/test/image/upload/chicken-cacciatore.jpg";
-
-        when(
-                imageService.uploadWeeklyOfferingImage(any())
-        ).thenReturn(imageUrl);
-
-        mockMvc.perform(
-                        multipart("/api/admin/weekly-offerings/images")
-                                .file(file)
-                                .session(session)
-                                .with(csrf())
-                )
-                .andExpect(status().isOk())
-                .andExpect(
-                        jsonPath("$.imageUrl")
-                                .value(imageUrl)
-                );
-
-        verify(imageService)
-                .uploadWeeklyOfferingImage(any());
-    }
-
 
 }

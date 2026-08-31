@@ -9,15 +9,49 @@
                 Recipe
             </label>
 
-            <select id="recipe" v-model="form.recipeId" @change="handleRecipeSelected" required>
-                <option disabled :value="null">
-                    Select a recipe
-                </option>
+            <div class="recipe-picker">
+                <input id="recipe" v-model="recipeSearch" type="search" placeholder="Search recipes..."
+                    autocomplete="off" @input="handleRecipeSearch" @focus="showRecipeResults = true" />
 
-                <option v-for="recipe in recipeStore.recipes" :key="recipe.id" :value="recipe.id">
-                    {{ recipe.name }}
-                </option>
-            </select>
+                <div v-if="showRecipeResults" class="recipe-results">
+                    <p v-if="searchingRecipes" class="recipe-results-message">
+                        Searching...
+                    </p>
+
+                    <button v-for="recipe in activeRecipes" v-else :key="recipe.id" type="button" class="recipe-result"
+                        @click="selectRecipe(recipe)">
+                        {{ recipe.name }}
+                    </button>
+
+                    <p v-if="
+                        !searchingRecipes &&
+                        activeRecipes.length === 0
+                    " class="recipe-results-message">
+                        No active recipes found.
+                    </p>
+                </div>
+
+                <button v-if="selectedRecipe" type="button" class="change-recipe-button" @click="clearSelectedRecipe">
+                    Change Recipe
+                </button>
+
+                <p v-if="recipeSearchError">
+                    {{ recipeSearchError }}
+                </p>
+            </div>
+
+            <div v-if="selectedRecipe" class="selected-recipe">
+                <p class="selected-recipe-label">
+                    Recipe Details
+                </p>
+
+                <RecipeSummary :name="selectedRecipe.name" :description="selectedRecipe.description"
+                    :image-url="selectedRecipe.imageUrl" :image-alt="selectedRecipe.imageAlt" />
+
+                <p class="recipe-source-note">
+                    Description and photo are managed in Recipes.
+                </p>
+            </div>
 
             <p v-if="recipeStore.loading">
                 Loading recipes...
@@ -45,39 +79,6 @@
         </div>
 
         <div>
-            <label for="public-description">
-                Description
-            </label>
-
-            <textarea id="public-description" v-model="form.publicDescription"></textarea>
-        </div>
-
-        <div>
-            <label for="image">
-                Replace Image
-            </label>
-
-            <input id="image" type="file" accept="image/*" @change="handleImageSelected" />
-
-            <p v-if="uploadingImage">
-                Uploading image...
-            </p>
-
-            <div v-if="form.imageUrl">
-                <p>Current image:</p>
-
-                <img :src="form.imageUrl" :alt="form.imageAlt || 'Weekly offering image'"
-                    class="weekly-offering-image-preview" />
-            </div>
-
-            <label for="image-alt">
-                Image description
-            </label>
-
-            <input id="image-alt" v-model="form.imageAlt" type="text" />
-        </div>
-
-        <div>
             <h4>Prices</h4>
             <div v-for="(price, index) in form.prices" :key="index" class="price-row">
                 <div class="price-field">
@@ -100,6 +101,11 @@
                     Remove Price
                 </button>
             </div>
+
+            <button type="button" class="add-price-button" @click="addPrice">
+                + Add Size / Price
+            </button>
+
             <fieldset v-if="form.offeringType === 'DINNER'">
                 <legend>Dinner Includes</legend>
 
@@ -113,6 +119,7 @@
                     Homemade Bread
                 </label>
             </fieldset>
+
         </div>
         <button type="submit" :disabled="saving">
             {{
@@ -131,9 +138,17 @@
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, watch, ref } from 'vue'
+import {
+    computed,
+    onBeforeUnmount,
+    onMounted,
+    reactive,
+    ref,
+    watch
+} from 'vue'
 import { useRecipeStore } from '@/stores/recipeStore'
-import { getCsrfToken } from '@/utils/csrf'
+import { getActiveRecipes } from '@/api/recipesApi'
+import RecipeSummary from '@/components/admin/RecipeSummary.vue'
 
 const props = defineProps({
     item: {
@@ -154,14 +169,31 @@ const emit = defineEmits([
 
 const recipeStore = useRecipeStore()
 
+const recipeSearch = ref('')
+const activeRecipes = ref([])
+const searchingRecipes = ref(false)
+const recipeSearchError = ref('')
+const showRecipeResults = ref(false)
+
+let recipeSearchTimer = null
+
 const editing = computed(() => Boolean(props.item))
 
-const uploadingImage = ref(false)
+const selectedRecipe = computed(() => {
+    if (!form.recipeId) {
+        return null
+    }
+
+    return activeRecipes.value.find(
+        recipe => recipe.id === form.recipeId
+    ) ?? recipeStore.recipes.find(
+        recipe => recipe.id === form.recipeId
+    ) ?? null
+})
 
 const form = reactive({
     recipeId: null,
     offeringType: '',
-    publicDescription: '',
     includesHouseSalad: false,
     includesHomemadeBread: false,
     prices: [
@@ -170,13 +202,14 @@ const form = reactive({
             amount: null,
             displayOrder: 0
         }
-    ],
-    imageUrl: null,
-    imageAlt: ''
+    ]
 })
 
-onMounted(() => {
-    recipeStore.fetchRecipes()
+onMounted(async () => {
+    await Promise.all([
+        recipeStore.fetchRecipes(),
+        loadActiveRecipes()
+    ])
 })
 
 watch(
@@ -189,6 +222,10 @@ watch(
     }
 )
 
+onBeforeUnmount(() => {
+    clearTimeout(recipeSearchTimer)
+})
+
 function populateForm(item) {
     if (!item) {
         resetForm()
@@ -197,11 +234,10 @@ function populateForm(item) {
 
     form.recipeId = item.recipeId
     form.offeringType = item.offeringType
-    form.publicDescription = item.publicDescription ?? ''
-    form.imageUrl = item.imageUrl ?? null
-    form.imageAlt = item.imageAlt ?? ''
+
     form.includesHouseSalad =
         item.includesHouseSalad ?? false
+
     form.includesHomemadeBread =
         item.includesHomemadeBread ?? false
 
@@ -217,11 +253,9 @@ function populateForm(item) {
 function resetForm() {
     form.recipeId = null
     form.offeringType = ''
-    form.publicDescription = ''
-    form.imageUrl = null
-    form.imageAlt = ''
     form.includesHouseSalad = false
     form.includesHomemadeBread = false
+
     form.prices = [
         {
             label: '',
@@ -230,9 +264,65 @@ function resetForm() {
         }
     ]
 }
-defineExpose({
-    resetForm
-})
+
+async function loadActiveRecipes(search = '') {
+    searchingRecipes.value = true
+    recipeSearchError.value = ''
+
+    try {
+        activeRecipes.value =
+            await getActiveRecipes(search)
+    } catch (error) {
+        recipeSearchError.value =
+            error.message || 'Unable to load recipes.'
+    } finally {
+        searchingRecipes.value = false
+    }
+}
+
+function handleRecipeSearch() {
+    clearTimeout(recipeSearchTimer)
+
+    form.recipeId = null
+    showRecipeResults.value = true
+
+    recipeSearchTimer = setTimeout(() => {
+        loadActiveRecipes(recipeSearch.value)
+    }, 300)
+}
+
+async function selectRecipe(recipe) {
+    form.recipeId = recipe.id
+    recipeSearch.value = recipe.name
+    recipeSearchError.value = ''
+    showRecipeResults.value = false
+
+    await handleRecipeSelected()
+}
+
+async function clearSelectedRecipe() {
+    form.recipeId = null
+    recipeSearch.value = ''
+    showRecipeResults.value = true
+
+    resetWeeklyDetails()
+
+    await loadActiveRecipes()
+}
+
+function resetWeeklyDetails() {
+    form.offeringType = ''
+    form.includesHouseSalad = false
+    form.includesHomemadeBread = false
+
+    form.prices = [
+        {
+            label: '',
+            amount: null,
+            displayOrder: 0
+        }
+    ]
+}
 
 async function handleRecipeSelected() {
     if (!form.recipeId) {
@@ -245,34 +335,12 @@ async function handleRecipeSelected() {
         )
 
     if (!previousItem) {
-        form.offeringType = ''
-        form.publicDescription = ''
-        form.imageUrl = null
-        form.imageAlt = ''
-        form.includesHouseSalad = false
-        form.includesHomemadeBread = false
-        form.prices = [
-            {
-                label: '',
-                amount: null,
-                displayOrder: 0
-            }
-        ]
-
+        resetWeeklyDetails()
         return
     }
 
     form.offeringType =
         previousItem.offeringType ?? ''
-
-    form.publicDescription =
-        previousItem.publicDescription ?? ''
-
-    form.imageUrl =
-        previousItem.imageUrl ?? null
-
-    form.imageAlt =
-        previousItem.imageAlt ?? ''
 
     form.includesHouseSalad =
         previousItem.includesHouseSalad ?? false
@@ -307,17 +375,20 @@ function removePrice(index) {
 }
 
 function submitForm() {
+    if (!form.recipeId) {
+        recipeSearchError.value =
+            'Please select a recipe from the list.'
+
+        showRecipeResults.value = true
+        return
+    }
+
     const isDinner =
         form.offeringType === 'DINNER'
 
     emit('submit', {
         recipeId: form.recipeId,
         offeringType: form.offeringType,
-        publicDescription:
-            form.publicDescription || null,
-
-        imageUrl: form.imageUrl || null,
-        imageAlt: form.imageAlt?.trim() || null,
 
         includesHouseSalad:
             isDinner
@@ -344,57 +415,6 @@ function submitForm() {
     })
 }
 
-async function handleImageSelected(event) {
-    const file = event.target.files?.[0]
-
-    if (!file) {
-        return
-    }
-
-    uploadingImage.value = true
-
-    try {
-        const formData = new FormData()
-
-        formData.append('file', file)
-
-        const csrfToken = getCsrfToken()
-
-        const response = await fetch(
-            '/api/admin/weekly-offerings/images',
-            {
-                method: 'POST',
-                headers: {
-                    'X-XSRF-TOKEN': csrfToken
-                },
-                credentials: 'include',
-                body: formData
-            }
-        )
-
-        if (!response.ok) {
-            const errorResponse =
-                await response.json().catch(() => null)
-
-            throw new Error(
-                errorResponse?.message
-                ?? 'Unable to upload image.'
-            )
-        }
-
-        const result = await response.json()
-
-        form.imageUrl = result.imageUrl
-
-    } catch (error) {
-        window.alert(
-            error.message
-            ?? 'Unable to upload image.'
-        )
-    } finally {
-        uploadingImage.value = false
-    }
-}
 </script>
 
 <style scoped>
@@ -464,30 +484,85 @@ select option {
     background: #140f0c;
 }
 
+.recipe-picker {
+    position: relative;
 
-/* ==========================================================
-   IMAGE
-   ========================================================== */
+    display: grid;
+    gap: 0.5rem;
+}
 
-.weekly-offering-image-preview {
-    display: block;
+.recipe-results {
+    display: grid;
 
-    width: 100%;
-    max-width: 320px;
     max-height: 240px;
+    overflow-y: auto;
 
-    margin: 0.5rem 0;
-
-    object-fit: contain;
+    background: #140f0c;
 
     border: 1px solid var(--bronze-color);
+    border-radius: 0.4rem;
+}
+
+.recipe-result {
+    width: 100%;
+    padding: 0.75rem 0.8rem;
+
+    color: var(--default-color);
+    background: transparent;
+
+    border: 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 0;
+
+    text-align: left;
+}
+
+.recipe-result:last-child {
+    border-bottom: 0;
+}
+
+.recipe-result:hover {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.recipe-results-message {
+    padding: 0.75rem 0.8rem;
+}
+
+.change-recipe-button {
+    margin-top: 0.25rem;
+}
+
+/* ==========================================================
+   SELECTED RECIPE PREVIEW
+   ========================================================== */
+
+.selected-recipe {
+    padding: 1rem;
+
+    background: rgba(255, 255, 255, 0.04);
+
+    border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: 0.5rem;
 }
 
-input[type="file"] {
-    padding: 0.5rem;
+.selected-recipe-label {
+    margin: 0 0 0.75rem;
+
+    color: var(--bronze-bold);
+
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
 }
 
+.recipe-source-note {
+    margin: 0.75rem 0 0;
+
+    font-size: 0.8rem;
+    opacity: 0.65;
+}
 
 /* ==========================================================
    PRICES
@@ -617,10 +692,6 @@ form p {
 @media (max-width: 600px) {
     form>div>div {
         grid-template-columns: 1fr;
-    }
-
-    .weekly-offering-image-preview {
-        max-width: 100%;
     }
 
     button {
