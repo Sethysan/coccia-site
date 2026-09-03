@@ -1,225 +1,226 @@
 <template>
-    <main class="admin-page">
-        <div class="admin-page-container">
+    <section>
 
-            <header class="page-header">
-                <div>
-                    <p class="admin-eyebrow">
-                        Coccia House
-                    </p>
+        <header class="page-header">
+            <div>
+                <h1>Users & Access</h1>
 
-                    <h1>Users & Access</h1>
+                <p class="admin-subtext">
+                    Manage who can access and update the website.
+                </p>
+            </div>
+        </header>
 
-                    <p class="admin-subtext">
-                        Manage who can access and update the website.
-                    </p>
-                </div>
+        <div class="page-actions">
+            <button v-if="!showCreateForm" type="button" class="primary-button" @click="showCreateForm = true">
+                + Add User
+            </button>
+        </div>
 
-                <RouterLink to="/admin">
-                    Back to Dashboard
-                </RouterLink>
-            </header>
+        <section v-if="showCreateForm" class="admin-card create-user-card">
+            <h2>Add User</h2>
 
-            <section class="admin-card create-user-card">
-                <h2>Add User</h2>
+            <form class="admin-form user-form" @submit.prevent="handleCreateUser">
+                <label>
+                    Display Name
 
-                <form class="admin-form user-form" @submit.prevent="handleCreateUser">
-                    <label>
-                        Display Name
+                    <input v-model.trim="newUser.displayName" type="text" maxlength="100" required>
+                </label>
 
-                        <input v-model.trim="newUser.displayName" type="text" maxlength="100" required>
-                    </label>
+                <label>
+                    Username
 
-                    <label>
-                        Username
+                    <input v-model.trim="newUser.username" type="text" maxlength="100" autocomplete="username" required>
+                </label>
 
-                        <input v-model.trim="newUser.username" type="text" maxlength="100" autocomplete="username"
-                            required>
-                    </label>
+                <label>
+                    Role
 
-                    <label>
-                        Role
+                    <select v-model="newUser.role">
+                        <option value="STAFF">
+                            Staff
+                        </option>
 
-                        <select v-model="newUser.role">
-                            <option value="STAFF">
-                                Staff
-                            </option>
+                        <option value="ADMIN">
+                            Administrator
+                        </option>
+                    </select>
+                </label>
 
-                            <option value="ADMIN">
-                                Administrator
-                            </option>
-                        </select>
-                    </label>
+                <label>
+                    Temporary Password
 
-                    <label>
-                        Temporary Password
+                    <input v-model="newUser.password" type="password" minlength="8" maxlength="100"
+                        autocomplete="new-password" required>
+                </label>
 
-                        <input v-model="newUser.password" type="password" minlength="8" maxlength="100"
-                            autocomplete="new-password" required>
-                    </label>
+                <p v-if="createError" class="admin-form-error">
+                    {{ createError }}
+                </p>
 
-                    <p v-if="createError" class="admin-form-error">
-                        {{ createError }}
-                    </p>
-
+                <div class="admin-form-actions">
                     <button type="submit" :disabled="creating">
                         {{ creating ? 'Creating...' : 'Add User' }}
                     </button>
-                </form>
-            </section>
 
-            <section class="users-section">
-                <div class="admin-section-heading">
-                    <h2>Website Users</h2>
-
-                    <span v-if="usersStore.users.length">
-                        {{ usersStore.users.length }}
-                        {{ usersStore.users.length === 1 ? 'user' : 'users' }}
-                    </span>
+                    <button type="button" :disabled="creating" @click="cancelCreateUser">
+                        Cancel
+                    </button>
                 </div>
+            </form>
+        </section>
 
-                <p v-if="usersStore.loading">
-                    Loading users...
+        <section class="users-section">
+            <div class="admin-section-heading">
+                <h2>Website Users</h2>
+
+                <span v-if="usersStore.users.length">
+                    {{ usersStore.users.length }}
+                    {{ usersStore.users.length === 1 ? 'user' : 'users' }}
+                </span>
+            </div>
+
+            <p v-if="usersStore.loading">
+                Loading users...
+            </p>
+
+            <div v-else-if="usersStore.error && !usersStore.users.length" class="error-message">
+                <strong>Unable to load website users.</strong>
+
+                <p>
+                    {{ usersStore.error }}
                 </p>
+            </div>
 
-                <div v-else-if="usersStore.error && !usersStore.users.length" class="error-message">
-                    <strong>Unable to load website users.</strong>
+            <div v-else class="users-list">
+                <article v-for="user in usersStore.users" :key="user.id" class="admin-card user-card"
+                    :class="{ 'is-inactive': !user.active }">
+                    <div class="user-card-header">
+                        <div>
+                            <h3>{{ user.displayName }}</h3>
 
-                    <p>
-                        {{ usersStore.error }}
-                    </p>
-                </div>
-
-                <div v-else class="users-list">
-                    <article v-for="user in usersStore.users" :key="user.id" class="admin-card user-card"
-                        :class="{ 'is-inactive': !user.active }">
-                        <div class="user-card-header">
-                            <div>
-                                <h3>{{ user.displayName }}</h3>
-
-                                <p>@{{ user.username }}</p>
-                            </div>
-
-                            <span class="role-badge">
-                                {{ roleLabel(user.role) }}
-                            </span>
+                            <p>@{{ user.username }}</p>
                         </div>
 
-                        <div class="user-status">
-                            {{ user.active ? 'Active' : 'Inactive' }}
-                        </div>
+                        <span class="role-badge">
+                            {{ roleLabel(user.role) }}
+                        </span>
+                    </div>
+
+                    <div class="user-status">
+                        {{ user.active ? 'Active' : 'Inactive' }}
+                    </div>
+
+                    <div class="admin-form-actions">
+                        <button type="button" @click="startEditing(user)">
+                            Edit Access
+                        </button>
+
+                        <button type="button" @click="startPasswordReset(user)">
+                            Reset Password
+                        </button>
+                    </div>
+
+                    <form v-if="editingUserId === user.id" class="admin-form admin-divider-panel"
+                        @submit.prevent="handleUpdateUser(user.id)">
+                        <label>
+                            Display Name
+
+                            <input v-model.trim="editUser.displayName" type="text" maxlength="100" required>
+                        </label>
+
+                        <label v-if="user.username !== auth.username">
+                            Role
+
+                            <select v-model="editUser.role">
+                                <option value="STAFF">
+                                    Staff
+                                </option>
+
+                                <option value="ADMIN">
+                                    Administrator
+                                </option>
+                            </select>
+                        </label>
+
+                        <p v-else>
+                            Role: Administrator
+                        </p>
+                        <label v-if="user.username !== auth.username" class="admin-checkbox-label">
+                            <input v-model="editUser.active" type="checkbox">
+
+                            Active
+                        </label>
+
+                        <p v-else>
+                            Your administrator access cannot be removed from this page.
+                        </p>
+
+                        <p v-if="editError" class="admin-form-error">
+                            {{ editError }}
+                        </p>
 
                         <div class="admin-form-actions">
-                            <button type="button" @click="startEditing(user)">
-                                Edit Access
+                            <button type="submit" :disabled="savingUserId === user.id">
+                                {{
+                                    savingUserId === user.id
+                                        ? 'Saving...'
+                                        : 'Save Changes'
+                                }}
                             </button>
 
-                            <button type="button" @click="startPasswordReset(user)">
-                                Reset Password
+                            <button type="button" @click="cancelEditing">
+                                Cancel
                             </button>
                         </div>
+                    </form>
 
-                        <form v-if="editingUserId === user.id" class="admin-form admin-divider-panel"
-                            @submit.prevent="handleUpdateUser(user.id)">
-                            <label>
-                                Display Name
+                    <form v-if="passwordUserId === user.id" class="admin-form admin-divider-panel"
+                        @submit.prevent="handleResetPassword(user.id)">
+                        <label>
+                            New Password
 
-                                <input v-model.trim="editUser.displayName" type="text" maxlength="100" required>
-                            </label>
+                            <input v-model="newPassword" type="password" minlength="8" maxlength="100"
+                                autocomplete="new-password" required>
+                        </label>
 
-                            <label v-if="user.username !== auth.username">
-                                Role
+                        <p v-if="passwordError" class="admin-form-error">
+                            {{ passwordError }}
+                        </p>
 
-                                <select v-model="editUser.role">
-                                    <option value="STAFF">
-                                        Staff
-                                    </option>
+                        <p v-if="passwordSaved" class="admin-success-message">
+                            Password updated.
+                        </p>
 
-                                    <option value="ADMIN">
-                                        Administrator
-                                    </option>
-                                </select>
-                            </label>
+                        <div class="admin-form-actions">
+                            <button type="submit" :disabled="resettingPassword">
+                                {{
+                                    resettingPassword
+                                        ? 'Updating...'
+                                        : 'Update Password'
+                                }}
+                            </button>
 
-                            <p v-else>
-                                Role: Administrator
-                            </p>
-                            <label v-if="user.username !== auth.username" class="admin-checkbox-label">
-                                <input v-model="editUser.active" type="checkbox">
+                            <button type="button" @click="cancelPasswordReset">
+                                Cancel
+                            </button>
+                        </div>
+                    </form>
+                </article>
+            </div>
+        </section>
 
-                                Active
-                            </label>
-
-                            <p v-else>
-                                Your administrator access cannot be removed from this page.
-                            </p>
-
-                            <p v-if="editError" class="admin-form-error">
-                                {{ editError }}
-                            </p>
-
-                            <div class="admin-form-actions">
-                                <button type="submit" :disabled="savingUserId === user.id">
-                                    {{
-                                        savingUserId === user.id
-                                            ? 'Saving...'
-                                            : 'Save Changes'
-                                    }}
-                                </button>
-
-                                <button type="button" @click="cancelEditing">
-                                    Cancel
-                                </button>
-                            </div>
-                        </form>
-
-                        <form v-if="passwordUserId === user.id" class="admin-form admin-divider-panel"
-                            @submit.prevent="handleResetPassword(user.id)">
-                            <label>
-                                New Password
-
-                                <input v-model="newPassword" type="password" minlength="8" maxlength="100"
-                                    autocomplete="new-password" required>
-                            </label>
-
-                            <p v-if="passwordError" class="admin-form-error">
-                                {{ passwordError }}
-                            </p>
-
-                            <p v-if="passwordSaved" class="admin-success-message">
-                                Password updated.
-                            </p>
-
-                            <div class="admin-form-actions">
-                                <button type="submit" :disabled="resettingPassword">
-                                    {{
-                                        resettingPassword
-                                            ? 'Updating...'
-                                            : 'Update Password'
-                                    }}
-                                </button>
-
-                                <button type="button" @click="cancelPasswordReset">
-                                    Cancel
-                                </button>
-                            </div>
-                        </form>
-                    </article>
-                </div>
-            </section>
-
-        </div>
-    </main>
+    </section>
 </template>
 
 <script setup>
 import { onMounted, reactive, ref } from 'vue'
-import { RouterLink } from 'vue-router'
 import { useUsersStore } from '@/stores/usersStore'
 import { useAuthStore } from '@/stores/authStore'
 
 const usersStore = useUsersStore()
 
+const showCreateForm = ref(false)
 const creating = ref(false)
 const createError = ref(null)
 
@@ -256,6 +257,16 @@ onMounted(async () => {
     }
 })
 
+function cancelCreateUser() {
+    showCreateForm.value = false
+    createError.value = null
+
+    newUser.displayName = ''
+    newUser.username = ''
+    newUser.role = 'STAFF'
+    newUser.password = ''
+}
+
 async function handleCreateUser() {
     creating.value = true
     createError.value = null
@@ -268,10 +279,7 @@ async function handleCreateUser() {
             password: newUser.password
         })
 
-        newUser.displayName = ''
-        newUser.username = ''
-        newUser.role = 'STAFF'
-        newUser.password = ''
+        cancelCreateUser()
     } catch (error) {
         createError.value =
             error?.message || 'Unable to create user.'
@@ -361,6 +369,13 @@ function roleLabel(role) {
 </script>
 
 <style scoped>
+.page-actions {
+    display: flex;
+    justify-content: flex-end;
+
+    margin-bottom: 1rem;
+}
+
 .create-user-card {
     margin-bottom: 2rem;
 }

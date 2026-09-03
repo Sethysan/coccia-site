@@ -1,180 +1,159 @@
 <template>
-    <main class="admin-page">
-        <div class="admin-page-container">
+    <section>
 
-            <header class="page-header">
-                <div>
-                    <p class="admin-eyebrow">
-                        Coccia House Admin
-                    </p>
+        <header class="page-header">
+            <div>
+                <h1>Announcements</h1>
 
-                    <h1>Announcements</h1>
+                <p class="admin-subtext">
+                    Manage website announcements and customer updates.
+                </p>
+            </div>
+        </header>
 
-                    <p v-if="auth.username" class="admin-subtext">
-                        Signed in as {{ auth.username }}
-                    </p>
+        <div class="page-actions">
+            <button v-if="!showCreateForm" type="button" class="primary-button" @click="showCreateForm = true">
+                + Create Announcement
+            </button>
+        </div>
+
+        <section v-if="showCreateForm" class="admin-card create-form-card">
+            <p class="admin-eyebrow">
+                New Announcement
+            </p>
+
+            <h2>Create Draft</h2>
+
+            <AnnouncementForm :saving="creatingAnnouncement" submit-label="Create Draft"
+                @submit="handleCreateAnnouncement" @cancel="showCreateForm = false" />
+        </section>
+
+        <div class="announcement-filters">
+            <button type="button" :class="{ active: selectedFilter === 'active' }" @click="selectedFilter = 'active'">
+                Active ({{ announcementCounts.active }})
+            </button>
+
+            <button type="button" :class="{ active: selectedFilter === 'drafts' }" @click="selectedFilter = 'drafts'">
+                Drafts ({{ announcementCounts.drafts }})
+            </button>
+
+            <button type="button" :class="{ active: selectedFilter === 'archived' }"
+                @click="selectedFilter = 'archived'">
+                Archived ({{ announcementCounts.archived }})
+            </button>
+        </div>
+
+        <p v-if="announcementStore.loading" class="state-message">
+            Loading announcements...
+        </p>
+
+        <div v-if="announcementStore.error" class="error-message" role="alert">
+            {{ announcementStore.error }}
+        </div>
+
+        <p v-else-if="
+            filteredAnnouncements.length === 0
+        " class="state-message">
+            No {{ emptyFilterLabel }} announcements.
+        </p>
+
+        <section v-else class="announcement-grid">
+
+            <article v-for="announcement in filteredAnnouncements" :key="announcement.id"
+                class="admin-card announcement-card">
+                <div class="announcement-card-header">
+                    <div>
+                        <p class="announcement-placement">
+                            {{ formatLabel(announcement.placement) }}
+                        </p>
+
+                        <h2>
+                            {{ announcement.title }}
+                        </h2>
+                    </div>
+
+                    <span class="status-badge" :class="`status-${announcement.status.toLowerCase()}`
+                        ">
+                        {{ formatLabel(announcement.status) }}
+                    </span>
                 </div>
 
-                <button type="button" @click="handleLogout">
-                    Log Out
-                </button>
-            </header>
-
-            <div class="page-actions">
-                <button type="button" @click="router.push('/admin')">
-                    ← Dashboard
-                </button>
-
-                <button v-if="!showCreateForm" type="button" class="primary-button" @click="showCreateForm = true">
-                    + Create Announcement
-                </button>
-            </div>
-
-            <section v-if="showCreateForm" class="admin-card create-form-card">
-                <p class="admin-eyebrow">
-                    New Announcement
+                <p class="announcement-message">
+                    {{ announcement.message }}
                 </p>
 
-                <h2>Create Draft</h2>
+                <div class="announcement-meta">
+                    <span>
+                        <strong>Type:</strong>
+                        {{ formatLabel(announcement.type) }}
+                    </span>
 
-                <AnnouncementForm :saving="creatingAnnouncement" submit-label="Create Draft"
-                    @submit="handleCreateAnnouncement" @cancel="showCreateForm = false" />
-            </section>
+                    <span>
+                        <strong>Starts:</strong>
+                        {{ formatDateTime(announcement.startDateTime) }}
+                    </span>
 
-            <div class="announcement-filters">
-                <button type="button" :class="{ active: selectedFilter === 'active' }"
-                    @click="selectedFilter = 'active'">
-                    Active ({{ announcementCounts.active }})
-                </button>
+                    <span>
+                        <strong>Ends:</strong>
+                        {{
+                            announcement.endDateTime
+                                ? formatDateTime(announcement.endDateTime)
+                                : "No end date"
+                        }}
+                    </span>
 
-                <button type="button" :class="{ active: selectedFilter === 'drafts' }"
-                    @click="selectedFilter = 'drafts'">
-                    Drafts ({{ announcementCounts.drafts }})
-                </button>
+                    <span>
+                        <strong>Display order:</strong>
+                        {{ announcement.displayOrder }}
+                    </span>
+                </div>
 
-                <button type="button" :class="{ active: selectedFilter === 'archived' }"
-                    @click="selectedFilter = 'archived'">
-                    Archived ({{ announcementCounts.archived }})
-                </button>
-            </div>
+                <div class="announcement-actions">
 
-            <p v-if="announcementStore.loading" class="state-message">
-                Loading announcements...
-            </p>
+                    <button v-if="announcement.status === 'draft'" type="button"
+                        @click="handleSchedule(announcement.id)">
+                        Schedule
+                    </button>
 
-            <div v-if="announcementStore.error" class="error-message" role="alert">
-                {{ announcementStore.error }}
-            </div>
+                    <button v-if="announcement.status === 'draft'" type="button"
+                        @click="editingAnnouncement = announcement">
+                        Edit
+                    </button>
 
-            <p v-else-if="
-                filteredAnnouncements.length === 0
-            " class="state-message">
-                No {{ emptyFilterLabel }} announcements.
-            </p>
+                    <button v-if="announcement.status === 'scheduled'" type="button"
+                        @click="handleArchive(announcement.id)">
+                        Archive
+                    </button>
 
-            <section v-else class="announcement-grid">
+                    <button v-if="announcement.status === 'draft'" type="button" class="danger-button"
+                        @click="handleDelete(announcement.id)">
+                        Delete
+                    </button>
 
-                <article v-for="announcement in filteredAnnouncements" :key="announcement.id"
-                    class="admin-card announcement-card">
-                    <div class="announcement-card-header">
-                        <div>
-                            <p class="announcement-placement">
-                                {{ formatLabel(announcement.placement) }}
-                            </p>
+                    <button v-if="announcement.status === 'archived'" type="button"
+                        @click="handleDuplicate(announcement)">
+                        Duplicate as Draft
+                    </button>
 
-                            <h2>
-                                {{ announcement.title }}
-                            </h2>
-                        </div>
+                </div>
 
-                        <span class="status-badge" :class="`status-${announcement.status.toLowerCase()}`
-                            ">
-                            {{ formatLabel(announcement.status) }}
-                        </span>
-                    </div>
+                <AnnouncementForm v-if="editingAnnouncement?.id === announcement.id" :announcement="announcement"
+                    :saving="updatingAnnouncement" submit-label="Save Changes" @submit="data => handleUpdateAnnouncement(
+                        announcement.id,
+                        data
+                    )" @cancel="editingAnnouncement = null" />
 
-                    <p class="announcement-message">
-                        {{ announcement.message }}
-                    </p>
+            </article>
+        </section>
 
-                    <div class="announcement-meta">
-                        <span>
-                            <strong>Type:</strong>
-                            {{ formatLabel(announcement.type) }}
-                        </span>
-
-                        <span>
-                            <strong>Starts:</strong>
-                            {{ formatDateTime(announcement.startDateTime) }}
-                        </span>
-
-                        <span>
-                            <strong>Ends:</strong>
-                            {{
-                                announcement.endDateTime
-                                    ? formatDateTime(announcement.endDateTime)
-                                    : "No end date"
-                            }}
-                        </span>
-
-                        <span>
-                            <strong>Display order:</strong>
-                            {{ announcement.displayOrder }}
-                        </span>
-                    </div>
-
-                    <div class="announcement-actions">
-
-                        <button v-if="announcement.status === 'draft'" type="button"
-                            @click="handleSchedule(announcement.id)">
-                            Schedule
-                        </button>
-
-                        <button v-if="announcement.status === 'draft'" type="button"
-                            @click="editingAnnouncement = announcement">
-                            Edit
-                        </button>
-
-                        <button v-if="announcement.status === 'scheduled'" type="button"
-                            @click="handleArchive(announcement.id)">
-                            Archive
-                        </button>
-
-                        <button v-if="announcement.status === 'draft'" type="button" class="danger-button"
-                            @click="handleDelete(announcement.id)">
-                            Delete
-                        </button>
-
-                        <button v-if="announcement.status === 'archived'" type="button"
-                            @click="handleDuplicate(announcement)">
-                            Duplicate as Draft
-                        </button>
-
-                    </div>
-
-                    <AnnouncementForm v-if="editingAnnouncement?.id === announcement.id" :announcement="announcement"
-                        :saving="updatingAnnouncement" submit-label="Save Changes" @submit="data => handleUpdateAnnouncement(
-                            announcement.id,
-                            data
-                        )" @cancel="editingAnnouncement = null" />
-
-                </article>
-            </section>
-
-        </div>
-    </main>
+    </section>
 </template>
 
 <script setup>
 import { computed, onMounted, ref } from "vue"
 import AnnouncementForm from "@/components/admin/AnnouncementForm.vue"
-import { useRouter } from "vue-router"
-
-import { useAuthStore } from "@/stores/authStore"
 import { useAnnouncementStore } from "@/stores/announcementStore"
 
-const router = useRouter()
-const auth = useAuthStore()
 const announcementStore = useAnnouncementStore()
 const showCreateForm = ref(false)
 const creatingAnnouncement = ref(false)
@@ -184,11 +163,6 @@ const updatingAnnouncement = ref(false)
 onMounted(() => {
     announcementStore.loadAdminAnnouncements()
 })
-
-async function handleLogout() {
-    await auth.logout()
-    await router.push("/admin/login")
-}
 
 async function handleCreateAnnouncement(data) {
     creatingAnnouncement.value = true
@@ -390,6 +364,13 @@ const emptyFilterLabel = computed(() => {
 </script>
 
 <style scoped>
+.page-actions {
+    display: flex;
+    justify-content: flex-end;
+
+    margin-bottom: 1rem;
+}
+
 .announcement-grid {
     display: grid;
     gap: 1rem;

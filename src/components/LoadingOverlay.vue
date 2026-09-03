@@ -95,13 +95,6 @@ onMounted(() => {
 
 }
 
-/* .pizza {
-    width: min(78vw, 420px);
-    display: block;
-    user-select: none;
-    pointer-events: none;
-} */
-
 .pizza-frame {
     
     aspect-ratio: 1 / 1;

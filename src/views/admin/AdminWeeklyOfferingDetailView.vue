@@ -1,5 +1,5 @@
 <template>
-    <main class="admin-page">
+    <section class="weekly-offering-detail">
 
         <!-- Error Message -->
         <div v-if="weeklyOfferings.error" class="admin-alert" role="alert">
@@ -12,234 +12,230 @@
             </button>
         </div>
 
-        <div class="admin-page-container admin-page-container-wide">
+        <button class="back-button" type="button" @click="router.push('/admin/weekly-offerings')">
+            ← Back to Weekly Offerings
+        </button>
 
-            <button class="back-button" type="button" @click="router.push('/admin/weekly-offerings')">
-                ← Back to Weekly Offerings
-            </button>
+        <p v-if="weeklyOfferings.loading">
+            Loading weekly offering...
+        </p>
 
-            <p v-if="weeklyOfferings.loading">
-                Loading weekly offering...
-            </p>
+        <div v-else-if="offering" class="admin-offering-layout">
 
-            <div v-else-if="offering" class="admin-offering-layout">
-
-                <!-- =========================================
+            <!-- =========================================
                      LEFT: ADMIN EDITOR
                 ========================================== -->
 
-                <section class="admin-editor-panel">
+            <section class="admin-editor-panel">
 
-                    <header class="offering-header">
+                <header class="offering-header">
 
-                        <div>
-                            <p class="admin-eyebrow">
-                                Weekly Offering
-                            </p>
+                    <div>
+                        <p class="admin-eyebrow">
+                            Weekly Offering
+                        </p>
 
-                            <h1>
-                                Manage Weekly Offering
-                            </h1>
+                        <h1>
+                            Manage Weekly Offering
+                        </h1>
 
-                            <p class="offering-dates">
-                                {{ formatDateRange(
-                                    offering.startDate,
-                                    offering.endDate
-                                ) }}
-                            </p>
-                        </div>
-
-                        <span class="status-badge" :class="`status-${offering.status.toLowerCase()}`">
-                            {{ offering.status }}
-                        </span>
-
-                    </header>
-
-
-                    <!-- Offering Actions -->
-
-                    <div class="offering-actions">
-
-                        <button v-if="offering.status === 'DRAFT'" type="button" class="primary-button"
-                            @click="scheduleOffering">
-                            Schedule Offering
-                        </button>
-
-                        <button v-if="
-                            offering.status !== 'ARCHIVED'
-                            && !showDateForm
-                        " type="button" @click="showDateForm = true">
-                            Edit Dates
-                        </button>
-
-                        <button v-if="
-                            offering.status === 'SCHEDULED'
-                            || offering.status === 'PUBLISHED'
-                        " type="button" @click="archiveOffering">
-                            Archive Offering
-                        </button>
-
-                        <button v-if="offering.status === 'DRAFT'" type="button" class="danger-button"
-                            @click="deleteOffering">
-                            Delete Offering
-                        </button>
-
+                        <p class="offering-dates">
+                            {{ formatDateRange(
+                                offering.startDate,
+                                offering.endDate
+                            ) }}
+                        </p>
                     </div>
 
+                    <span class="status-badge" :class="`status-${offering.status.toLowerCase()}`">
+                        {{ offering.status }}
+                    </span>
 
-                    <!-- Date Form -->
-
-                    <div v-if="showDateForm" class="admin-form-container">
-                        <WeeklyOfferingForm :saving="savingDates" submit-label="Save Dates"
-                            :initial-start-date="offering.startDate" :initial-end-date="offering.endDate"
-                            @submit="updateOfferingDates" @cancel="showDateForm = false" />
-                    </div>
+                </header>
 
 
-                    <!-- =====================================
+                <!-- Offering Actions -->
+
+                <div class="offering-actions">
+
+                    <button v-if="offering.status === 'DRAFT'" type="button" class="primary-button"
+                        @click="scheduleOffering">
+                        Schedule Offering
+                    </button>
+
+                    <button v-if="
+                        offering.status !== 'ARCHIVED'
+                        && !showDateForm
+                    " type="button" @click="showDateForm = true">
+                        Edit Dates
+                    </button>
+
+                    <button v-if="
+                        offering.status === 'SCHEDULED'
+                        || offering.status === 'PUBLISHED'
+                    " type="button" @click="archiveOffering">
+                        Archive Offering
+                    </button>
+
+                    <button v-if="offering.status === 'DRAFT'" type="button" class="danger-button"
+                        @click="deleteOffering">
+                        Delete Offering
+                    </button>
+
+                </div>
+
+
+                <!-- Date Form -->
+
+                <div v-if="showDateForm" class="admin-form-container">
+                    <WeeklyOfferingForm :saving="savingDates" submit-label="Save Dates"
+                        :initial-start-date="offering.startDate" :initial-end-date="offering.endDate"
+                        @submit="updateOfferingDates" @cancel="showDateForm = false" />
+                </div>
+
+
+                <!-- =====================================
                          ITEMS
                     ====================================== -->
 
-                    <section class="items-section">
+                <section class="items-section">
 
-                        <div class="section-heading">
+                    <div class="section-heading">
 
-                            <div>
-                                <p class="admin-eyebrow">
-                                    Menu Items
-                                </p>
+                        <div>
+                            <p class="admin-eyebrow">
+                                Menu Items
+                            </p>
 
-                                <h2>
-                                    Weekly Features
-                                </h2>
-                            </div>
-
-                            <button v-if="
-                                offering.status !== 'ARCHIVED'
-                                && !showAddItemForm
-                            " type="button" class="primary-button" @click="startAddingItem">
-                                + Add Item
-                            </button>
-
+                            <h2>
+                                Weekly Features
+                            </h2>
                         </div>
 
-
-                        <!-- Add / Edit Item Form -->
-
-                        <div v-if="showAddItemForm" ref="itemFormSection" class="item-form-section">
-                            <div class="form-heading">
-
-                                <p class="admin-eyebrow">
-                                    {{
-                                        editingItem
-                                            ? 'Editing Item'
-                                            : 'New Item'
-                                    }}
-                                </p>
-
-                                <h2>
-                                    {{
-                                        editingItem
-                                            ? editingItem.recipeName
-                                            : 'Add Weekly Feature'
-                                    }}
-                                </h2>
-
-                            </div>
-
-                            <WeeklyOfferingItemForm ref="itemForm" :item="editingItem" :saving="savingItem"
-                                @submit="saveItem" @cancel="cancelItemForm" />
-                        </div>
-
-
-                        <p v-if="offering.items.length === 0" class="empty-state">
-                            No items have been added yet.
-                        </p>
-
-
-                        <!-- Item Cards -->
-
-                        <div class="admin-item-list">
-
-                            <article v-for="item in sortedItems" :key="item.id" class="admin-item-card">
-
-                                <RecipeSummary :name="item.recipeName" :description="item.publicDescription"
-                                    :image-url="item.imageUrl" :image-alt="item.imageAlt">
-                                    <p class="admin-item-type">
-                                        Featured
-                                        {{ formatOfferingType(item.offeringType) }}
-                                    </p>
-
-                                    <p v-if="item.includedSidesText" class="admin-item-sides">
-                                        {{ item.includedSidesText }}
-                                    </p>
-
-                                    <ul class="admin-price-list">
-                                        <li v-for="price in item.prices" :key="price.id">
-                                            <span v-if="price.label">
-                                                {{ price.label }}:
-                                            </span>
-
-                                            ${{ price.amount }}
-                                        </li>
-                                    </ul>
-
-                                    <div v-if="offering.status !== 'ARCHIVED'" class="admin-item-actions">
-                                        <button type="button" @click="startEditingItem(item)">
-                                            Edit Offering Details
-                                        </button>
-
-                                        <button type="button" class="danger-button" @click="deleteItem(item.id)">
-                                            Delete
-                                        </button>
-                                    </div>
-                                </RecipeSummary>
-
-                            </article>
-
-                        </div>
-
-                    </section>
-
-                </section>
-
-
-                <!-- =========================================
-                     RIGHT: PUBLIC PREVIEW
-                ========================================== -->
-
-                <aside class="preview-panel">
-
-                    <header class="preview-heading">
-
-                        <p class="admin-eyebrow">
-                            Customer View
-                        </p>
-
-                        <h2>
-                            Public Preview
-                        </h2>
-
-                        <p>
-                            This is how the weekly features
-                            will appear to customers.
-                        </p>
-
-                    </header>
-
-                    <div class="preview-content">
-
-                        <WeeklyOffering :offering="offering" />
+                        <button v-if="
+                            offering.status !== 'ARCHIVED'
+                            && !showAddItemForm
+                        " type="button" class="primary-button" @click="startAddingItem">
+                            + Add Item
+                        </button>
 
                     </div>
 
-                </aside>
 
-            </div>
+                    <!-- Add / Edit Item Form -->
+
+                    <div v-if="showAddItemForm" ref="itemFormSection" class="item-form-section">
+                        <div class="form-heading">
+
+                            <p class="admin-eyebrow">
+                                {{
+                                    editingItem
+                                        ? 'Editing Item'
+                                        : 'New Item'
+                                }}
+                            </p>
+
+                            <h2>
+                                {{
+                                    editingItem
+                                        ? editingItem.recipeName
+                                        : 'Add Weekly Feature'
+                                }}
+                            </h2>
+
+                        </div>
+
+                        <WeeklyOfferingItemForm ref="itemForm" :item="editingItem" :saving="savingItem"
+                            @submit="saveItem" @cancel="cancelItemForm" />
+                    </div>
+
+
+                    <p v-if="offering.items.length === 0" class="empty-state">
+                        No items have been added yet.
+                    </p>
+
+
+                    <!-- Item Cards -->
+
+                    <div class="admin-item-list">
+
+                        <article v-for="item in sortedItems" :key="item.id" class="admin-item-card">
+
+                            <RecipeSummary :name="item.recipeName" :description="item.publicDescription"
+                                :image-url="item.imageUrl" :image-alt="item.imageAlt">
+                                <p class="admin-item-type">
+                                    Featured
+                                    {{ formatOfferingType(item.offeringType) }}
+                                </p>
+
+                                <p v-if="item.includedSidesText" class="admin-item-sides">
+                                    {{ item.includedSidesText }}
+                                </p>
+
+                                <ul class="admin-price-list">
+                                    <li v-for="price in item.prices" :key="price.id">
+                                        <span v-if="price.label">
+                                            {{ price.label }}:
+                                        </span>
+
+                                        ${{ price.amount }}
+                                    </li>
+                                </ul>
+
+                                <div v-if="offering.status !== 'ARCHIVED'" class="admin-item-actions">
+                                    <button type="button" @click="startEditingItem(item)">
+                                        Edit Offering Details
+                                    </button>
+
+                                    <button type="button" class="danger-button" @click="deleteItem(item.id)">
+                                        Delete
+                                    </button>
+                                </div>
+                            </RecipeSummary>
+
+                        </article>
+
+                    </div>
+
+                </section>
+
+            </section>
+
+
+            <!-- =========================================
+                     RIGHT: PUBLIC PREVIEW
+                ========================================== -->
+
+            <aside class="preview-panel">
+
+                <header class="preview-heading">
+
+                    <p class="admin-eyebrow">
+                        Customer View
+                    </p>
+
+                    <h2>
+                        Public Preview
+                    </h2>
+
+                    <p>
+                        This is how the weekly features
+                        will appear to customers.
+                    </p>
+
+                </header>
+
+                <div class="preview-content">
+
+                    <WeeklyOffering :offering="offering" />
+
+                </div>
+
+            </aside>
 
         </div>
 
-    </main>
+    </section>
 </template>
 
 <script setup>

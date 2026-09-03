@@ -1,100 +1,81 @@
 <template>
-    <main class="admin-page">
-        <div class="admin-page-container">
+    <section>
 
-            <header class="page-header">
-                <div>
-                    <p class="admin-eyebrow">
-                        Coccia House Admin
-                    </p>
+        <header class="page-header">
+            <div>
+                <h1>Store Hours</h1>
 
-                    <h1>Store Hours</h1>
+                <p class="admin-subtext">
+                    Manage the hours customers see on the website.
+                </p>
+            </div>
+        </header>
 
-                    <p v-if="auth.username" class="admin-subtext">
-                        Signed in as {{ auth.username }}
-                    </p>
+        <p v-if="hoursStore.loading" class="state-message">
+            Loading store hours...
+        </p>
+
+        <div v-if="hoursStore.error" class="error-message" role="alert">
+            {{ hoursStore.error.message }}
+        </div>
+
+        <section v-if="!hoursStore.loading" class="hours-grid">
+            <article v-for="day in editingHours" :key="day.day" class="admin-card hours-card">
+                <div class="hours-card-header">
+                    <h2>{{ day.name }}</h2>
+
+                    <label class="closed-control">
+                        <input v-model="day.closed" type="checkbox" @change="handleClosedChange(day)">
+
+                        Closed
+                    </label>
                 </div>
 
-                <button type="button" @click="handleLogout">
-                    Log Out
-                </button>
-            </header>
+                <div v-if="!day.closed" class="time-fields">
+                    <label>
+                        Opens
 
-            <div class="page-actions">
-                <button type="button" @click="router.push('/admin')">
-                    ← Dashboard
-                </button>
-            </div>
-
-            <p v-if="hoursStore.loading" class="state-message">
-                Loading store hours...
-            </p>
-
-            <div v-if="hoursStore.error" class="error-message" role="alert">
-                {{ hoursStore.error.message }}
-            </div>
-
-            <section v-if="!hoursStore.loading" class="hours-grid">
-                <article v-for="day in editingHours" :key="day.day" class="admin-card hours-card">
-                    <div class="hours-card-header">
-                        <h2>{{ day.name }}</h2>
-
-                        <label class="closed-control">
-                            <input v-model="day.closed" type="checkbox" @change="handleClosedChange(day)">
-
-                            Closed
-                        </label>
-                    </div>
-
-                    <div v-if="!day.closed" class="time-fields">
-                        <label>
-                            Opens
-
-                            <input v-model="day.openTime" type="time" required>
-                        </label>
-
-                        <label>
-                            Closes
-
-                            <input v-model="day.closeTime" type="time" required>
-                        </label>
-                    </div>
-
-                    <label class="note-field">
-                        Note
-
-                        <input v-model="day.note" type="text" maxlength="255" placeholder="Optional">
+                        <input v-model="day.openTime" type="time" required>
                     </label>
 
-                    <p v-if="dayErrors[day.day]" class="day-error" role="alert">
-                        {{ dayErrors[day.day] }}
-                    </p>
+                    <label>
+                        Closes
 
-                    <div class="save-row">
-                        <button type="button" :disabled="savingDay !== null" @click="saveDay(day)">
-                            {{
-                                savingDay === day.day
-                                    ? 'Saving...'
-                                    : `Save ${day.name}`
-                            }}
-                        </button>
+                        <input v-model="day.closeTime" type="time" required>
+                    </label>
+                </div>
 
-                        <span v-if="savedDay === day.day" class="save-success" role="status">
-                            ✓ Saved
-                        </span>
-                    </div>
-                </article>
-            </section>
+                <label class="note-field">
+                    Note
 
-        </div>
-    </main>
+                    <input v-model="day.note" type="text" maxlength="255" placeholder="Optional">
+                </label>
+
+                <p v-if="dayErrors[day.day]" class="day-error" role="alert">
+                    {{ dayErrors[day.day] }}
+                </p>
+
+                <div class="save-row">
+                    <button type="button" :disabled="savingDay !== null" @click="saveDay(day)">
+                        {{
+                            savingDay === day.day
+                                ? 'Saving...'
+                                : `Save ${day.name}`
+                        }}
+                    </button>
+
+                    <span v-if="savedDay === day.day" class="save-success" role="status">
+                        ✓ Saved
+                    </span>
+                </div>
+            </article>
+        </section>
+
+    </section>
 </template>
 
 <script setup>
 import { onMounted, ref } from 'vue'
-import { useRouter } from 'vue-router'
-
-import { useAuthStore } from '@/stores/authStore'
 import { useHoursStore } from '@/stores/hoursStore'
 
 const editingHours = ref([])
@@ -104,8 +85,6 @@ const dayErrors = ref({})
 const DEFAULT_OPEN_TIME = '15:00'
 const DEFAULT_CLOSE_TIME = '21:00'
 
-const router = useRouter()
-const auth = useAuthStore()
 const hoursStore = useHoursStore()
 
 onMounted(async () => {
@@ -115,11 +94,6 @@ onMounted(async () => {
         ...day
     }))
 })
-
-async function handleLogout() {
-    await auth.logout()
-    await router.push('/admin/login')
-}
 
 function formatTime(time) {
     if (!time) {

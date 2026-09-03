@@ -1,221 +1,207 @@
 <template>
-    <main class="admin-page">
-        <div class="admin-page-container">
+    <section>
 
-            <header class="page-header">
-                <div>
-                    <p class="admin-eyebrow">
-                        Coccia House Admin
-                    </p>
-
-                    <h1>
-                        {{
-                            viewingArchived
-                                ? 'Archived Weekly Offerings'
-                                : 'Weekly Offerings'
-                        }}
-                    </h1>
-
-                    <p v-if="auth.username" class="admin-subtext">
-                        Signed in as {{ auth.username }}
-                    </p>
-                </div>
-
-                <button type="button" @click="handleLogout">
-                    Log Out
-                </button>
-            </header>
-
-            <div class="page-actions">
-                <button type="button" @click="router.push('/admin')">
-                    ← Dashboard
-                </button>
-
-                <button type="button" @click="toggleArchived">
+        <header class="page-header">
+            <div>
+                <h1>
                     {{
                         viewingArchived
-                            ? '← Back to Weekly Offerings'
-                            : 'View Archived Offerings'
+                            ? 'Archived Weekly Offerings'
+                            : 'Weekly Offerings'
                     }}
-                </button>
+                </h1>
 
-                <button v-if="!showCreateForm && !viewingArchived" type="button" class="primary-button"
-                    @click="showCreateForm = true">
-                    + Create Weekly Offering
-                </button>
-            </div>
-
-            <div v-if="viewingArchived" class="archive-search">
-                <label for="recipe-search">
-                    Search archived offerings by recipe
-                </label>
-
-                <input id="recipe-search" v-model="recipeSearch" type="search" placeholder="Start typing a recipe..."
-                    autocomplete="off" @input="handleRecipeSearchInput" />
-
-                <div v-if="
-                    recipeSearch.trim()
-                    && !selectedRecipeName
-                    && recipeSuggestions.length
-                " class="recipe-suggestion-area">
-                    <p class="recipe-suggestion-label">
-                        Select a recipe
-                    </p>
-
-                    <ul class="recipe-suggestions">
-                        <li v-for="recipeName in recipeSuggestions" :key="recipeName">
-                            <button type="button" @click="selectRecipe(recipeName)">
-                                {{ recipeName }}
-                            </button>
-                        </li>
-                    </ul>
-                </div>
-            </div>
-
-            <section v-if="recipeSearchSummary" class="recipe-search-summary">
-                <div>
-                    <p class="admin-eyebrow">
-                        Recipe History
-                    </p>
-
-                    <h2>
-                        {{ recipeSearchSummary.recipeName }}
-                    </h2>
-                </div>
-
-                <div class="recipe-summary-stats">
-                    <div class="recipe-stat">
-                        <span class="summary-label">
-                            Last Featured
-                        </span>
-
-                        <strong>
-                            {{
-                                formatDateRange(
-                                    recipeSearchSummary.lastStartDate,
-                                    recipeSearchSummary.lastEndDate
-                                )
-                            }}
-                        </strong>
-                    </div>
-
-                    <div class="recipe-stat times-featured">
-                        <span class="summary-label">
-                            Times Featured
-                        </span>
-
-                        <strong>
-                            {{ recipeSearchSummary.count }}
-                        </strong>
-                    </div>
-                </div>
-            </section>
-
-            <section v-if="showCreateForm" class="admin-card create-form-card">
-                <p class="admin-eyebrow">
-                    New Weekly Offering
+                <p class="admin-subtext">
+                    Manage weekly dinner, soup and dessert features.
                 </p>
-
-                <h2>Create Draft</h2>
-
-                <WeeklyOfferingForm :saving="creatingOffering" submit-label="Create Draft" @submit="createOffering"
-                    @cancel="showCreateForm = false" />
-            </section>
-
-            <p v-if="weeklyOfferings.loading" class="state-message">
-                Loading weekly offerings...
-            </p>
-
-            <div v-else-if="weeklyOfferings.error" class="error-message" role="alert">
-                {{ weeklyOfferings.error }}
             </div>
+        </header>
 
-            <p v-else-if="weeklyOfferings.offerings.length === 0" class="state-message">
+        <div class="page-actions">
+            <button type="button" @click="toggleArchived">
                 {{
                     viewingArchived
-                        ? 'No archived weekly offerings.'
-                        : 'No weekly offerings found.'
+                        ? '← Back to Weekly Offerings'
+                        : 'View Archived Offerings'
                 }}
-            </p>
+            </button>
 
-            <p v-if="
-                viewingArchived
-                && recipeSearch.trim()
-                && !selectedRecipeName
-                && recipeSuggestions.length === 0
-            " class="state-message">
-                No archived recipes match
-                “{{ recipeSearch.trim() }}”.
-            </p>
-
-            <section v-else class="offering-grid">
-                <article v-for="offering in filteredOfferings" :key="offering.id" class="admin-card offering-card">
-                    <div class="offering-card-header">
-                        <div>
-                            <p class="offering-label">
-                                Weekly Offering
-                            </p>
-
-                            <h2>
-                                {{ formatDateRange(
-                                    offering.startDate,
-                                    offering.endDate
-                                ) }}
-                            </h2>
-                        </div>
-
-                        <span class="status-badge" :class="`status-${getDisplayStatus(offering).toLowerCase()}`">
-                            {{ getDisplayStatus(offering) }}
-                        </span>
-                    </div>
-
-                    <div class="offering-meta">
-                        <span>
-                            {{ offering.items.length }}
-                            {{
-                                offering.items.length === 1
-                                    ? 'item'
-                                    : 'items'
-                            }}
-                        </span>
-                    </div>
-
-                    <ul v-if="viewingArchived && offering.items.length" class="recipe-history-list">
-
-                        <li v-for="item in offering.items" :key="item.id">
-                            {{ item.recipeName }}
-                        </li>
-
-                    </ul>
-
-                    <button type="button" class="card-action" @click="
-                        router.push(
-                            `/admin/weekly-offerings/${offering.id}`
-                        )
-                        ">
-                        {{
-                            offering.status === 'DRAFT'
-                                ? 'Continue Editing'
-                                : 'View Offering'
-                        }}
-                    </button>
-                </article>
-            </section>
+            <button v-if="!showCreateForm && !viewingArchived" type="button" class="primary-button"
+                @click="showCreateForm = true">
+                + Create Weekly Offering
+            </button>
         </div>
-    </main>
+
+        <div v-if="viewingArchived" class="archive-search">
+            <label for="recipe-search">
+                Search archived offerings by recipe
+            </label>
+
+            <input id="recipe-search" v-model="recipeSearch" type="search" placeholder="Start typing a recipe..."
+                autocomplete="off" @input="handleRecipeSearchInput" />
+
+            <div v-if="
+                recipeSearch.trim()
+                && !selectedRecipeName
+                && recipeSuggestions.length
+            " class="recipe-suggestion-area">
+                <p class="recipe-suggestion-label">
+                    Select a recipe
+                </p>
+
+                <ul class="recipe-suggestions">
+                    <li v-for="recipeName in recipeSuggestions" :key="recipeName">
+                        <button type="button" @click="selectRecipe(recipeName)">
+                            {{ recipeName }}
+                        </button>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <section v-if="recipeSearchSummary" class="recipe-search-summary">
+            <div>
+                <p class="admin-eyebrow">
+                    Recipe History
+                </p>
+
+                <h2>
+                    {{ recipeSearchSummary.recipeName }}
+                </h2>
+            </div>
+
+            <div class="recipe-summary-stats">
+                <div class="recipe-stat">
+                    <span class="summary-label">
+                        Last Featured
+                    </span>
+
+                    <strong>
+                        {{
+                            formatDateRange(
+                                recipeSearchSummary.lastStartDate,
+                                recipeSearchSummary.lastEndDate
+                            )
+                        }}
+                    </strong>
+                </div>
+
+                <div class="recipe-stat times-featured">
+                    <span class="summary-label">
+                        Times Featured
+                    </span>
+
+                    <strong>
+                        {{ recipeSearchSummary.count }}
+                    </strong>
+                </div>
+            </div>
+        </section>
+
+        <section v-if="showCreateForm" class="admin-card create-form-card">
+            <p class="admin-eyebrow">
+                New Weekly Offering
+            </p>
+
+            <h2>Create Draft</h2>
+
+            <WeeklyOfferingForm :saving="creatingOffering" submit-label="Create Draft" @submit="createOffering"
+                @cancel="showCreateForm = false" />
+        </section>
+
+        <p v-if="weeklyOfferings.loading" class="state-message">
+            Loading weekly offerings...
+        </p>
+
+        <div v-else-if="weeklyOfferings.error" class="error-message" role="alert">
+            {{ weeklyOfferings.error }}
+        </div>
+
+        <p v-else-if="weeklyOfferings.offerings.length === 0" class="state-message">
+            {{
+                viewingArchived
+                    ? 'No archived weekly offerings.'
+                    : 'No weekly offerings found.'
+            }}
+        </p>
+
+        <p v-if="
+            viewingArchived
+            && recipeSearch.trim()
+            && !selectedRecipeName
+            && recipeSuggestions.length === 0
+        " class="state-message">
+            No archived recipes match
+            “{{ recipeSearch.trim() }}”.
+        </p>
+
+        <section v-else class="offering-grid">
+            <article v-for="offering in filteredOfferings" :key="offering.id" class="admin-card offering-card">
+                <div class="offering-card-header">
+                    <div>
+                        <p class="offering-label">
+                            Weekly Offering
+                        </p>
+
+                        <h2>
+                            {{ formatDateRange(
+                                offering.startDate,
+                                offering.endDate
+                            ) }}
+                        </h2>
+                    </div>
+
+                    <span class="status-badge" :class="`status-${getDisplayStatus(offering).toLowerCase()}`">
+                        {{ getDisplayStatus(offering) }}
+                    </span>
+                </div>
+
+                <div class="offering-meta">
+                    <span>
+                        {{ offering.items.length }}
+                        {{
+                            offering.items.length === 1
+                                ? 'item'
+                                : 'items'
+                        }}
+                    </span>
+                </div>
+
+                <ul v-if="viewingArchived && offering.items.length" class="recipe-history-list">
+
+                    <li v-for="item in offering.items" :key="item.id">
+                        {{ item.recipeName }}
+                    </li>
+
+                </ul>
+
+                <button type="button" class="card-action" @click="
+                    router.push(
+                        `/admin/weekly-offerings/${offering.id}`
+                    )
+                    ">
+                    {{
+                        offering.status === 'DRAFT'
+                            ? 'Continue Editing'
+                            : 'View Offering'
+                    }}
+                </button>
+            </article>
+        </section>
+
+    </section>
 </template>
 
 <script setup>
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { useAuthStore } from '@/stores/authStore'
 import { useWeeklyOfferingStore } from '@/stores/weeklyOfferingStore'
 import WeeklyOfferingForm from '@/components/admin/WeeklyOfferingForm.vue'
 import { formatDateRange } from '@/utils/dateFormat'
 
 const router = useRouter()
-const auth = useAuthStore()
 const weeklyOfferings = useWeeklyOfferingStore()
+
 const showCreateForm = ref(false)
 const creatingOffering = ref(false)
 const viewingArchived = ref(false)
@@ -225,11 +211,6 @@ const selectedRecipeName = ref(null)
 onMounted(() => {
     weeklyOfferings.fetchOfferings()
 })
-
-async function handleLogout() {
-    await auth.logout()
-    await router.push('/admin/login')
-}
 
 async function toggleArchived() {
     viewingArchived.value = !viewingArchived.value
@@ -398,6 +379,15 @@ function handleRecipeSearchInput() {
    HEADER
    ========================================================== */
 
+.page-actions {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+
+    margin-bottom: 1.5rem;
+}
 
 .offering-label {
     margin: 0;

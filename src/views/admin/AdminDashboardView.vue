@@ -1,98 +1,77 @@
 <template>
-    <main class="admin-page">
-        <div class="admin-page-container">
+    <section>
+        <header class="page-header">
+            <div>
+                <h1>
+                    Welcome{{ auth.displayName ? `, ${auth.displayName}` : '' }}
+                </h1>
 
-            <header class="page-header">
-                <div>
-                    <p class="admin-eyebrow">
-                        Coccia House
-                    </p>
+                <p class="admin-subtext">
+                    What would you like to work on?
+                </p>
+            </div>
+        </header>
 
-                    <h1>
-                        Admin Dashboard
-                    </h1>
+        <section class="dashboard-grid">
 
-                    <p class="admin-subtext">
-                        Welcome{{ auth.displayName ? `, ${auth.displayName}` : '' }}.
-                        Manage the content that appears on the public website.
-                    </p>
-                </div>
+            <RouterLink to="/admin/weekly-offerings" class="admin-card dashboard-card">
+                <h2>Weekly Features</h2>
 
-                <button type="button" @click="handleLogout">
-                    Log Out
-                </button>
-            </header>
+                <p>
+                    Create, edit, schedule, and archive weekly dinner,
+                    soup, and dessert features.
+                </p>
+            </RouterLink>
 
-            <section class="dashboard-grid">
+            <RouterLink to="/admin/menu" class="admin-card dashboard-card">
+                <h2>Menu</h2>
 
-                <RouterLink to="/admin/weekly-offerings" class="admin-card dashboard-card">
-                    <h2>Weekly Features</h2>
+                <p>
+                    Manage menu sections, dishes, prices, and visibility.
+                </p>
+            </RouterLink>
 
-                    <p>
-                        Create, edit, schedule, and archive weekly dinner,
-                        soup, and dessert features.
-                    </p>
-                </RouterLink>
+            <RouterLink to="/admin/recipes" class="admin-card dashboard-card">
+                <h2>Recipes</h2>
 
-                <article class="admin-card dashboard-card is-coming-soon">
-                    <h2>Menu</h2>
+                <p>
+                    Manage reusable dishes used throughout the website.
+                </p>
+            </RouterLink>
 
-                    <p>
-                        Manage menu sections, items, descriptions, and prices.
-                    </p>
+            <RouterLink to="/admin/hours" class="admin-card dashboard-card">
+                <h2>Store Hours</h2>
 
-                    <span>Coming soon</span>
-                </article>
+                <p>
+                    Manage regular hours and the public open/closed status.
+                </p>
+            </RouterLink>
 
-                <RouterLink to="/admin/hours" class="admin-card dashboard-card">
-                    <h2>Store Hours</h2>
+            <RouterLink to="/admin/announcements" class="admin-card dashboard-card">
+                <h2>Announcements</h2>
 
-                    <p>
-                        Manage regular hours and the public open/closed status.
-                    </p>
-                </RouterLink>
+                <p>
+                    Schedule website notices, closures, and special messages.
+                </p>
+            </RouterLink>
 
-                <RouterLink to="/admin/announcements" class="admin-card dashboard-card">
-                    <h2>Announcements</h2>
+            <RouterLink v-if="auth.isAdmin" to="/admin/users" class="admin-card dashboard-card">
+                <h2>Users & Access</h2>
 
-                    <p>
-                        Schedule website notices, closures, and special messages.
-                    </p>
-                </RouterLink>
+                <p>
+                    Manage website users, roles, and access.
+                </p>
+            </RouterLink>
 
-                <RouterLink to="/admin/recipes" class="admin-card dashboard-card">
-                    <h2>Recipes</h2>
-
-                    <p>
-                        Manage reusable dishes used by weekly features.
-                    </p>
-                </RouterLink>
-                
-                <RouterLink v-if="auth.isAdmin" to="/admin/users" class="admin-card dashboard-card">
-                    <h2>Users & Access</h2>
-
-                    <p>
-                        Manage website users, roles, and access.
-                    </p>
-                </RouterLink>
-
-            </section>
-
-        </div>
-    </main>
+        </section>
+    </section>
 </template>
 
 <script setup>
-import { RouterLink, useRouter } from 'vue-router'
+import { RouterLink } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 
-const router = useRouter()
 const auth = useAuthStore()
-
-async function handleLogout() {
-    await auth.logout()
-    await router.push('/admin/login')
-}
 </script>
 
 <style scoped>
@@ -126,23 +105,6 @@ async function handleLogout() {
     margin: 0;
 
     line-height: 1.6;
-}
-
-.is-coming-soon {
-    opacity: 0.7;
-}
-
-.is-coming-soon span {
-    display: inline-block;
-
-    margin-top: 1rem;
-
-    color: var(--bronze-bold);
-
-    font-size: 0.75rem;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
 }
 
 @media (max-width: 700px) {

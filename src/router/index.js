@@ -20,6 +20,8 @@ import AdminRecipesView
   from '../views/admin/AdminRecipesView.vue'
 import AdminMenuView
   from '../views/admin/AdminMenuView.vue'
+import AdminLayout
+  from '../layouts/AdminLayout.vue'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -30,45 +32,47 @@ const router = createRouter({
     { path: '/admin/login', component: AdminLoginView },
     {
       path: '/admin',
-      component: AdminDashboardView,
-      meta: { requiresAuth: true }
-    },
-    {
-      path: '/admin/weekly-offerings',
-      component: AdminWeeklyOfferingsView, meta: { requiresAuth: true }
-    },
-    {
-      path: '/admin/weekly-offerings/:id',
-      component: AdminWeeklyOfferingDetailView, meta: { requiresAuth: true }
-    },
-    {
-      path: '/admin/announcements',
-      component: AdminAnnouncementsView,
-      meta: { requiresAuth: true }
-    },
-    {
-      path: '/admin/hours',
-      component: AdminHoursView,
-      meta: { requiresAuth: true }
-    },
-    {
-      path: '/admin/users',
-      name: 'admin-users',
-      component: AdminUsersView,
-      meta: {
-        requiresAuth: true,
-        requiresAdmin: true
-      }
-    },
-    {
-      path: '/admin/recipes',
-      component: AdminRecipesView,
-      meta: { requiresAuth: true }
-    },
-    {
-      path: '/admin/menu',
-      component: AdminMenuView,
-      meta: { requiresAuth: true }
+      component: AdminLayout,
+      meta: { requiresAuth: true },
+
+      children: [
+        {
+          path: '',
+          component: AdminDashboardView
+        },
+        {
+          path: 'weekly-offerings',
+          component: AdminWeeklyOfferingsView
+        },
+        {
+          path: 'weekly-offerings/:id',
+          component: AdminWeeklyOfferingDetailView
+        },
+        {
+          path: 'announcements',
+          component: AdminAnnouncementsView
+        },
+        {
+          path: 'hours',
+          component: AdminHoursView
+        },
+        {
+          path: 'recipes',
+          component: AdminRecipesView
+        },
+        {
+          path: 'menu',
+          component: AdminMenuView
+        },
+        {
+          path: 'users',
+          name: 'admin-users',
+          component: AdminUsersView,
+          meta: {
+            requiresAdmin: true
+          }
+        }
+      ]
     }
   ],
 
@@ -93,7 +97,9 @@ router.beforeEach(async (to) => {
   const loading = useLoadingStore()
   const auth = useAuthStore()
 
-  await loading.play()
+  if (!to.path.startsWith('/admin')) {
+    await loading.play()
+  }
 
   if (to.meta.requiresAuth) {
     if (!auth.sessionChecked) {
