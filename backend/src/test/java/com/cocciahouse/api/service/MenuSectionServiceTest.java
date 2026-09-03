@@ -3,6 +3,7 @@ package com.cocciahouse.api.service;
 import com.cocciahouse.api.dto.menu.MenuSectionRequest;
 import com.cocciahouse.api.model.MenuSection;
 import com.cocciahouse.api.repository.MenuSectionRepository;
+import com.cocciahouse.api.exception.MenuSectionNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -233,9 +234,9 @@ class MenuSectionServiceTest {
                 Optional.empty()
         );
 
-        IllegalArgumentException exception =
+        MenuSectionNotFoundException exception =
                 assertThrows(
-                        IllegalArgumentException.class,
+                        MenuSectionNotFoundException.class,
                         () ->
                                 menuSectionService.updateSection(
                                         sectionId,

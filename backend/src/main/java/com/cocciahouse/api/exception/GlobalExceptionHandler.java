@@ -29,6 +29,28 @@ public class GlobalExceptionHandler {
                 .body(response);
     }
 
+    @ExceptionHandler({
+            RecipeNotFoundException.class,
+            MenuSectionNotFoundException.class,
+            MenuItemNotFoundException.class
+    })
+    public ResponseEntity<ApiErrorResponse> handleNotFound(
+            RuntimeException exception
+    ) {
+
+        ApiErrorResponse response =
+                new ApiErrorResponse(
+                        HttpStatus.NOT_FOUND.value(),
+                        HttpStatus.NOT_FOUND.getReasonPhrase(),
+                        exception.getMessage(),
+                        Instant.now()
+                );
+
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(response);
+    }
+
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ApiErrorResponse> handleIllegalArgumentException(
             IllegalArgumentException exception
@@ -109,4 +131,23 @@ public class GlobalExceptionHandler {
                 .status(HttpStatus.CONFLICT)
                 .body(response);
     }
+
+    @ExceptionHandler(DuplicateMenuItemException.class)
+    public ResponseEntity<ApiErrorResponse> handleDuplicateMenuItem(
+            DuplicateMenuItemException exception
+    ) {
+
+        ApiErrorResponse response =
+                new ApiErrorResponse(
+                        HttpStatus.CONFLICT.value(),
+                        HttpStatus.CONFLICT.getReasonPhrase(),
+                        exception.getMessage(),
+                        Instant.now()
+                );
+
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(response);
+    }
+
 }

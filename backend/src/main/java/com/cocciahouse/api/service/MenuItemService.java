@@ -9,8 +9,13 @@ import com.cocciahouse.api.model.Recipe;
 import com.cocciahouse.api.repository.MenuItemRepository;
 import com.cocciahouse.api.repository.MenuSectionRepository;
 import com.cocciahouse.api.repository.RecipeRepository;
+import com.cocciahouse.api.exception.MenuItemNotFoundException;
+import com.cocciahouse.api.exception.MenuSectionNotFoundException;
+import com.cocciahouse.api.exception.RecipeNotFoundException;
+import com.cocciahouse.api.exception.DuplicateMenuItemException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.util.List;
 
 @Service
 public class MenuItemService {
@@ -29,6 +34,26 @@ public class MenuItemService {
         this.recipeRepository = recipeRepository;
     }
 
+    @Transactional(readOnly = true)
+    public List<MenuItem> getMenuItemsForSection(
+            Long menuSectionId
+    ) {
+        return menuItemRepository
+                .findByMenuSectionIdOrderByDisplayOrderAsc(
+                        menuSectionId
+                );
+    }
+
+    @Transactional(readOnly = true)
+    public List<MenuItem> getVisibleMenuItemsForSection(
+            Long menuSectionId
+    ) {
+        return menuItemRepository
+                .findByMenuSectionIdAndVisibleTrueOrderByDisplayOrderAsc(
+                        menuSectionId
+                );
+    }
+
     @Transactional
     public MenuItem createMenuItem(
             Long menuSectionId,
@@ -39,7 +64,7 @@ public class MenuItemService {
                 menuSectionRepository
                         .findById(menuSectionId)
                         .orElseThrow(() ->
-                                new IllegalArgumentException(
+                                new MenuSectionNotFoundException(
                                         "Menu section not found."
                                 )
                         );
@@ -48,7 +73,7 @@ public class MenuItemService {
                 recipeRepository
                         .findById(request.recipeId())
                         .orElseThrow(() ->
-                                new IllegalArgumentException(
+                                new RecipeNotFoundException(
                                         "Recipe not found."
                                 )
                         );
@@ -66,7 +91,7 @@ public class MenuItemService {
                                 recipe.getId()
                         )
         ) {
-            throw new IllegalArgumentException(
+            throw new DuplicateMenuItemException(
                     "That recipe is already in this menu section."
             );
         }
@@ -125,7 +150,7 @@ public class MenuItemService {
                                 menuSectionId
                         )
                         .orElseThrow(() ->
-                                new IllegalArgumentException(
+                                new MenuItemNotFoundException(
                                         "Menu item does not belong to that menu section."
                                 )
                         );
@@ -134,7 +159,7 @@ public class MenuItemService {
                 recipeRepository
                         .findById(request.recipeId())
                         .orElseThrow(() ->
-                                new IllegalArgumentException(
+                                new RecipeNotFoundException(
                                         "Recipe not found."
                                 )
                         );
@@ -161,7 +186,7 @@ public class MenuItemService {
                                 menuItemId
                         )
         ) {
-            throw new IllegalArgumentException(
+            throw new DuplicateMenuItemException(
                     "That recipe is already in this menu section."
             );
         }

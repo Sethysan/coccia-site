@@ -18,6 +18,8 @@ import AdminUsersView
   from '@/views/admin/AdminUsersView.vue'
 import AdminRecipesView
   from '../views/admin/AdminRecipesView.vue'
+import AdminMenuView
+  from '../views/admin/AdminMenuView.vue'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -61,6 +63,11 @@ const router = createRouter({
     {
       path: '/admin/recipes',
       component: AdminRecipesView,
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/admin/menu',
+      component: AdminMenuView,
       meta: { requiresAuth: true }
     }
   ],

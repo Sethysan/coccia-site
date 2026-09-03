@@ -3,6 +3,7 @@ package com.cocciahouse.api.service;
 import com.cocciahouse.api.dto.menu.MenuSectionRequest;
 import com.cocciahouse.api.model.MenuSection;
 import com.cocciahouse.api.repository.MenuSectionRepository;
+import com.cocciahouse.api.exception.MenuSectionNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -84,7 +85,7 @@ public class MenuSectionService {
                 menuSectionRepository
                         .findById(id)
                         .orElseThrow(() ->
-                                new IllegalArgumentException(
+                                new MenuSectionNotFoundException(
                                         "Menu section not found."
                                 )
                         );

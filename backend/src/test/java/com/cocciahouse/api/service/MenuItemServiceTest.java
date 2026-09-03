@@ -8,6 +8,10 @@ import com.cocciahouse.api.model.Recipe;
 import com.cocciahouse.api.repository.MenuItemRepository;
 import com.cocciahouse.api.repository.MenuSectionRepository;
 import com.cocciahouse.api.repository.RecipeRepository;
+import com.cocciahouse.api.exception.MenuItemNotFoundException;
+import com.cocciahouse.api.exception.MenuSectionNotFoundException;
+import com.cocciahouse.api.exception.RecipeNotFoundException;
+import com.cocciahouse.api.exception.DuplicateMenuItemException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -44,6 +48,77 @@ class MenuItemServiceTest {
                         menuSectionRepository,
                         recipeRepository
                 );
+    }
+
+    @Test
+    void getMenuItemsForSection_returnsItemsInRepositoryOrder() {
+
+        Long sectionId = 2L;
+
+        MenuItem first =
+                new MenuItem();
+
+        MenuItem second =
+                new MenuItem();
+
+        List<MenuItem> items =
+                List.of(
+                        first,
+                        second
+                );
+
+        when(
+                menuItemRepository
+                        .findByMenuSectionIdOrderByDisplayOrderAsc(
+                                sectionId
+                        )
+        ).thenReturn(items);
+
+        List<MenuItem> result =
+                menuItemService.getMenuItemsForSection(
+                        sectionId
+                );
+
+        assertEquals(
+                items,
+                result
+        );
+    }
+
+    @Test
+    void getVisibleMenuItemsForSection_returnsVisibleItemsInRepositoryOrder() {
+
+        Long sectionId = 2L;
+
+        MenuItem first =
+                new MenuItem();
+
+        MenuItem second =
+                new MenuItem();
+
+        List<MenuItem> items =
+                List.of(
+                        first,
+                        second
+                );
+
+        when(
+                menuItemRepository
+                        .findByMenuSectionIdAndVisibleTrueOrderByDisplayOrderAsc(
+                                sectionId
+                        )
+        ).thenReturn(items);
+
+        List<MenuItem> result =
+                menuItemService
+                        .getVisibleMenuItemsForSection(
+                                sectionId
+                        );
+
+        assertEquals(
+                items,
+                result
+        );
     }
 
     @Test
@@ -186,9 +261,9 @@ class MenuItemServiceTest {
                 Optional.empty()
         );
 
-        IllegalArgumentException exception =
+        MenuSectionNotFoundException exception =
                 assertThrows(
-                        IllegalArgumentException.class,
+                        MenuSectionNotFoundException.class,
                         () ->
                                 menuItemService.createMenuItem(
                                         sectionId,
@@ -247,9 +322,9 @@ class MenuItemServiceTest {
                 Optional.empty()
         );
 
-        IllegalArgumentException exception =
+        RecipeNotFoundException exception =
                 assertThrows(
-                        IllegalArgumentException.class,
+                        RecipeNotFoundException.class,
                         () ->
                                 menuItemService.createMenuItem(
                                         sectionId,
@@ -377,9 +452,9 @@ class MenuItemServiceTest {
                         )
         ).thenReturn(true);
 
-        IllegalArgumentException exception =
+        DuplicateMenuItemException exception =
                 assertThrows(
-                        IllegalArgumentException.class,
+                        DuplicateMenuItemException.class,
                         () ->
                                 menuItemService.createMenuItem(
                                         sectionId,
@@ -700,6 +775,101 @@ class MenuItemServiceTest {
     }
 
     @Test
+    void updateMenuItem_throwsWhenRecipeAlreadyExistsInSection() {
+
+        Long sectionId = 2L;
+        Long menuItemId = 20L;
+        Long oldRecipeId = 10L;
+        Long newRecipeId = 11L;
+
+        MenuSection section =
+                new MenuSection("Entrees");
+
+        Recipe oldRecipe =
+                mock(Recipe.class);
+
+        Recipe newRecipe =
+                mock(Recipe.class);
+
+        when(
+                oldRecipe.getId()
+        ).thenReturn(oldRecipeId);
+
+        when(
+                newRecipe.getId()
+        ).thenReturn(newRecipeId);
+
+        when(
+                newRecipe.isActive()
+        ).thenReturn(true);
+
+        MenuItem existing =
+                new MenuItem();
+
+        existing.setMenuSection(section);
+        existing.setRecipe(oldRecipe);
+
+        MenuItemRequest request =
+                new MenuItemRequest(
+                        newRecipeId,
+                        4,
+                        true,
+                        List.of(
+                                new MenuItemPriceRequest(
+                                        null,
+                                        new BigDecimal("22.00"),
+                                        0
+                                )
+                        )
+                );
+
+        when(
+                menuItemRepository.findByIdAndMenuSectionId(
+                        menuItemId,
+                        sectionId
+                )
+        ).thenReturn(
+                Optional.of(existing)
+        );
+
+        when(
+                recipeRepository.findById(newRecipeId)
+        ).thenReturn(
+                Optional.of(newRecipe)
+        );
+
+        when(
+                menuItemRepository
+                        .existsByMenuSectionIdAndRecipeIdAndIdNot(
+                                sectionId,
+                                newRecipeId,
+                                menuItemId
+                        )
+        ).thenReturn(true);
+
+        DuplicateMenuItemException exception =
+                assertThrows(
+                        DuplicateMenuItemException.class,
+                        () ->
+                                menuItemService.updateMenuItem(
+                                        sectionId,
+                                        menuItemId,
+                                        request
+                                )
+                );
+
+        assertEquals(
+                "That recipe is already in this menu section.",
+                exception.getMessage()
+        );
+
+        verify(
+                menuItemRepository,
+                never()
+        ).save(any());
+    }
+
+    @Test
     void updateMenuItem_rejectsItemFromDifferentSection() {
 
         Long requestedSectionId = 3L;
@@ -740,9 +910,9 @@ class MenuItemServiceTest {
                 Optional.empty()
         );
 
-        IllegalArgumentException exception =
+        MenuItemNotFoundException exception =
                 assertThrows(
-                        IllegalArgumentException.class,
+                        MenuItemNotFoundException.class,
                         () ->
                                 menuItemService.updateMenuItem(
                                         requestedSectionId,
