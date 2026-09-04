@@ -4,63 +4,7 @@
             {{ editing ? 'Edit Weekly Offering Item' : 'Add Weekly Offering Item' }}
         </h3>
 
-        <div>
-            <label for="recipe">
-                Recipe
-            </label>
-
-            <div class="recipe-picker">
-                <input id="recipe" v-model="recipeSearch" type="search" placeholder="Search recipes..."
-                    autocomplete="off" @input="handleRecipeSearch" @focus="showRecipeResults = true" />
-
-                <div v-if="showRecipeResults" class="recipe-results">
-                    <p v-if="searchingRecipes" class="recipe-results-message">
-                        Searching...
-                    </p>
-
-                    <button v-for="recipe in activeRecipes" v-else :key="recipe.id" type="button" class="recipe-result"
-                        @click="selectRecipe(recipe)">
-                        {{ recipe.name }}
-                    </button>
-
-                    <p v-if="
-                        !searchingRecipes &&
-                        activeRecipes.length === 0
-                    " class="recipe-results-message">
-                        No active recipes found.
-                    </p>
-                </div>
-
-                <button v-if="selectedRecipe" type="button" class="change-recipe-button" @click="clearSelectedRecipe">
-                    Change Recipe
-                </button>
-
-                <p v-if="recipeSearchError">
-                    {{ recipeSearchError }}
-                </p>
-            </div>
-
-            <div v-if="selectedRecipe" class="selected-recipe">
-                <p class="selected-recipe-label">
-                    Recipe Details
-                </p>
-
-                <RecipeSummary :name="selectedRecipe.name" :description="selectedRecipe.description"
-                    :image-url="selectedRecipe.imageUrl" :image-alt="selectedRecipe.imageAlt" />
-
-                <p class="recipe-source-note">
-                    Description and photo are managed in Recipes.
-                </p>
-            </div>
-
-            <p v-if="recipeStore.loading">
-                Loading recipes...
-            </p>
-
-            <p v-if="recipeStore.error">
-                {{ recipeStore.error }}
-            </p>
-        </div>
+        <RecipePicker v-model="form.recipeId" @selected="handleRecipeSelected" @cleared="handleRecipeCleared" />
 
         <div>
             <label for="offering-type">
@@ -140,15 +84,12 @@
 <script setup>
 import {
     computed,
-    onBeforeUnmount,
-    onMounted,
     reactive,
-    ref,
     watch
 } from 'vue'
+
 import { useRecipeStore } from '@/stores/recipeStore'
-import { getActiveRecipes } from '@/api/recipesApi'
-import RecipeSummary from '@/components/admin/RecipeSummary.vue'
+import RecipePicker from '@/components/admin/RecipePicker.vue'
 
 const props = defineProps({
     item: {
@@ -169,27 +110,7 @@ const emit = defineEmits([
 
 const recipeStore = useRecipeStore()
 
-const recipeSearch = ref('')
-const activeRecipes = ref([])
-const searchingRecipes = ref(false)
-const recipeSearchError = ref('')
-const showRecipeResults = ref(false)
-
-let recipeSearchTimer = null
-
 const editing = computed(() => Boolean(props.item))
-
-const selectedRecipe = computed(() => {
-    if (!form.recipeId) {
-        return null
-    }
-
-    return activeRecipes.value.find(
-        recipe => recipe.id === form.recipeId
-    ) ?? recipeStore.recipes.find(
-        recipe => recipe.id === form.recipeId
-    ) ?? null
-})
 
 const form = reactive({
     recipeId: null,
@@ -205,13 +126,6 @@ const form = reactive({
     ]
 })
 
-onMounted(async () => {
-    await Promise.all([
-        recipeStore.fetchRecipes(),
-        loadActiveRecipes()
-    ])
-})
-
 watch(
     () => props.item,
     (item) => {
@@ -221,10 +135,6 @@ watch(
         immediate: true
     }
 )
-
-onBeforeUnmount(() => {
-    clearTimeout(recipeSearchTimer)
-})
 
 function populateForm(item) {
     if (!item) {
@@ -265,49 +175,8 @@ function resetForm() {
     ]
 }
 
-async function loadActiveRecipes(search = '') {
-    searchingRecipes.value = true
-    recipeSearchError.value = ''
-
-    try {
-        activeRecipes.value =
-            await getActiveRecipes(search)
-    } catch (error) {
-        recipeSearchError.value =
-            error.message || 'Unable to load recipes.'
-    } finally {
-        searchingRecipes.value = false
-    }
-}
-
-function handleRecipeSearch() {
-    clearTimeout(recipeSearchTimer)
-
-    form.recipeId = null
-    showRecipeResults.value = true
-
-    recipeSearchTimer = setTimeout(() => {
-        loadActiveRecipes(recipeSearch.value)
-    }, 300)
-}
-
-async function selectRecipe(recipe) {
-    form.recipeId = recipe.id
-    recipeSearch.value = recipe.name
-    recipeSearchError.value = ''
-    showRecipeResults.value = false
-
-    await handleRecipeSelected()
-}
-
-async function clearSelectedRecipe() {
-    form.recipeId = null
-    recipeSearch.value = ''
-    showRecipeResults.value = true
-
+function handleRecipeCleared() {
     resetWeeklyDetails()
-
-    await loadActiveRecipes()
 }
 
 function resetWeeklyDetails() {
