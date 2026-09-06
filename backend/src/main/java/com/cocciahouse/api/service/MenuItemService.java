@@ -13,9 +13,12 @@ import com.cocciahouse.api.exception.MenuItemNotFoundException;
 import com.cocciahouse.api.exception.MenuSectionNotFoundException;
 import com.cocciahouse.api.exception.RecipeNotFoundException;
 import com.cocciahouse.api.exception.DuplicateMenuItemException;
+import com.cocciahouse.api.dto.menu.MenuItemMoveDirection;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import java.util.List;
+import java.util.ArrayList;
 
 @Service
 public class MenuItemService {
@@ -101,8 +104,21 @@ public class MenuItemService {
 
         menuItem.setMenuSection(section);
         menuItem.setRecipe(recipe);
+        List<MenuItem> existingItems =
+                menuItemRepository
+                        .findByMenuSectionIdOrderByDisplayOrderAsc(
+                                menuSectionId
+                        );
+
+        int nextDisplayOrder =
+                existingItems.stream()
+                        .mapToInt(MenuItem::getDisplayOrder)
+                        .max()
+                        .orElse(-1)
+                        + 1;
+
         menuItem.setDisplayOrder(
-                request.displayOrder()
+                nextDisplayOrder
         );
         menuItem.setVisible(
                 request.visible()
@@ -246,4 +262,67 @@ public class MenuItemService {
                 ? null
                 : cleaned;
     }
+
+    @Transactional
+    public List<MenuItem> moveMenuItem(
+            Long menuSectionId,
+            Long menuItemId,
+            MenuItemMoveDirection direction
+    ) {
+        if (direction == null) {
+            throw new IllegalArgumentException(
+                    "Move direction is required."
+            );
+        }
+
+        List<MenuItem> items =
+                new ArrayList<>(
+                        menuItemRepository
+                                .findByMenuSectionIdOrderByDisplayOrderAsc(
+                                        menuSectionId
+                                )
+                );
+
+        int currentIndex = -1;
+
+        for (int index = 0; index < items.size(); index++) {
+            if (items.get(index).getId().equals(menuItemId)) {
+                currentIndex = index;
+                break;
+            }
+        }
+
+        if (currentIndex == -1) {
+            throw new MenuItemNotFoundException(
+                    "Menu item not found in that menu section."
+            );
+        }
+
+        int targetIndex =
+                direction == MenuItemMoveDirection.UP
+                        ? currentIndex - 1
+                        : currentIndex + 1;
+
+        if (targetIndex < 0 || targetIndex >= items.size()) {
+            return items;
+        }
+
+        MenuItem currentItem = items.get(currentIndex);
+
+        items.remove(currentIndex);
+        items.add(targetIndex, currentItem);
+
+        for (int index = 0; index < items.size(); index++) {
+            MenuItem item = items.get(index);
+
+            item.setDisplayOrder(index);
+            menuItemRepository.save(item);
+        }
+
+        return menuItemRepository
+                .findByMenuSectionIdOrderByDisplayOrderAsc(
+                        menuSectionId
+                );
+    }
+
 }

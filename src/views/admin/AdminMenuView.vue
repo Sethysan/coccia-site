@@ -225,8 +225,9 @@
                     </p>
 
                     <div v-else class="menu-item-list">
-                        <article v-for="item in menuStore.itemsBySection[section.id]" :key="item.id"
-                            class="menu-item-row">
+                        <article v-for="(item, itemIndex) in
+                            menuStore.itemsBySection[section.id]" :key="item.id" class="menu-item-row">
+
                             <div>
                                 <strong>{{ item.recipeName }}</strong>
 
@@ -240,17 +241,47 @@
                                             {{ price.label }}:
                                         </span>
 
-                                        ${{ price.amount }}
+                                        ${{ formatPrice(price.amount) }}
                                     </li>
                                 </ul>
                             </div>
 
                             <div class="menu-item-actions">
-                                <span>
+                                <span class="item-status" :class="{ hidden: !item.visible }">
                                     {{ item.visible ? 'Visible' : 'Hidden' }}
                                 </span>
 
-                                <button type="button" @click="startEditingMenuItem(section.id, item)">
+                                <button v-if="itemIndex > 0" type="button" :disabled="movingMenuItemId === item.id"
+                                    @click="
+                                        handleMoveMenuItem(
+                                            section.id,
+                                            item.id,
+                                            'UP'
+                                        )
+                                        ">
+                                    ↑
+                                </button>
+
+                                <button v-if="
+                                    itemIndex <
+                                    (menuStore.itemsBySection[section.id] ?? []).length - 1
+                                " type="button" :disabled="movingMenuItemId === item.id" @click="
+                                    handleMoveMenuItem(
+                                        section.id,
+                                        item.id,
+                                        'DOWN'
+                                    )
+                                    ">
+                                    ↓
+                                </button>
+
+                                <button type="button" :disabled="savingMenuItem"
+                                    @click="toggleMenuItemVisibility(section.id, item)">
+                                    {{ item.visible ? 'Hide' : 'Show' }}
+                                </button>
+
+                                <button type="button" :disabled="savingMenuItem"
+                                    @click="startEditingMenuItem(section.id, item)">
                                     Edit
                                 </button>
                             </div>
@@ -283,6 +314,7 @@ const openSectionId = ref(null)
 const addingItemSectionId = ref(null)
 const editingMenuItem = ref(null)
 const savingMenuItem = ref(false)
+const movingMenuItemId = ref(null)
 
 const editSection = ref({
     name: '',
@@ -452,6 +484,56 @@ async function handleSaveMenuItem(sectionId, payload) {
             cancelMenuItemForm()
         }
 
+    } finally {
+        savingMenuItem.value = false
+    }
+}
+
+async function handleMoveMenuItem(
+    sectionId,
+    menuItemId,
+    direction
+) {
+    movingMenuItemId.value = menuItemId
+    menuStore.clearError()
+
+    try {
+        await menuStore.moveItem(
+            sectionId,
+            menuItemId,
+            direction
+        )
+    } finally {
+        movingMenuItemId.value = null
+    }
+}
+
+function formatPrice(amount) {
+    return Number(amount).toFixed(2)
+}
+
+async function toggleMenuItemVisibility(sectionId, item) {
+    savingMenuItem.value = true
+    menuStore.clearError()
+
+    try {
+        await menuStore.saveItem(
+            sectionId,
+            item.id,
+            {
+                recipeId: item.recipeId,
+                displayOrder: item.displayOrder,
+                visible: !item.visible,
+
+                prices: item.prices.map(
+                    (price, index) => ({
+                        label: price.label ?? null,
+                        amount: Number(price.amount),
+                        displayOrder: index
+                    })
+                )
+            }
+        )
     } finally {
         savingMenuItem.value = false
     }
@@ -633,6 +715,14 @@ async function toggleSectionItems(sectionId) {
 
 .menu-item-row p {
     margin: 0.35rem 0 0;
+}
+
+.item-status {
+    font-weight: 700;
+}
+
+.item-status.hidden {
+    opacity: 0.55;
 }
 
 @media (max-width: 700px) {

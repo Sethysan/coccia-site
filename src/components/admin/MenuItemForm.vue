@@ -60,17 +60,6 @@
             </button>
         </div>
 
-        <label>
-            Display order
-
-            <input
-                v-model.number="form.displayOrder"
-                type="number"
-                min="0"
-                required
-            >
-        </label>
-
         <label class="visible-control">
             <input
                 v-model="form.visible"

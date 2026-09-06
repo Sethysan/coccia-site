@@ -47,3 +47,16 @@ export async function updateMenuItem(
         }
     )
 }
+
+export async function moveMenuItem(
+    sectionId,
+    menuItemId,
+    direction
+) {
+    return apiRequest(
+        `/api/admin/menu/sections/${sectionId}/items/${menuItemId}/move?direction=${direction}`,
+        {
+            method: 'PUT'
+        }
+    )
+}

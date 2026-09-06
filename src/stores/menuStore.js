@@ -7,7 +7,8 @@ import {
     updateMenuSection,
     getMenuItems,
     createMenuItem,
-    updateMenuItem
+    updateMenuItem,
+    moveMenuItem
 } from '@/api/menuApi'
 
 export const useMenuStore = defineStore('menu', () => {
@@ -210,6 +211,27 @@ export const useMenuStore = defineStore('menu', () => {
         }
     }
 
+    async function moveItem(sectionId, menuItemId, direction) {
+        clearError()
+
+        try {
+            const items = await moveMenuItem(
+                sectionId,
+                menuItemId,
+                direction
+            )
+
+            itemsBySection.value[sectionId] = items
+
+            return items
+        } catch (err) {
+            error.value =
+                err.message || 'Unable to move menu item.'
+
+            return null
+        }
+    }
+
     return {
         sections,
         itemsBySection,
@@ -221,6 +243,7 @@ export const useMenuStore = defineStore('menu', () => {
         fetchItems,
         addItem,
         saveItem,
-        clearError
+        clearError,
+        moveItem
     }
 })

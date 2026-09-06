@@ -6,6 +6,7 @@ import com.cocciahouse.api.dto.menu.MenuItemResponse;
 import com.cocciahouse.api.model.MenuItem;
 import com.cocciahouse.api.model.MenuItemPrice;
 import com.cocciahouse.api.service.MenuItemService;
+import com.cocciahouse.api.dto.menu.MenuItemMoveDirection;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -70,6 +71,23 @@ public class AdminMenuItemController {
                 );
 
         return toResponse(menuItem);
+    }
+
+    @PutMapping("/{menuItemId}/move")
+    public List<MenuItemResponse> moveMenuItem(
+            @PathVariable Long menuSectionId,
+            @PathVariable Long menuItemId,
+            @RequestParam MenuItemMoveDirection direction
+    ) {
+        return menuItemService
+                .moveMenuItem(
+                        menuSectionId,
+                        menuItemId,
+                        direction
+                )
+                .stream()
+                .map(this::toResponse)
+                .toList();
     }
 
     private MenuItemResponse toResponse(

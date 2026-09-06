@@ -12,6 +12,7 @@ import com.cocciahouse.api.exception.MenuItemNotFoundException;
 import com.cocciahouse.api.exception.MenuSectionNotFoundException;
 import com.cocciahouse.api.exception.RecipeNotFoundException;
 import com.cocciahouse.api.exception.DuplicateMenuItemException;
+import com.cocciahouse.api.dto.menu.MenuItemMoveDirection;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -135,6 +136,13 @@ class MenuItemServiceTest {
 
         recipe.setActive(true);
 
+        MenuItem existingItem =
+                mock(MenuItem.class);
+
+        when(
+                existingItem.getDisplayOrder()
+        ).thenReturn(4);
+
         MenuItemRequest request =
                 new MenuItemRequest(
                         recipeId,
@@ -175,6 +183,15 @@ class MenuItemServiceTest {
         ).thenReturn(false);
 
         when(
+                menuItemRepository
+                        .findByMenuSectionIdOrderByDisplayOrderAsc(
+                                sectionId
+                        )
+        ).thenReturn(
+                List.of(existingItem)
+        );
+
+        when(
                 menuItemRepository.save(any(MenuItem.class))
         ).thenAnswer(
                 invocation -> invocation.getArgument(0)
@@ -197,7 +214,7 @@ class MenuItemServiceTest {
         );
 
         assertEquals(
-                3,
+                5,
                 result.getDisplayOrder()
         );
 
@@ -935,6 +952,136 @@ class MenuItemServiceTest {
                 menuItemRepository,
                 never()
         ).save(any());
+    }
+
+    @Test
+    void moveMenuItem_movesItemUp() {
+        MenuItem first = mock(MenuItem.class);
+        MenuItem second = mock(MenuItem.class);
+
+        when(first.getId()).thenReturn(1L);
+
+        when(second.getId()).thenReturn(2L);
+
+        when(
+                menuItemRepository
+                        .findByMenuSectionIdOrderByDisplayOrderAsc(10L)
+        )
+                .thenReturn(List.of(first, second))
+                .thenReturn(List.of(second, first));
+
+        List<MenuItem> result =
+                menuItemService.moveMenuItem(
+                        10L,
+                        2L,
+                        MenuItemMoveDirection.UP
+                );
+
+        verify(first).setDisplayOrder(1);
+        verify(second).setDisplayOrder(0);
+
+        verify(menuItemRepository).save(first);
+        verify(menuItemRepository).save(second);
+
+        assertEquals(second, result.get(0));
+        assertEquals(first, result.get(1));
+    }
+
+    @Test
+    void moveMenuItem_movesItemDown() {
+        MenuItem first = mock(MenuItem.class);
+        MenuItem second = mock(MenuItem.class);
+
+        when(first.getId()).thenReturn(1L);
+
+        when(
+                menuItemRepository
+                        .findByMenuSectionIdOrderByDisplayOrderAsc(10L)
+        )
+                .thenReturn(List.of(first, second))
+                .thenReturn(List.of(second, first));
+
+        List<MenuItem> result =
+                menuItemService.moveMenuItem(
+                        10L,
+                        1L,
+                        MenuItemMoveDirection.DOWN
+                );
+
+        verify(first).setDisplayOrder(1);
+        verify(second).setDisplayOrder(0);
+
+        verify(menuItemRepository).save(first);
+        verify(menuItemRepository).save(second);
+
+        assertEquals(second, result.get(0));
+        assertEquals(first, result.get(1));
+    }
+
+    @Test
+    void moveMenuItem_doesNothingWhenAlreadyAtBoundary() {
+        MenuItem first = mock(MenuItem.class);
+        MenuItem second = mock(MenuItem.class);
+
+        when(first.getId()).thenReturn(1L);
+
+        when(
+                menuItemRepository
+                        .findByMenuSectionIdOrderByDisplayOrderAsc(10L)
+        )
+                .thenReturn(
+                        List.of(first, second)
+                );
+
+        List<MenuItem> result =
+                menuItemService.moveMenuItem(
+                        10L,
+                        1L,
+                        MenuItemMoveDirection.UP
+                );
+
+        assertEquals(List.of(first, second), result);
+
+        verify(
+                menuItemRepository,
+                never()
+        ).save(any(MenuItem.class));
+
+        verify(first, never())
+                .setDisplayOrder(anyInt());
+
+        verify(second, never())
+                .setDisplayOrder(anyInt());
+    }
+
+    @Test
+    void moveMenuItem_throwsWhenItemIsNotInSection() {
+        MenuItem existing = mock(MenuItem.class);
+
+        when(existing.getId()).thenReturn(1L);
+
+        when(
+                menuItemRepository
+                        .findByMenuSectionIdOrderByDisplayOrderAsc(10L)
+        )
+                .thenReturn(
+                        List.of(existing)
+                );
+
+        assertThrows(
+                MenuItemNotFoundException.class,
+                () ->
+                        menuItemService.moveMenuItem(
+                                10L,
+                                999L,
+                                MenuItemMoveDirection.DOWN
+                        )
+        );
+
+        verify(
+                menuItemRepository,
+                never()
+        ).save(any(MenuItem.class));
     }
 
 }
