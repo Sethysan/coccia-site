@@ -1,5 +1,7 @@
 package com.cocciahouse.api.dto.menu;
 
+import com.cocciahouse.api.model.PizzaSpecialtyPricingMode;
+
 import java.util.List;
 
 public record PizzaSpecialtyResponse(
@@ -21,6 +23,12 @@ public record PizzaSpecialtyResponse(
         int displayOrder,
 
         boolean active,
+
+        PizzaSpecialtyPricingMode pricingMode,
+
+        List<Long> toppingIds,
+
+        List<PizzaSpecialtyAddOnResponse> addOns,
 
         List<PizzaSpecialtyPriceResponse> prices
 

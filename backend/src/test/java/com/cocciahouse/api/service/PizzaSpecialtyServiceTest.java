@@ -2,14 +2,21 @@ package com.cocciahouse.api.service;
 
 import com.cocciahouse.api.dto.menu.PizzaSpecialtyPriceRequest;
 import com.cocciahouse.api.dto.menu.PizzaSpecialtyRequest;
+import com.cocciahouse.api.dto.menu.PizzaSpecialtyAddOnRequest;
+import com.cocciahouse.api.model.PizzaSpecialtyAddOnPricingType;
 import com.cocciahouse.api.model.MenuSection;
 import com.cocciahouse.api.model.PizzaSize;
 import com.cocciahouse.api.model.PizzaSpecialty;
 import com.cocciahouse.api.model.Recipe;
+import com.cocciahouse.api.model.PizzaSpecialtyPricingMode;
+import com.cocciahouse.api.model.PizzaAddOn;
+import com.cocciahouse.api.model.PizzaTopping;
 import com.cocciahouse.api.repository.MenuSectionRepository;
 import com.cocciahouse.api.repository.PizzaSizeRepository;
 import com.cocciahouse.api.repository.PizzaSpecialtyRepository;
 import com.cocciahouse.api.repository.RecipeRepository;
+import com.cocciahouse.api.repository.PizzaAddOnRepository;
+import com.cocciahouse.api.repository.PizzaToppingRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -27,6 +34,8 @@ class PizzaSpecialtyServiceTest {
     private MenuSectionRepository menuSectionRepository;
     private RecipeRepository recipeRepository;
     private PizzaSizeRepository pizzaSizeRepository;
+    private PizzaToppingRepository pizzaToppingRepository;
+    private PizzaAddOnRepository pizzaAddOnRepository;
 
     private PizzaSpecialtyService pizzaSpecialtyService;
 
@@ -44,12 +53,20 @@ class PizzaSpecialtyServiceTest {
         pizzaSizeRepository =
                 mock(PizzaSizeRepository.class);
 
+        pizzaToppingRepository =
+                mock(PizzaToppingRepository.class);
+
+        pizzaAddOnRepository =
+                mock(PizzaAddOnRepository.class);
+
         pizzaSpecialtyService =
                 new PizzaSpecialtyService(
                         pizzaSpecialtyRepository,
                         menuSectionRepository,
                         recipeRepository,
-                        pizzaSizeRepository
+                        pizzaSizeRepository,
+                        pizzaToppingRepository,
+                        pizzaAddOnRepository
                 );
     }
 
@@ -113,6 +130,9 @@ class PizzaSpecialtyServiceTest {
                 new PizzaSpecialtyRequest(
                         10L,
                         true,
+                        PizzaSpecialtyPricingMode.CUSTOM,
+                        List.of(),
+                        List.of(),
                         List.of(
                                 new PizzaSpecialtyPriceRequest(
                                         100L,
@@ -208,6 +228,9 @@ class PizzaSpecialtyServiceTest {
                 new PizzaSpecialtyRequest(
                         10L,
                         true,
+                        PizzaSpecialtyPricingMode.CUSTOM,
+                        List.of(),
+                        List.of(),
                         List.of(
                                 new PizzaSpecialtyPriceRequest(
                                         100L,
@@ -282,6 +305,9 @@ class PizzaSpecialtyServiceTest {
                 new PizzaSpecialtyRequest(
                         10L,
                         true,
+                        PizzaSpecialtyPricingMode.CUSTOM,
+                        List.of(),
+                        List.of(),
                         List.of(
                                 new PizzaSpecialtyPriceRequest(
                                         999L,
@@ -333,6 +359,9 @@ class PizzaSpecialtyServiceTest {
                 new PizzaSpecialtyRequest(
                         10L,
                         true,
+                        PizzaSpecialtyPricingMode.CUSTOM,
+                        List.of(),
+                        List.of(),
                         List.of(
                                 new PizzaSpecialtyPriceRequest(
                                         100L,
@@ -354,6 +383,576 @@ class PizzaSpecialtyServiceTest {
 
         assertEquals(
                 "Inactive recipe cannot be added as a specialty pizza: Old Specialty",
+                exception.getMessage()
+        );
+
+        verify(
+                pizzaSpecialtyRepository,
+                never()
+        ).save(any());
+    }
+
+    @Test
+    void createCalculatedSpecialty_acceptsToppingsWithoutCustomPrices() {
+        MenuSection section =
+                new MenuSection("Pizza");
+
+        Recipe recipe =
+                createActiveRecipe();
+
+        PizzaTopping pepperoni =
+                new PizzaTopping();
+
+        pepperoni.setMenuSection(section);
+        pepperoni.setName("Pepperoni");
+        pepperoni.setActive(true);
+
+        when(menuSectionRepository.findById(1L))
+                .thenReturn(Optional.of(section));
+
+        when(recipeRepository.findById(10L))
+                .thenReturn(Optional.of(recipe));
+
+        when(
+                pizzaSpecialtyRepository
+                        .existsByMenuSectionIdAndRecipeId(
+                                1L,
+                                10L
+                        )
+        ).thenReturn(false);
+
+        when(
+                pizzaSpecialtyRepository
+                        .findByMenuSectionIdWithDetails(1L)
+        ).thenReturn(List.of());
+
+        when(
+                pizzaToppingRepository
+                        .findByIdAndMenuSectionId(
+                                200L,
+                                1L
+                        )
+        ).thenReturn(Optional.of(pepperoni));
+
+        when(
+                pizzaSpecialtyRepository
+                        .save(any(PizzaSpecialty.class))
+        ).thenAnswer(
+                invocation ->
+                        invocation.getArgument(0)
+        );
+
+        PizzaSpecialtyRequest request =
+                new PizzaSpecialtyRequest(
+                        10L,
+                        true,
+                        PizzaSpecialtyPricingMode.CALCULATED,
+                        List.of(200L),
+                        List.of(),
+                        List.of()
+                );
+
+        pizzaSpecialtyService.createSpecialty(
+                1L,
+                request
+        );
+
+        ArgumentCaptor<PizzaSpecialty> captor =
+                ArgumentCaptor.forClass(
+                        PizzaSpecialty.class
+                );
+
+        verify(pizzaSpecialtyRepository)
+                .save(captor.capture());
+
+        PizzaSpecialty saved =
+                captor.getValue();
+
+        assertEquals(
+                PizzaSpecialtyPricingMode.CALCULATED,
+                saved.getPricingMode()
+        );
+
+        assertEquals(
+                1,
+                saved.getToppings().size()
+        );
+
+        assertSame(
+                pepperoni,
+                saved.getToppings().getFirst()
+        );
+
+        assertTrue(saved.getPrices().isEmpty());
+    }
+
+    @Test
+    void createCalculatedSpecialty_storesIncludedAddOns() {
+        MenuSection section =
+                new MenuSection("Pizza");
+
+        Recipe recipe =
+                createActiveRecipe();
+
+        PizzaAddOn doubleCheese =
+                new PizzaAddOn();
+
+        doubleCheese.setMenuSection(section);
+        doubleCheese.setName("Double Cheese");
+        doubleCheese.setActive(true);
+
+        when(menuSectionRepository.findById(1L))
+                .thenReturn(Optional.of(section));
+
+        when(recipeRepository.findById(10L))
+                .thenReturn(Optional.of(recipe));
+
+        when(
+                pizzaSpecialtyRepository
+                        .existsByMenuSectionIdAndRecipeId(
+                                1L,
+                                10L
+                        )
+        ).thenReturn(false);
+
+        when(
+                pizzaSpecialtyRepository
+                        .findByMenuSectionIdWithDetails(1L)
+        ).thenReturn(List.of());
+
+        when(
+                pizzaAddOnRepository
+                        .findByIdAndMenuSectionId(
+                                300L,
+                                1L
+                        )
+        ).thenReturn(Optional.of(doubleCheese));
+
+        when(
+                pizzaSpecialtyRepository
+                        .save(any(PizzaSpecialty.class))
+        ).thenAnswer(
+                invocation ->
+                        invocation.getArgument(0)
+        );
+
+        PizzaSpecialtyRequest request =
+                new PizzaSpecialtyRequest(
+                        10L,
+                        true,
+                        PizzaSpecialtyPricingMode.CALCULATED,
+                        List.of(),
+                        List.of(
+                                new PizzaSpecialtyAddOnRequest(
+                                        300L,
+                                        PizzaSpecialtyAddOnPricingType.FREE,
+                                        null
+                                )
+                        ),
+                        List.of()
+                );
+
+        pizzaSpecialtyService.createSpecialty(
+                1L,
+                request
+        );
+
+        ArgumentCaptor<PizzaSpecialty> captor =
+                ArgumentCaptor.forClass(
+                        PizzaSpecialty.class
+                );
+
+        verify(pizzaSpecialtyRepository)
+                .save(captor.capture());
+
+        PizzaSpecialty saved =
+                captor.getValue();
+
+        assertEquals(
+                1,
+                saved.getSpecialtyAddOns().size()
+        );
+
+        assertSame(
+                doubleCheese,
+                saved.getSpecialtyAddOns()
+                        .getFirst()
+                        .getPizzaAddOn()
+        );
+
+        assertEquals(
+                PizzaSpecialtyAddOnPricingType.FREE,
+                saved.getSpecialtyAddOns()
+                        .getFirst()
+                        .getPricingType()
+        );
+    }
+
+    @Test
+    void createCalculatedSpecialty_acceptsCustomAddOnPrice() {
+        MenuSection section =
+                new MenuSection("Pizza");
+
+        Recipe recipe =
+                createActiveRecipe();
+
+        PizzaAddOn doubleCheese =
+                new PizzaAddOn();
+
+        doubleCheese.setMenuSection(section);
+        doubleCheese.setName("Double Cheese");
+        doubleCheese.setActive(true);
+
+        when(menuSectionRepository.findById(1L))
+                .thenReturn(Optional.of(section));
+
+        when(recipeRepository.findById(10L))
+                .thenReturn(Optional.of(recipe));
+
+        when(
+                pizzaSpecialtyRepository
+                        .existsByMenuSectionIdAndRecipeId(
+                                1L,
+                                10L
+                        )
+        ).thenReturn(false);
+
+        when(
+                pizzaSpecialtyRepository
+                        .findByMenuSectionIdWithDetails(1L)
+        ).thenReturn(List.of());
+
+        when(
+                pizzaAddOnRepository
+                        .findByIdAndMenuSectionId(
+                                300L,
+                                1L
+                        )
+        ).thenReturn(Optional.of(doubleCheese));
+
+        when(
+                pizzaSpecialtyRepository
+                        .save(any(PizzaSpecialty.class))
+        ).thenAnswer(
+                invocation ->
+                        invocation.getArgument(0)
+        );
+
+        PizzaSpecialtyRequest request =
+                new PizzaSpecialtyRequest(
+                        10L,
+                        true,
+                        PizzaSpecialtyPricingMode.CALCULATED,
+                        List.of(),
+                        List.of(
+                                new PizzaSpecialtyAddOnRequest(
+                                        300L,
+                                        PizzaSpecialtyAddOnPricingType.CUSTOM,
+                                        new BigDecimal("1.00")
+                                )
+                        ),
+                        List.of()
+                );
+
+        pizzaSpecialtyService.createSpecialty(
+                1L,
+                request
+        );
+
+        ArgumentCaptor<PizzaSpecialty> captor =
+                ArgumentCaptor.forClass(
+                        PizzaSpecialty.class
+                );
+
+        verify(pizzaSpecialtyRepository)
+                .save(captor.capture());
+
+        PizzaSpecialty saved =
+                captor.getValue();
+
+        assertEquals(
+                PizzaSpecialtyAddOnPricingType.CUSTOM,
+                saved.getSpecialtyAddOns()
+                        .getFirst()
+                        .getPricingType()
+        );
+
+        assertEquals(
+                new BigDecimal("1.00"),
+                saved.getSpecialtyAddOns()
+                        .getFirst()
+                        .getOverrideAmount()
+        );
+    }
+
+    @Test
+    void createCalculatedSpecialty_rejectsCustomAddOnWithoutPrice() {
+        MenuSection section =
+                new MenuSection("Pizza");
+
+        Recipe recipe =
+                createActiveRecipe();
+
+        PizzaAddOn doubleCheese =
+                new PizzaAddOn();
+
+        doubleCheese.setMenuSection(section);
+        doubleCheese.setName("Double Cheese");
+        doubleCheese.setActive(true);
+
+        when(menuSectionRepository.findById(1L))
+                .thenReturn(Optional.of(section));
+
+        when(recipeRepository.findById(10L))
+                .thenReturn(Optional.of(recipe));
+
+        when(
+                pizzaSpecialtyRepository
+                        .existsByMenuSectionIdAndRecipeId(
+                                1L,
+                                10L
+                        )
+        ).thenReturn(false);
+
+        when(
+                pizzaSpecialtyRepository
+                        .findByMenuSectionIdWithDetails(1L)
+        ).thenReturn(List.of());
+
+        when(
+                pizzaAddOnRepository
+                        .findByIdAndMenuSectionId(
+                                300L,
+                                1L
+                        )
+        ).thenReturn(Optional.of(doubleCheese));
+
+        PizzaSpecialtyRequest request =
+                new PizzaSpecialtyRequest(
+                        10L,
+                        true,
+                        PizzaSpecialtyPricingMode.CALCULATED,
+                        List.of(),
+                        List.of(
+                                new PizzaSpecialtyAddOnRequest(
+                                        300L,
+                                        PizzaSpecialtyAddOnPricingType.CUSTOM,
+                                        null
+                                )
+                        ),
+                        List.of()
+                );
+
+        IllegalArgumentException exception =
+                assertThrows(
+                        IllegalArgumentException.class,
+                        () ->
+                                pizzaSpecialtyService
+                                        .createSpecialty(
+                                                1L,
+                                                request
+                                        )
+                );
+
+        assertEquals(
+                "Custom specialty add-on pricing requires an amount",
+                exception.getMessage()
+        );
+
+        verify(
+                pizzaSpecialtyRepository,
+                never()
+        ).save(any());
+    }
+
+    @Test
+    void createCalculatedSpecialty_rejectsInvalidAddOnPricingCombinations() {
+        MenuSection section =
+                new MenuSection("Pizza");
+
+        Recipe recipe =
+                createActiveRecipe();
+
+        PizzaAddOn doubleCheese =
+                new PizzaAddOn();
+
+        doubleCheese.setMenuSection(section);
+        doubleCheese.setName("Double Cheese");
+        doubleCheese.setActive(true);
+
+        when(menuSectionRepository.findById(1L))
+                .thenReturn(Optional.of(section));
+
+        when(recipeRepository.findById(10L))
+                .thenReturn(Optional.of(recipe));
+
+        when(
+                pizzaSpecialtyRepository
+                        .existsByMenuSectionIdAndRecipeId(
+                                1L,
+                                10L
+                        )
+        ).thenReturn(false);
+
+        when(
+                pizzaSpecialtyRepository
+                        .findByMenuSectionIdWithDetails(1L)
+        ).thenReturn(List.of());
+
+        when(
+                pizzaAddOnRepository
+                        .findByIdAndMenuSectionId(
+                                300L,
+                                1L
+                        )
+        ).thenReturn(Optional.of(doubleCheese));
+
+        PizzaSpecialtyRequest standardWithOverride =
+                new PizzaSpecialtyRequest(
+                        10L,
+                        true,
+                        PizzaSpecialtyPricingMode.CALCULATED,
+                        List.of(),
+                        List.of(
+                                new PizzaSpecialtyAddOnRequest(
+                                        300L,
+                                        PizzaSpecialtyAddOnPricingType.STANDARD,
+                                        new BigDecimal("1.00")
+                                )
+                        ),
+                        List.of()
+                );
+
+        IllegalArgumentException standardException =
+                assertThrows(
+                        IllegalArgumentException.class,
+                        () -> pizzaSpecialtyService.createSpecialty(
+                                1L,
+                                standardWithOverride
+                        )
+                );
+
+        assertEquals(
+                "Only custom specialty add-on pricing can have an override amount",
+                standardException.getMessage()
+        );
+
+        PizzaSpecialtyRequest freeWithOverride =
+                new PizzaSpecialtyRequest(
+                        10L,
+                        true,
+                        PizzaSpecialtyPricingMode.CALCULATED,
+                        List.of(),
+                        List.of(
+                                new PizzaSpecialtyAddOnRequest(
+                                        300L,
+                                        PizzaSpecialtyAddOnPricingType.FREE,
+                                        new BigDecimal("1.00")
+                                )
+                        ),
+                        List.of()
+                );
+
+        IllegalArgumentException freeException =
+                assertThrows(
+                        IllegalArgumentException.class,
+                        () -> pizzaSpecialtyService.createSpecialty(
+                                1L,
+                                freeWithOverride
+                        )
+                );
+
+        assertEquals(
+                "Only custom specialty add-on pricing can have an override amount",
+                freeException.getMessage()
+        );
+
+        PizzaSpecialtyRequest negativeCustom =
+                new PizzaSpecialtyRequest(
+                        10L,
+                        true,
+                        PizzaSpecialtyPricingMode.CALCULATED,
+                        List.of(),
+                        List.of(
+                                new PizzaSpecialtyAddOnRequest(
+                                        300L,
+                                        PizzaSpecialtyAddOnPricingType.CUSTOM,
+                                        new BigDecimal("-1.00")
+                                )
+                        ),
+                        List.of()
+                );
+
+        IllegalArgumentException negativeException =
+                assertThrows(
+                        IllegalArgumentException.class,
+                        () -> pizzaSpecialtyService.createSpecialty(
+                                1L,
+                                negativeCustom
+                        )
+                );
+
+        assertEquals(
+                "Specialty add-on price cannot be negative",
+                negativeException.getMessage()
+        );
+
+        verify(
+                pizzaSpecialtyRepository,
+                never()
+        ).save(any());
+    }
+
+    @Test
+    void createCustomSpecialty_rejectsMissingPrices() {
+        MenuSection section =
+                new MenuSection("Pizza");
+
+        Recipe recipe =
+                createActiveRecipe();
+
+        when(menuSectionRepository.findById(1L))
+                .thenReturn(Optional.of(section));
+
+        when(recipeRepository.findById(10L))
+                .thenReturn(Optional.of(recipe));
+
+        when(
+                pizzaSpecialtyRepository
+                        .existsByMenuSectionIdAndRecipeId(
+                                1L,
+                                10L
+                        )
+        ).thenReturn(false);
+
+        when(
+                pizzaSpecialtyRepository
+                        .findByMenuSectionIdWithDetails(1L)
+        ).thenReturn(List.of());
+
+        PizzaSpecialtyRequest request =
+                new PizzaSpecialtyRequest(
+                        10L,
+                        true,
+                        PizzaSpecialtyPricingMode.CUSTOM,
+                        List.of(),
+                        List.of(),
+                        List.of()
+                );
+
+        IllegalArgumentException exception =
+                assertThrows(
+                        IllegalArgumentException.class,
+                        () ->
+                                pizzaSpecialtyService
+                                        .createSpecialty(
+                                                1L,
+                                                request
+                                        )
+                );
+
+        assertEquals(
+                "Custom specialty pizzas require at least one price",
                 exception.getMessage()
         );
 
@@ -465,6 +1064,9 @@ class PizzaSpecialtyServiceTest {
                 new PizzaSpecialtyRequest(
                         10L,
                         true,
+                        PizzaSpecialtyPricingMode.CUSTOM,
+                        List.of(),
+                        List.of(),
                         List.of(
                                 new PizzaSpecialtyPriceRequest(
                                         100L,

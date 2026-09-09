@@ -47,6 +47,26 @@ public class PizzaSpecialty {
     @Column(nullable = false)
     private boolean active = true;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "pricing_mode", nullable = false)
+    private PizzaSpecialtyPricingMode pricingMode = PizzaSpecialtyPricingMode.CUSTOM;
+
+    @ManyToMany
+    @JoinTable(
+            name = "pizza_specialty_toppings",
+            joinColumns = @JoinColumn(name = "pizza_specialty_id"),
+            inverseJoinColumns = @JoinColumn(name = "pizza_topping_id")
+    )
+    private final List<PizzaTopping> toppings = new ArrayList<>();
+
+    @OneToMany(
+            mappedBy = "pizzaSpecialty",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
+    private final List<PizzaSpecialtyAddOn> specialtyAddOns =
+            new ArrayList<>();
+
     @OneToMany(
             mappedBy = "pizzaSpecialty",
             cascade = CascadeType.ALL,
@@ -104,6 +124,30 @@ public class PizzaSpecialty {
         this.active = active;
     }
 
+    public PizzaSpecialtyPricingMode getPricingMode() {
+        return pricingMode;
+    }
+
+    public void setPricingMode(
+            PizzaSpecialtyPricingMode pricingMode
+    ) {
+        this.pricingMode = pricingMode;
+    }
+
+    public List<PizzaTopping> getToppings() {
+        return toppings;
+    }
+
+    public void addTopping(
+            PizzaTopping topping
+    ) {
+        toppings.add(topping);
+    }
+
+    public void clearToppings() {
+        toppings.clear();
+    }
+
     public List<PizzaSpecialtyPrice> getPrices() {
         return prices;
     }
@@ -117,5 +161,20 @@ public class PizzaSpecialty {
 
     public void clearPrices() {
         prices.clear();
+    }
+
+    public List<PizzaSpecialtyAddOn> getSpecialtyAddOns() {
+        return specialtyAddOns;
+    }
+
+    public void addSpecialtyAddOn(
+            PizzaSpecialtyAddOn specialtyAddOn
+    ) {
+        specialtyAddOn.setPizzaSpecialty(this);
+        specialtyAddOns.add(specialtyAddOn);
+    }
+
+    public void clearSpecialtyAddOns() {
+        specialtyAddOns.clear();
     }
 }
