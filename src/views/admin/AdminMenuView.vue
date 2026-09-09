@@ -166,6 +166,19 @@
                             }}
                         </button>
 
+                        <button v-if="section.name.trim().toLowerCase() === 'pizza'" type="button" @click="
+                            openPizzaSectionId =
+                            openPizzaSectionId === section.id
+                                ? null
+                                : section.id
+                            ">
+                            {{
+                                openPizzaSectionId === section.id
+                                    ? 'Hide Pizza Setup'
+                                    : 'Manage Pizza'
+                            }}
+                        </button>
+
                         <button type="button" @click="startEditingSection(section)">
                             Edit Section
                         </button>
@@ -289,6 +302,13 @@
                     </div>
                 </section>
 
+                <!-- PIZZA CONFIGURATION -->
+
+                <PizzaManager v-if="
+                    openPizzaSectionId === section.id
+                    && editingSectionId !== section.id
+                " :section="section" />
+
             </article>
         </section>
     </section>
@@ -300,6 +320,7 @@ import { onMounted, ref } from 'vue'
 
 import { useMenuStore } from '@/stores/menuStore'
 import MenuItemForm from '@/components/admin/MenuItemForm.vue'
+import PizzaManager from '@/components/admin/PizzaManager.vue'
 
 const menuStore = useMenuStore()
 
@@ -309,6 +330,7 @@ const creatingSection = ref(false)
 
 const editingSectionId = ref(null)
 const savingSectionId = ref(null)
+const openPizzaSectionId = ref(null)
 const openSectionId = ref(null)
 
 const addingItemSectionId = ref(null)

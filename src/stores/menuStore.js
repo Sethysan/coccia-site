@@ -8,7 +8,22 @@ import {
     getMenuItems,
     createMenuItem,
     updateMenuItem,
-    moveMenuItem
+    moveMenuItem,
+    getPizzaSizes,
+    createPizzaSize,
+    updatePizzaSize,
+
+    getPizzaAddOns,
+    createPizzaAddOn,
+    updatePizzaAddOn,
+
+    getPizzaToppings,
+    createPizzaTopping,
+    updatePizzaTopping,
+
+    getPizzaSpecialties,
+    createPizzaSpecialty,
+    updatePizzaSpecialty,
 } from '@/api/menuApi'
 
 export const useMenuStore = defineStore('menu', () => {
@@ -16,6 +31,13 @@ export const useMenuStore = defineStore('menu', () => {
     const itemsBySection = ref({})
     const loading = ref(false)
     const error = ref(null)
+
+    const pizzaSizes = ref([])
+    const pizzaAddOns = ref([])
+    const pizzaToppings = ref([])
+    const pizzaSpecialties = ref([])
+
+    const pizzaLoading = ref(false)
 
     function clearError() {
         error.value = null
@@ -232,6 +254,170 @@ export const useMenuStore = defineStore('menu', () => {
         }
     }
 
+    async function loadPizzaConfiguration(menuSectionId) {
+        pizzaLoading.value = true
+
+        try {
+            const [
+                sizes,
+                addOns,
+                toppings,
+                specialties,
+            ] = await Promise.all([
+                getPizzaSizes(menuSectionId),
+                getPizzaAddOns(menuSectionId),
+                getPizzaToppings(menuSectionId),
+                getPizzaSpecialties(menuSectionId),
+            ])
+
+            pizzaSizes.value = sizes
+            pizzaAddOns.value = addOns
+            pizzaToppings.value = toppings
+            pizzaSpecialties.value = specialties
+        } finally {
+            pizzaLoading.value = false
+        }
+    }
+
+    async function addPizzaSize(menuSectionId, data) {
+        const created =
+            await createPizzaSize(menuSectionId, data)
+
+        pizzaSizes.value.push(created)
+
+        return created
+    }
+
+    async function editPizzaSize(
+        menuSectionId,
+        pizzaSizeId,
+        data
+    ) {
+        const updated =
+            await updatePizzaSize(
+                menuSectionId,
+                pizzaSizeId,
+                data
+            )
+
+        const index =
+            pizzaSizes.value.findIndex(
+                size => size.id === pizzaSizeId
+            )
+
+        if (index !== -1) {
+            pizzaSizes.value[index] = updated
+        }
+
+        return updated
+    }
+
+    async function addPizzaAddOn(menuSectionId, data) {
+        const created =
+            await createPizzaAddOn(menuSectionId, data)
+
+        pizzaAddOns.value.push(created)
+
+        return created
+    }
+
+    async function editPizzaAddOn(
+        menuSectionId,
+        pizzaAddOnId,
+        data
+    ) {
+        const updated =
+            await updatePizzaAddOn(
+                menuSectionId,
+                pizzaAddOnId,
+                data
+            )
+
+        const index =
+            pizzaAddOns.value.findIndex(
+                addOn => addOn.id === pizzaAddOnId
+            )
+
+        if (index !== -1) {
+            pizzaAddOns.value[index] = updated
+        }
+
+        return updated
+    }
+
+    async function addPizzaTopping(menuSectionId, data) {
+        const created =
+            await createPizzaTopping(menuSectionId, data)
+
+        pizzaToppings.value.push(created)
+
+        return created
+    }
+
+    async function editPizzaTopping(
+        menuSectionId,
+        pizzaToppingId,
+        data
+    ) {
+        const updated =
+            await updatePizzaTopping(
+                menuSectionId,
+                pizzaToppingId,
+                data
+            )
+
+        const index =
+            pizzaToppings.value.findIndex(
+                topping => topping.id === pizzaToppingId
+            )
+
+        if (index !== -1) {
+            pizzaToppings.value[index] = updated
+        }
+
+        return updated
+    }
+
+    async function addPizzaSpecialty(
+        menuSectionId,
+        data
+    ) {
+        const created =
+            await createPizzaSpecialty(
+                menuSectionId,
+                data
+            )
+
+        pizzaSpecialties.value.push(created)
+
+        return created
+    }
+
+    async function editPizzaSpecialty(
+        menuSectionId,
+        specialtyId,
+        data
+    ) {
+        const updated =
+            await updatePizzaSpecialty(
+                menuSectionId,
+                specialtyId,
+                data
+            )
+
+        const index =
+            pizzaSpecialties.value.findIndex(
+                specialty =>
+                    specialty.id === specialtyId
+            )
+
+        if (index !== -1) {
+            pizzaSpecialties.value[index] = updated
+        }
+
+        return updated
+    }
+
     return {
         sections,
         itemsBySection,
@@ -244,6 +430,25 @@ export const useMenuStore = defineStore('menu', () => {
         addItem,
         saveItem,
         clearError,
-        moveItem
+        moveItem,
+        pizzaSizes,
+        pizzaAddOns,
+        pizzaToppings,
+        pizzaSpecialties,
+        pizzaLoading,
+
+        loadPizzaConfiguration,
+
+        addPizzaSize,
+        editPizzaSize,
+
+        addPizzaAddOn,
+        editPizzaAddOn,
+
+        addPizzaTopping,
+        editPizzaTopping,
+
+        addPizzaSpecialty,
+        editPizzaSpecialty,
     }
 })

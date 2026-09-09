@@ -5,55 +5,35 @@
         </label>
 
         <div class="recipe-picker">
-            <input
-                id="recipe"
-                v-model="recipeSearch"
-                type="search"
-                placeholder="Search recipes..."
-                autocomplete="off"
-                @input="handleRecipeSearch"
-                @focus="showRecipeResults = true"
-            >
+            <input id="recipe" v-model="recipeSearch" type="search" placeholder="Search recipes..." autocomplete="off"
+                @input="handleRecipeSearch" @focus="showRecipeResults = true">
 
-            <div
-                v-if="showRecipeResults"
-                class="recipe-results"
-            >
-                <p
-                    v-if="searchingRecipes"
-                    class="recipe-results-message"
-                >
+            <div v-if="showRecipeResults" class="recipe-results">
+                <p v-if="searchingRecipes" class="recipe-results-message">
                     Searching...
                 </p>
 
-                <button
-                    v-for="recipe in activeRecipes"
-                    v-else
-                    :key="recipe.id"
-                    type="button"
-                    class="recipe-result"
-                    @click="selectRecipe(recipe)"
-                >
+                <button v-for="recipe in activeRecipes" v-else :key="recipe.id" type="button" class="recipe-result"
+                    @click="selectRecipe(recipe)">
                     {{ recipe.name }}
                 </button>
 
-                <p
-                    v-if="
-                        !searchingRecipes
-                        && activeRecipes.length === 0
-                    "
-                    class="recipe-results-message"
-                >
-                    No active recipes found.
-                </p>
+                <div v-if="
+                    !searchingRecipes
+                    && recipeSearch.trim()
+                    && !exactRecipeMatch
+                " class="recipe-results-empty">
+                    <p v-if="activeRecipes.length === 0" class="recipe-results-message">
+                        No active recipes found.
+                    </p>
+
+                    <button type="button" class="recipe-result create-recipe-result" @click="requestRecipeCreation">
+                        + Create "{{ recipeSearch.trim() }}"
+                    </button>
+                </div>
             </div>
 
-            <button
-                v-if="selectedRecipe"
-                type="button"
-                class="change-recipe-button"
-                @click="clearSelectedRecipe"
-            >
+            <button v-if="selectedRecipe" type="button" class="change-recipe-button" @click="clearSelectedRecipe">
                 Change Recipe
             </button>
 
@@ -62,20 +42,13 @@
             </p>
         </div>
 
-        <div
-            v-if="selectedRecipe"
-            class="selected-recipe"
-        >
+        <div v-if="selectedRecipe" class="selected-recipe">
             <p class="selected-recipe-label">
                 Recipe Details
             </p>
 
-            <RecipeSummary
-                :name="selectedRecipe.name"
-                :description="selectedRecipe.description"
-                :image-url="selectedRecipe.imageUrl"
-                :image-alt="selectedRecipe.imageAlt"
-            />
+            <RecipeSummary :name="selectedRecipe.name" :description="selectedRecipe.description"
+                :image-url="selectedRecipe.imageUrl" :image-alt="selectedRecipe.imageAlt" />
 
             <p class="recipe-source-note">
                 Description and photo are managed in Recipes.
@@ -115,7 +88,8 @@ const props = defineProps({
 const emit = defineEmits([
     'update:modelValue',
     'selected',
-    'cleared'
+    'cleared',
+    'create-requested'
 ])
 
 const recipeStore = useRecipeStore()
@@ -137,6 +111,24 @@ const selectedRecipe = computed(() => {
         recipe => recipe.id === props.modelValue
     ) ?? recipeStore.recipes.find(
         recipe => recipe.id === props.modelValue
+    ) ?? null
+})
+
+const exactRecipeMatch = computed(() => {
+    const searchName =
+        recipeSearch.value
+            .trim()
+            .toLowerCase()
+
+    if (!searchName) {
+        return null
+    }
+
+    return activeRecipes.value.find(
+        recipe =>
+            recipe.name
+                .trim()
+                .toLowerCase() === searchName
     ) ?? null
 })
 
@@ -196,6 +188,18 @@ function handleRecipeSearch() {
     recipeSearchTimer = setTimeout(() => {
         loadActiveRecipes(recipeSearch.value)
     }, 300)
+}
+
+function requestRecipeCreation() {
+    const name = recipeSearch.value.trim()
+
+    if (!name) {
+        return
+    }
+
+    showRecipeResults.value = false
+
+    emit('create-requested', name)
 }
 
 function selectRecipe(recipe) {

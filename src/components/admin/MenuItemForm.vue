@@ -1,80 +1,86 @@
 <template>
-    <form
-        class="admin-form menu-item-form"
-        @submit.prevent="submitForm"
-    >
+    <form class="admin-form menu-item-form" @submit.prevent="submitForm">
         <h3>
             {{ editing ? 'Edit Menu Item' : 'Add Menu Item' }}
         </h3>
 
-        <RecipePicker
-            v-model="form.recipeId"
-            @cleared="handleRecipeCleared"
-        />
+        <div class="recipe-selection">
+            <RecipePicker v-model="form.recipeId" @create-requested="beginCreateRecipe" />
+
+            <div v-if="showCreateRecipe" class="inline-recipe-form">
+                <h4>Create New Recipe</h4>
+
+                <label>
+                    Recipe name
+
+                    <input v-model="newRecipeName" type="text" maxlength="150"
+                        placeholder="Example: Homemade Provolone Sticks" required>
+                </label>
+
+                <label>
+                    Description
+
+                    <textarea v-model="newRecipeDescription" rows="3"
+                        placeholder="Describe the dish for customers."></textarea>
+                </label>
+
+                <label>
+                    Image description
+
+                    <input v-model="newRecipeImageAlt" type="text" maxlength="255"
+                        placeholder="Optional description of the photo">
+                </label>
+
+                <div class="admin-form-actions">
+                    <button type="button" class="primary-button" :disabled="creatingRecipe" @click="createRecipe">
+                        {{
+                            creatingRecipe
+                                ? 'Creating...'
+                                : 'Create & Select Recipe'
+                        }}
+                    </button>
+
+                    <button type="button" :disabled="creatingRecipe" @click="cancelCreateRecipe">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
 
         <div>
             <h4>Prices</h4>
 
-            <div
-                v-for="(price, index) in form.prices"
-                :key="index"
-                class="price-row"
-            >
+            <div v-for="(price, index) in form.prices" :key="index" class="price-row">
                 <label>
                     Label
 
-                    <input
-                        v-model="price.label"
-                        type="text"
-                        maxlength="100"
-                        placeholder="Optional, e.g. Regular"
-                    >
+                    <input v-model="price.label" type="text" maxlength="100" placeholder="Optional, e.g. Regular">
                 </label>
 
                 <label>
                     Amount
 
-                    <input
-                        v-model="price.amount"
-                        type="number"
-                        min="0.01"
-                        step="0.01"
-                        required
-                    >
+                    <input v-model="price.amount" type="number" min="0.01" step="0.01" required>
                 </label>
 
-                <button
-                    v-if="form.prices.length > 1"
-                    type="button"
-                    @click="removePrice(index)"
-                >
+                <button v-if="form.prices.length > 1" type="button" @click="removePrice(index)">
                     Remove
                 </button>
             </div>
 
-            <button
-                type="button"
-                @click="addPrice"
-            >
+            <button type="button" @click="addPrice">
                 + Add Size / Price
             </button>
         </div>
 
         <label class="visible-control">
-            <input
-                v-model="form.visible"
-                type="checkbox"
-            >
+            <input v-model="form.visible" type="checkbox">
 
             Visible on menu
         </label>
 
         <div class="admin-form-actions">
-            <button
-                type="submit"
-                class="primary-button"
-                :disabled="saving"
-            >
+            <button type="submit" class="primary-button" :disabled="saving">
                 {{
                     saving
                         ? 'Saving...'
@@ -84,11 +90,7 @@
                 }}
             </button>
 
-            <button
-                type="button"
-                :disabled="saving"
-                @click="$emit('cancel')"
-            >
+            <button type="button" :disabled="saving" @click="$emit('cancel')">
                 Cancel
             </button>
         </div>
@@ -98,11 +100,13 @@
 <script setup>
 import {
     computed,
+    ref,
     reactive,
     watch
 } from 'vue'
 
 import RecipePicker from '@/components/admin/RecipePicker.vue'
+import { useRecipeStore } from '@/stores/recipeStore'
 
 const props = defineProps({
     item: {
@@ -125,6 +129,14 @@ const emit = defineEmits([
     'submit',
     'cancel'
 ])
+
+const recipeStore = useRecipeStore()
+
+const showCreateRecipe = ref(false)
+const newRecipeName = ref('')
+const newRecipeDescription = ref('')
+const newRecipeImageAlt = ref('')
+const creatingRecipe = ref(false)
 
 const editing = computed(() => Boolean(props.item))
 
@@ -193,10 +205,50 @@ function resetForm() {
     ]
 }
 
-function handleRecipeCleared() {
-    // Menu-specific details stay intact when changing Recipe.
-    // This allows staff to correct a Recipe selection without
-    // re-entering prices and display order.
+function beginCreateRecipe(name) {
+    newRecipeName.value = name
+    newRecipeDescription.value = ''
+    newRecipeImageAlt.value = ''
+    showCreateRecipe.value = true
+
+    recipeStore.clearError()
+}
+
+function cancelCreateRecipe() {
+    showCreateRecipe.value = false
+    newRecipeName.value = ''
+    newRecipeDescription.value = ''
+    newRecipeImageAlt.value = ''
+
+    recipeStore.clearError()
+}
+
+async function createRecipe() {
+    const name = newRecipeName.value.trim()
+
+    if (!name) {
+        return
+    }
+
+    creatingRecipe.value = true
+    recipeStore.clearError()
+
+    try {
+        const createdRecipe =
+            await recipeStore.addRecipe(
+                name,
+                newRecipeDescription.value,
+                newRecipeImageAlt.value
+            )
+
+        if (createdRecipe) {
+            form.recipeId = createdRecipe.id
+            cancelCreateRecipe()
+        }
+
+    } finally {
+        creatingRecipe.value = false
+    }
 }
 
 function addPrice() {
@@ -250,7 +302,7 @@ function submitForm() {
     margin: 0;
 }
 
-.menu-item-form > div {
+.menu-item-form>div {
     display: grid;
     gap: 0.75rem;
 }
@@ -280,6 +332,34 @@ function submitForm() {
 
 .visible-control input {
     width: auto;
+}
+
+.recipe-selection {
+    display: grid;
+    gap: 0.75rem;
+}
+
+.create-recipe-toggle {
+    width: fit-content;
+}
+
+.inline-recipe-form {
+    display: grid;
+    gap: 0.75rem;
+
+    padding: 1rem;
+
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 0.4rem;
+}
+
+.inline-recipe-form h4 {
+    margin: 0;
+}
+
+.inline-recipe-form label {
+    display: grid;
+    gap: 0.4rem;
 }
 
 @media (max-width: 600px) {
