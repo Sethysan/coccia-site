@@ -20,74 +20,84 @@
       <div class="pizza-panel__header">
         <div>
           <h4>Sizes & Base Prices</h4>
+
           <p>
             The base price is the price of a
             plain cheese pizza.
           </p>
         </div>
 
-        <button v-if="!showAddSize && !editingSizeId" type="button" @click="startAddSize">
-          + Add Size
+        <button type="button" @click="showSizeEditor = !showSizeEditor">
+          {{ showSizeEditor ? 'Close' : 'Edit Sizes' }}
         </button>
       </div>
 
-      <div v-if="menuStore.pizzaSizes.length" class="pizza-size-list">
-        <div v-for="size in menuStore.pizzaSizes" :key="size.id" class="pizza-size-row">
-          <template v-if="editingSizeId !== size.id">
-            <div>
-              <strong>{{ size.name }}</strong>
+      <div v-if="showSizeEditor">
 
-              <span v-if="!size.active">
-                — Inactive
-              </span>
-            </div>
-
-            <div class="pizza-size-row__actions">
-              <strong>
-                ${{ Number(size.basePrice).toFixed(2) }}
-              </strong>
-
-              <button type="button" @click="startEditSize(size)">
-                Edit
-              </button>
-            </div>
-          </template>
-
-          <form v-else class="pizza-size-form" @submit.prevent="saveSize">
-            <label>
-              Size Name
-
-              <input v-model="sizeForm.name" type="text" required />
-            </label>
-
-            <label>
-              Base Price
-
-              <input v-model="sizeForm.basePrice" type="number" min="0.01" step="0.01" required />
-            </label>
-
-            <label class="checkbox-label">
-              <input v-model="sizeForm.active" type="checkbox" />
-
-              Active
-            </label>
-
-            <div class="pizza-size-form__actions">
-              <button type="submit">
-                Save
-              </button>
-
-              <button type="button" @click="cancelSizeForm">
-                Cancel
-              </button>
-            </div>
-          </form>
+        <div class="pizza-editor-actions">
+          <button v-if="!showAddSize && !editingSizeId" type="button" @click="startAddSize">
+            + Add Size
+          </button>
         </div>
+
+        <div v-if="menuStore.pizzaSizes.length" class="pizza-size-list">
+          <div v-for="size in menuStore.pizzaSizes" :key="size.id" class="pizza-size-row">
+            <template v-if="editingSizeId !== size.id">
+              <div>
+                <strong>{{ size.name }}</strong>
+
+                <span v-if="!size.active">
+                  — Inactive
+                </span>
+              </div>
+
+              <div class="pizza-size-row__actions">
+                <strong>
+                  ${{ Number(size.basePrice).toFixed(2) }}
+                </strong>
+
+                <button type="button" @click="startEditSize(size)">
+                  Edit
+                </button>
+              </div>
+            </template>
+
+            <form v-else class="pizza-size-form" @submit.prevent="saveSize">
+              <label>
+                Size Name
+
+                <input v-model="sizeForm.name" type="text" required />
+              </label>
+
+              <label>
+                Base Price
+
+                <input v-model="sizeForm.basePrice" type="number" min="0.01" step="0.01" required />
+              </label>
+
+              <label class="checkbox-label">
+                <input v-model="sizeForm.active" type="checkbox" />
+
+                Active
+              </label>
+
+              <div class="pizza-size-form__actions">
+                <button type="submit">
+                  Save
+                </button>
+
+                <button type="button" @click="cancelSizeForm">
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+        <p v-else-if="!showAddSize">
+          No pizza sizes have been added yet.
+        </p>
       </div>
 
-      <p v-else-if="!showAddSize">
-        No pizza sizes have been added yet.
-      </p>
 
       <form v-if="showAddSize" class="pizza-size-form pizza-size-form--new" @submit.prevent="saveSize">
         <label>
@@ -132,87 +142,91 @@
             any additional pizza extras.
           </p>
         </div>
+        <button type="button" @click="showAddOnEditor = !showAddOnEditor">
+          {{ showAddOnEditor ? 'Close' : 'Edit Add-ons' }}
+        </button>
+      </div>
+      <div v-if="showAddOnEditor">
 
         <button v-if="!showAddOnForm" type="button" @click="startAddOn">
           + Add Pricing Rule
         </button>
-      </div>
 
-      <div v-if="menuStore.pizzaAddOns.length" class="pizza-size-list">
-        <div v-for="addOn in menuStore.pizzaAddOns" :key="addOn.id" class="pizza-size-row">
-          <template v-if="editingAddOnId !== addOn.id">
-            <div>
-              <strong>{{ addOn.name }}</strong>
+        <div v-if="menuStore.pizzaAddOns.length" class="pizza-size-list">
+          <div v-for="addOn in menuStore.pizzaAddOns" :key="addOn.id" class="pizza-size-row">
+            <template v-if="editingAddOnId !== addOn.id">
+              <div>
+                <strong>{{ addOn.name }}</strong>
 
-              <span v-if="addOn.type === 'TOPPING'">
-                — Per Item
-              </span>
+                <span v-if="addOn.type === 'TOPPING'">
+                  — Per Item
+                </span>
 
-              <span v-if="!addOn.active">
-                — Inactive
-              </span>
-            </div>
+                <span v-if="!addOn.active">
+                  — Inactive
+                </span>
+              </div>
 
-            <div class="pizza-size-row__actions">
-              <strong>
-                +${{ Number(addOn.amount).toFixed(2) }}
-              </strong>
+              <div class="pizza-size-row__actions">
+                <strong>
+                  +${{ Number(addOn.amount).toFixed(2) }}
+                </strong>
 
-              <button type="button" @click="startEditAddOn(addOn)">
-                Edit
-              </button>
-            </div>
-          </template>
+                <button type="button" @click="startEditAddOn(addOn)">
+                  Edit
+                </button>
+              </div>
+            </template>
 
-          <form v-else class="pizza-size-form" @submit.prevent="saveAddOn">
-            <label>
-              Name
+            <form v-else class="pizza-size-form" @submit.prevent="saveAddOn">
+              <label>
+                Name
 
-              <input v-model="addOnForm.name" type="text" required />
-            </label>
+                <input v-model="addOnForm.name" type="text" required />
+              </label>
 
-            <label>
-              Amount
+              <label>
+                Amount
 
-              <input v-model="addOnForm.amount" type="number" min="0.01" step="0.01" required />
-            </label>
+                <input v-model="addOnForm.amount" type="number" min="0.01" step="0.01" required />
+              </label>
 
-            <label>
-              Type
+              <label>
+                Type
 
-              <select v-model="addOnForm.type">
-                <option value="TOPPING">
-                  Per Item
-                </option>
+                <select v-model="addOnForm.type">
+                  <option value="TOPPING">
+                    Per Item
+                  </option>
 
-                <option value="EXTRA">
-                  Extra
-                </option>
-              </select>
-            </label>
+                  <option value="EXTRA">
+                    Extra
+                  </option>
+                </select>
+              </label>
 
-            <label class="checkbox-label">
-              <input v-model="addOnForm.active" type="checkbox" />
+              <label class="checkbox-label">
+                <input v-model="addOnForm.active" type="checkbox" />
 
-              Active
-            </label>
+                Active
+              </label>
 
-            <div class="pizza-size-form__actions">
-              <button type="submit">
-                Save
-              </button>
+              <div class="pizza-size-form__actions">
+                <button type="submit">
+                  Save
+                </button>
 
-              <button type="button" @click="cancelAddOnForm">
-                Cancel
-              </button>
-            </div>
-          </form>
+                <button type="button" @click="cancelAddOnForm">
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
+        <p v-else-if="!showAddOnForm">
+          No pizza pricing rules have been added yet.
+        </p>
       </div>
-
-      <p v-else-if="!showAddOnForm">
-        No pizza pricing rules have been added yet.
-      </p>
 
       <form v-if="showAddOnForm && !editingAddOnId" class="pizza-size-form pizza-size-form--new"
         @submit.prevent="saveAddOn">
@@ -273,56 +287,63 @@
           </p>
         </div>
 
-        <button v-if="!showToppingForm" type="button" @click="startAddTopping">
-          + Add Topping
+        <button type="button" @click="showToppingEditor = !showToppingEditor">
+          {{ showToppingEditor ? 'Close' : 'Edit Toppings' }}
         </button>
       </div>
 
-      <div v-if="menuStore.pizzaToppings.length" class="pizza-size-list">
-        <div v-for="topping in menuStore.pizzaToppings" :key="topping.id" class="pizza-size-row">
-          <template v-if="editingToppingId !== topping.id">
-            <div>
-              <strong>{{ topping.name }}</strong>
+      <div v-if="showToppingEditor">
 
-              <span v-if="!topping.active">
-                — Inactive
-              </span>
-            </div>
+        <button v-if="!showAddSize && !editingSizeId" type="button" @click="startAddSize">
+          + Add Topping
+        </button>
 
-            <button type="button" @click="startEditTopping(topping)">
-              Edit
-            </button>
-          </template>
+        <div v-if="menuStore.pizzaToppings.length" class="pizza-size-list">
+          <div v-for="topping in menuStore.pizzaToppings" :key="topping.id" class="pizza-size-row">
+            <template v-if="editingToppingId !== topping.id">
+              <div>
+                <strong>{{ topping.name }}</strong>
 
-          <form v-else class="pizza-size-form" @submit.prevent="saveTopping">
-            <label>
-              Topping Name
+                <span v-if="!topping.active">
+                  — Inactive
+                </span>
+              </div>
 
-              <input v-model="toppingForm.name" type="text" required />
-            </label>
-
-            <label class="checkbox-label">
-              <input v-model="toppingForm.active" type="checkbox" />
-
-              Active
-            </label>
-
-            <div class="pizza-size-form__actions">
-              <button type="submit">
-                Save
+              <button type="button" @click="startEditTopping(topping)">
+                Edit
               </button>
+            </template>
 
-              <button type="button" @click="cancelToppingForm">
-                Cancel
-              </button>
-            </div>
-          </form>
+            <form v-else class="pizza-size-form" @submit.prevent="saveTopping">
+              <label>
+                Topping Name
+
+                <input v-model="toppingForm.name" type="text" required />
+              </label>
+
+              <label class="checkbox-label">
+                <input v-model="toppingForm.active" type="checkbox" />
+
+                Active
+              </label>
+
+              <div class="pizza-size-form__actions">
+                <button type="submit">
+                  Save
+                </button>
+
+                <button type="button" @click="cancelToppingForm">
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
+        <p v-else-if="!showToppingForm">
+          No pizza toppings have been added yet.
+        </p>
       </div>
 
-      <p v-else-if="!showToppingForm">
-        No pizza toppings have been added yet.
-      </p>
 
       <form v-if="showToppingForm && !editingToppingId" class="pizza-size-form pizza-size-form--new"
         @submit.prevent="saveTopping">
@@ -350,7 +371,65 @@
       </form>
     </div>
 
-    <!-- ==================== SPECIALTY PIZZAS ==================== -->
+    <!-- =========================================================
+     SPECIALTY PIZZAS
+     ========================================================= -->
+
+    <section class="pizza-panel pizza-panel--spaced">
+      <div class="pizza-panel-header">
+        <div>
+          <h4>Specialty Pizzas</h4>
+          <p>
+            Build pizzas like Works or Veggie using the sizes,
+            toppings, and pricing rules above.
+          </p>
+        </div>
+      </div>
+
+      <div v-if="menuStore.pizzaSpecialties.length" class="pizza-specialty-list">
+        <div v-for="specialty in menuStore.pizzaSpecialties" :key="specialty.id" class="pizza-specialty-row">
+          <div>
+            <strong>
+              {{ specialty.recipeName }}
+            </strong>
+
+            <p class="section-help">
+              {{
+                specialty.pricingMode === 'CALCULATED'
+                  ? 'Calculated from toppings'
+                  : 'Custom pricing'
+              }}
+            </p>
+
+            <p class="section-help">
+              {{ specialty.active ? 'Active' : 'Inactive' }}
+            </p>
+          </div>
+
+          <button type="button" @click="startEditSpecialty(specialty)">
+            Edit
+          </button>
+        </div>
+      </div>
+
+      <p v-else class="section-help">
+        No specialty pizzas have been added yet.
+      </p>
+
+      <button v-if="!showSpecialtyForm" type="button" class="primary-button" @click="startAddSpecialty">
+        + Add Specialty Pizza
+      </button>
+
+      <div v-else class="pizza-specialty-form-wrapper">
+        <PizzaSpecialtyForm :specialty="editingSpecialty" :sizes="menuStore.pizzaSizes" :add-ons="menuStore.pizzaAddOns"
+          :toppings="menuStore.pizzaToppings" @submit="saveSpecialty" />
+
+        <button type="button" @click="cancelSpecialtyForm">
+          Cancel
+        </button>
+      </div>
+
+    </section>
 
   </section>
 </template>
@@ -358,6 +437,7 @@
 <script setup>
 import { onMounted, ref } from 'vue'
 import { useMenuStore } from '@/stores/menuStore'
+import PizzaSpecialtyForm from './PizzaSpecialtyForm.vue'
 
 const props = defineProps({
   section: {
@@ -367,6 +447,10 @@ const props = defineProps({
 })
 
 const menuStore = useMenuStore()
+
+const showSizeEditor = ref(false)
+const showAddOnEditor = ref(false)
+const showToppingEditor = ref(false)
 
 const editingSizeId = ref(null)
 const showAddSize = ref(false)
@@ -394,6 +478,9 @@ const toppingForm = ref({
   name: '',
   active: true,
 })
+
+const showSpecialtyForm = ref(false)
+const editingSpecialty = ref(null)
 
 onMounted(async () => {
   await menuStore.loadPizzaConfiguration(
@@ -554,6 +641,62 @@ async function saveTopping() {
   cancelToppingForm()
 }
 
+function startAddSpecialty() {
+  editingSpecialty.value = null
+  showSpecialtyForm.value = true
+}
+
+function startEditSpecialty(specialty) {
+  editingSpecialty.value = specialty
+  showSpecialtyForm.value = true
+}
+
+function cancelSpecialtyForm() {
+  editingSpecialty.value = null
+  showSpecialtyForm.value = false
+}
+
+async function saveSpecialty(data) {
+  try {
+    const wasEditing =
+      Boolean(editingSpecialty.value)
+
+    let saved
+
+    if (wasEditing) {
+      saved =
+        await menuStore.editPizzaSpecialty(
+          props.section.id,
+          editingSpecialty.value.id,
+          data
+        )
+    } else {
+      saved =
+        await menuStore.addPizzaSpecialty(
+          props.section.id,
+          data
+        )
+    }
+
+    if (saved) {
+      cancelSpecialtyForm()
+
+      window.alert(
+        wasEditing
+          ? 'Specialty pizza updated successfully.'
+          : 'Specialty pizza saved successfully.'
+      )
+    }
+  } catch (error) {
+    console.error(error)
+
+    window.alert(
+      error.message ||
+      'Unable to save specialty pizza.'
+    )
+  }
+}
+
 </script>
 
 <style scoped>
@@ -662,5 +805,29 @@ async function saveTopping() {
   .pizza-size-form {
     grid-template-columns: 1fr;
   }
+}
+
+.pizza-specialty-list {
+  display: grid;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.pizza-specialty-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+
+  padding: 0.9rem;
+
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 0.5rem;
+}
+
+.pizza-specialty-form-wrapper {
+  display: grid;
+  gap: 1rem;
+  margin-top: 1rem;
 }
 </style>

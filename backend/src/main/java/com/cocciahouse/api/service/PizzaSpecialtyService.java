@@ -231,6 +231,16 @@ public class PizzaSpecialtyService {
         specialty.clearToppings();
         specialty.clearSpecialtyAddOns();
 
+        /*
+         * Flush the removals before rebuilding the specialty
+         * configuration.
+         *
+         * This prevents Hibernate from trying to insert a replacement
+         * add-on row before the previous row with the same
+         * specialty/add-on combination has been deleted.
+         */
+        pizzaSpecialtyRepository.flush();
+
         applySpecialtyConfiguration(
                 specialty,
                 menuSectionId,

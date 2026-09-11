@@ -158,7 +158,7 @@
 
                     <div class="section-actions">
 
-                        <button type="button" @click="toggleSectionItems(section.id)">
+                        <button v-if="section.name.trim().toLowerCase() !== 'pizza'" type="button" @click="toggleSectionItems(section.id)">
                             {{
                                 openSectionId === section.id
                                     ? 'Hide Items'
