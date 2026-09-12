@@ -77,246 +77,264 @@
             No menu sections yet.
         </p>
 
-        <section v-else class="section-list">
-            <article v-for="section in menuStore.sections" :key="section.id" class="admin-card section-card"
-                :class="{ inactive: !section.active }">
+        <section v-else class="section-list" :class="{
+            'section-list--grid': !expandedSectionId,
+            'section-list--workspace': expandedSectionId
+        }">
 
-                <!-- EDIT MODE -->
-                <form v-if="editingSectionId === section.id" class="admin-form section-edit-form"
-                    @submit.prevent="handleSaveSection(section.id)">
-                    <div class="admin-section-heading">
-                        <h2>Edit Section</h2>
-                    </div>
+            <!-- COLLAPSED GRID -->
 
-                    <label>
-                        Section name
+            <Transition name="section-expand" mode="out-in">
 
-                        <input v-model="editSection.name" type="text" maxlength="100" required>
-                    </label>
+                <!-- GRID VIEW -->
 
-                    <label>
-                        Included with this section
-
-                        <textarea v-model="editSection.subtitle" rows="2"></textarea>
-                    </label>
-
-                    <label>
-                        Additional note
-
-                        <textarea v-model="editSection.footerText" rows="2"></textarea>
-                    </label>
-
-                    <label>
-                        Display order
-
-                        <input v-model.number="editSection.displayOrder" type="number" min="0" required>
-                    </label>
-
-                    <div class="admin-form-actions">
-                        <button type="submit" class="primary-button" :disabled="savingSectionId === section.id">
-                            {{
-                                savingSectionId === section.id
-                                    ? 'Saving...'
-                                    : 'Save Changes'
-                            }}
-                        </button>
-
-                        <button type="button" :disabled="savingSectionId === section.id" @click="cancelEditingSection">
-                            Cancel
-                        </button>
-                    </div>
-                </form>
-
-
-                <!-- NORMAL CARD -->
-
-                <template v-else>
-                    <div class="section-heading">
-                        <div>
-                            <h2>{{ section.name }}</h2>
-
-                            <p v-if="section.subtitle" class="section-subtitle">
-                                {{ section.subtitle }}
-                            </p>
-                        </div>
-
-                        <span class="status-badge" :class="section.active
-                            ? 'status-current'
-                            : 'status-archived'
-                            ">
-                            {{ section.active ? 'Active' : 'Inactive' }}
+                <div v-if="!expandedSectionId" key="section-grid" class="section-grid-view">
+                    <button v-for="section in menuStore.sections" :key="section.id" type="button" class="section-tile"
+                        :class="{ inactive: !section.active }" @click="openSectionWorkspace(section)">
+                        <span class="section-tile__name">
+                            {{ section.name }}
                         </span>
-                    </div>
 
-                    <p v-if="section.footerText" class="section-footer">
-                        {{ section.footerText }}
-                    </p>
+                        <span v-if="!section.active" class="section-tile__status">
+                            Inactive
+                        </span>
+                    </button>
+                </div>
 
-                    <div class="section-meta">
-                        Display order: {{ section.displayOrder }}
-                    </div>
+                <!-- WORKSPACE VIEW -->
 
-                    <div class="section-actions">
+                <article v-else-if="expandedSection" :key="expandedSection.id"
+                    class="admin-card section-card section-card--workspace"
+                    :class="{ inactive: !expandedSection.active }">
 
-                        <button v-if="section.name.trim().toLowerCase() !== 'pizza'" type="button" @click="toggleSectionItems(section.id)">
-                            {{
-                                openSectionId === section.id
-                                    ? 'Hide Items'
-                                    : 'Manage Items'
-                            }}
-                        </button>
-
-                        <button v-if="section.name.trim().toLowerCase() === 'pizza'" type="button" @click="
-                            openPizzaSectionId =
-                            openPizzaSectionId === section.id
-                                ? null
-                                : section.id
-                            ">
-                            {{
-                                openPizzaSectionId === section.id
-                                    ? 'Hide Pizza Setup'
-                                    : 'Manage Pizza'
-                            }}
-                        </button>
-
-                        <button type="button" @click="startEditingSection(section)">
-                            Edit Section
-                        </button>
-
-                        <button type="button" :disabled="savingSectionId === section.id"
-                            @click="toggleSectionActive(section)">
-                            {{
-                                section.active
-                                    ? 'Deactivate'
-                                    : 'Reactivate'
-                            }}
-                        </button>
-                    </div>
-                </template>
-
-                <!-- SELECTED SECTION ACTIVE EDIT -->
-
-                <section v-if="
-                    openSectionId === section.id
-                    && editingSectionId !== section.id
-                " class="menu-items-panel">
-
-                    <div class="admin-section-heading">
+                    <div class="workspace-header">
                         <div>
-                            <h3>Menu Items</h3>
-
-                            <span>
-                                {{
-                                    (menuStore.itemsBySection[section.id] ?? []).length
-                                }}
-                                {{
-                                    (menuStore.itemsBySection[section.id] ?? []).length === 1
-                                        ? 'item'
-                                        : 'items'
-                                }}
+                            <span class="workspace-eyebrow">
+                                Menu Section
                             </span>
+
+                            <h2>{{ expandedSection.name }}</h2>
                         </div>
 
-                        <button v-if="addingItemSectionId !== section.id" type="button" class="primary-button"
-                            @click="startAddingMenuItem(section.id)">
-                            + Add Menu Item
+                        <button type="button" class="workspace-collapse-button" @click="collapseSectionWorkspace">
+                            Collapse Section
                         </button>
                     </div>
+                    <template v-for="section in [expandedSection]" :key="section.id">
 
-                    <div v-if="addingItemSectionId === section.id" class="menu-item-form-panel">
-                        <MenuItemForm :item="editingMenuItem" :saving="savingMenuItem" :default-display-order="(menuStore.itemsBySection[section.id] ?? []).length
-                            " @submit="
-                                payload =>
-                                    handleSaveMenuItem(section.id, payload)
-                            " @cancel="cancelMenuItemForm" />
-                    </div>
+                        <!-- EDIT MODE -->
+                        <form v-if="editingSectionId === section.id" class="admin-form section-edit-form"
+                            @submit.prevent="handleSaveSection(section.id)">
+                            <div class="admin-section-heading">
+                                <h2>Edit Section</h2>
+                            </div>
 
-                    <p v-if="
-                        (menuStore.itemsBySection[section.id] ?? []).length === 0
-                    " class="state-message">
-                        No items in this section yet.
-                    </p>
+                            <label>
+                                Section name
 
-                    <div v-else class="menu-item-list">
-                        <article v-for="(item, itemIndex) in
-                            menuStore.itemsBySection[section.id]" :key="item.id" class="menu-item-row">
+                                <input v-model="editSection.name" type="text" maxlength="100" required>
+                            </label>
 
-                            <div>
-                                <strong>{{ item.recipeName }}</strong>
+                            <label>
+                                Included with this section
 
-                                <p v-if="item.description">
-                                    {{ item.description }}
+                                <textarea v-model="editSection.subtitle" rows="2"></textarea>
+                            </label>
+
+                            <label>
+                                Additional note
+
+                                <textarea v-model="editSection.footerText" rows="2"></textarea>
+                            </label>
+
+                            <label>
+                                Display order
+
+                                <input v-model.number="editSection.displayOrder" type="number" min="0" required>
+                            </label>
+
+                            <div class="admin-form-actions">
+                                <button type="submit" class="primary-button" :disabled="savingSectionId === section.id">
+                                    {{
+                                        savingSectionId === section.id
+                                            ? 'Saving...'
+                                            : 'Save Changes'
+                                    }}
+                                </button>
+
+                                <button type="button" :disabled="savingSectionId === section.id"
+                                    @click="cancelEditingSection">
+                                    Cancel
+                                </button>
+                            </div>
+                        </form>
+
+
+                        <!-- NORMAL CARD -->
+
+                        <template v-else>
+                            <div class="section-heading">
+                                <p v-if="section.subtitle" class="section-subtitle">
+                                    {{ section.subtitle }}
                                 </p>
 
-                                <ul class="menu-item-prices">
-                                    <li v-for="price in item.prices" :key="price.id">
-                                        <span v-if="price.label">
-                                            {{ price.label }}:
+                                <span class="status-badge" :class="section.active
+                                    ? 'status-current'
+                                    : 'status-archived'
+                                    ">
+                                    {{ section.active ? 'Active' : 'Inactive' }}
+                                </span>
+                            </div>
+
+                            <p v-if="section.footerText" class="section-footer">
+                                {{ section.footerText }}
+                            </p>
+
+                            <div class="section-meta">
+                                Display order: {{ section.displayOrder }}
+                            </div>
+
+                            <div class="section-actions">
+
+                                <button type="button" @click="startEditingSection(section)">
+                                    Edit Section
+                                </button>
+
+                                <button type="button" :disabled="savingSectionId === section.id"
+                                    @click="toggleSectionActive(section)">
+                                    {{
+                                        section.active
+                                            ? 'Deactivate'
+                                            : 'Reactivate'
+                                    }}
+                                </button>
+                            </div>
+                        </template>
+
+                        <!-- SELECTED SECTION ACTIVE EDIT -->
+
+                        <section v-if="
+                            openSectionId === section.id
+                            && editingSectionId !== section.id
+                        " class="menu-items-panel">
+
+                            <div class="admin-section-heading">
+                                <div>
+                                    <h3>Menu Items</h3>
+
+                                    <span>
+                                        {{
+                                            (menuStore.itemsBySection[section.id] ?? []).length
+                                        }}
+                                        {{
+                                            (menuStore.itemsBySection[section.id] ?? []).length === 1
+                                                ? 'item'
+                                                : 'items'
+                                        }}
+                                    </span>
+                                </div>
+
+                                <button v-if="addingItemSectionId !== section.id" type="button" class="primary-button"
+                                    @click="startAddingMenuItem(section.id)">
+                                    + Add Menu Item
+                                </button>
+                            </div>
+
+                            <div v-if="addingItemSectionId === section.id" class="menu-item-form-panel">
+                                <MenuItemForm :item="editingMenuItem" :saving="savingMenuItem" :default-display-order="(menuStore.itemsBySection[section.id] ?? []).length
+                                    " @submit="
+                                        payload =>
+                                            handleSaveMenuItem(section.id, payload)
+                                    " @cancel="cancelMenuItemForm" />
+                            </div>
+
+                            <p v-if="
+                                (menuStore.itemsBySection[section.id] ?? []).length === 0
+                            " class="state-message">
+                                No items in this section yet.
+                            </p>
+
+                            <div v-else class="menu-item-list">
+                                <article v-for="(item, itemIndex) in
+                                    menuStore.itemsBySection[section.id]" :key="item.id" class="menu-item-row">
+
+                                    <div>
+                                        <strong>{{ item.recipeName }}</strong>
+
+                                        <p v-if="item.description">
+                                            {{ item.description }}
+                                        </p>
+
+                                        <ul class="menu-item-prices">
+                                            <li v-for="price in item.prices" :key="price.id">
+                                                <span v-if="price.label">
+                                                    {{ price.label }}:
+                                                </span>
+
+                                                ${{ formatPrice(price.amount) }}
+                                            </li>
+                                        </ul>
+                                    </div>
+
+                                    <div class="menu-item-actions">
+                                        <span class="item-status" :class="{ hidden: !item.visible }">
+                                            {{ item.visible ? 'Visible' : 'Hidden' }}
                                         </span>
 
-                                        ${{ formatPrice(price.amount) }}
-                                    </li>
-                                </ul>
+                                        <button v-if="itemIndex > 0" type="button"
+                                            :disabled="movingMenuItemId === item.id" @click="
+                                                handleMoveMenuItem(
+                                                    section.id,
+                                                    item.id,
+                                                    'UP'
+                                                )
+                                                ">
+                                            ↑
+                                        </button>
+
+                                        <button v-if="
+                                            itemIndex <
+                                            (menuStore.itemsBySection[section.id] ?? []).length - 1
+                                        " type="button" :disabled="movingMenuItemId === item.id" @click="
+                                            handleMoveMenuItem(
+                                                section.id,
+                                                item.id,
+                                                'DOWN'
+                                            )
+                                            ">
+                                            ↓
+                                        </button>
+
+                                        <button type="button" :disabled="savingMenuItem"
+                                            @click="toggleMenuItemVisibility(section.id, item)">
+                                            {{ item.visible ? 'Hide' : 'Show' }}
+                                        </button>
+
+                                        <button type="button" :disabled="savingMenuItem"
+                                            @click="startEditingMenuItem(section.id, item)">
+                                            Edit
+                                        </button>
+                                    </div>
+                                </article>
                             </div>
+                        </section>
 
-                            <div class="menu-item-actions">
-                                <span class="item-status" :class="{ hidden: !item.visible }">
-                                    {{ item.visible ? 'Visible' : 'Hidden' }}
-                                </span>
+                        <!-- PIZZA CONFIGURATION -->
 
-                                <button v-if="itemIndex > 0" type="button" :disabled="movingMenuItemId === item.id"
-                                    @click="
-                                        handleMoveMenuItem(
-                                            section.id,
-                                            item.id,
-                                            'UP'
-                                        )
-                                        ">
-                                    ↑
-                                </button>
-
-                                <button v-if="
-                                    itemIndex <
-                                    (menuStore.itemsBySection[section.id] ?? []).length - 1
-                                " type="button" :disabled="movingMenuItemId === item.id" @click="
-                                    handleMoveMenuItem(
-                                        section.id,
-                                        item.id,
-                                        'DOWN'
-                                    )
-                                    ">
-                                    ↓
-                                </button>
-
-                                <button type="button" :disabled="savingMenuItem"
-                                    @click="toggleMenuItemVisibility(section.id, item)">
-                                    {{ item.visible ? 'Hide' : 'Show' }}
-                                </button>
-
-                                <button type="button" :disabled="savingMenuItem"
-                                    @click="startEditingMenuItem(section.id, item)">
-                                    Edit
-                                </button>
-                            </div>
-                        </article>
-                    </div>
-                </section>
-
-                <!-- PIZZA CONFIGURATION -->
-
-                <PizzaManager v-if="
-                    openPizzaSectionId === section.id
-                    && editingSectionId !== section.id
-                " :section="section" />
-
-            </article>
+                        <PizzaManager v-if="
+                            openPizzaSectionId === section.id
+                            && editingSectionId !== section.id
+                        " :section="section" />
+                    </template>
+                </article>
+            </Transition>
         </section>
     </section>
 </template>
 
 <script setup>
 
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 
 import { useMenuStore } from '@/stores/menuStore'
 import MenuItemForm from '@/components/admin/MenuItemForm.vue'
@@ -330,8 +348,17 @@ const creatingSection = ref(false)
 
 const editingSectionId = ref(null)
 const savingSectionId = ref(null)
+
 const openPizzaSectionId = ref(null)
 const openSectionId = ref(null)
+
+const expandedSectionId = ref(null)
+
+const expandedSection = computed(() =>
+    menuStore.sections.find(
+        section => section.id === expandedSectionId.value
+    ) ?? null
+)
 
 const addingItemSectionId = ref(null)
 const editingMenuItem = ref(null)
@@ -591,15 +618,39 @@ async function handleCreateSection() {
     }
 }
 
-async function toggleSectionItems(sectionId) {
-    if (openSectionId.value === sectionId) {
+async function openSectionWorkspace(section) {
+    expandedSectionId.value = section.id
+
+    editingSectionId.value = null
+    addingItemSectionId.value = null
+    editingMenuItem.value = null
+
+    const isPizza =
+        section.name.trim().toLowerCase() === 'pizza'
+
+    if (isPizza) {
+        openPizzaSectionId.value = section.id
         openSectionId.value = null
+
         return
     }
 
-    openSectionId.value = sectionId
+    openPizzaSectionId.value = null
+    openSectionId.value = section.id
 
-    await menuStore.fetchItems(sectionId)
+    await menuStore.fetchItems(section.id)
+}
+
+function collapseSectionWorkspace() {
+    expandedSectionId.value = null
+    openSectionId.value = null
+    openPizzaSectionId.value = null
+
+    editingSectionId.value = null
+    addingItemSectionId.value = null
+    editingMenuItem.value = null
+
+    menuStore.clearError()
 }
 
 </script>
@@ -747,14 +798,173 @@ async function toggleSectionItems(sectionId) {
     opacity: 0.55;
 }
 
-@media (max-width: 700px) {
-    .page-actions {
-        align-items: stretch;
+.section-list--grid {
+    display: grid;
+    gap: 0.75rem;
+}
+
+.section-list--workspace {
+    display: block;
+}
+
+.section-tile {
+    min-height: 100px;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 0.4rem;
+
+    text-align: center;
+}
+
+.section-tile.inactive {
+    opacity: 0.55;
+}
+
+.section-tile__name {
+    font-size: 1.05rem;
+}
+
+.section-tile__status {
+    font-size: 0.75rem;
+    opacity: 0.7;
+}
+
+.section-card--workspace {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.workspace-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.workspace-header h2 {
+    margin: 0.2rem 0 0;
+}
+
+.workspace-eyebrow {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    opacity: 0.65;
+}
+
+.workspace-collapse-button {
+    flex-shrink: 0;
+}
+
+.section-grid-view {
+    display: grid;
+    grid-template-columns: repeat(auto-fit,
+            minmax(150px, 1fr));
+    gap: 0.75rem;
+}
+
+/* ==========================================================
+   ANIMATION EXPAND / COLLAPSE
+   ========================================================== */
+
+.section-expand-enter-active,
+.section-expand-leave-active {
+    transition:
+        opacity 120ms ease,
+        transform 120ms ease;
+}
+
+.section-expand-enter-from,
+.section-expand-leave-to {
+    opacity: 0;
+    transform: scale(0.985) translateY(4px);
+}
+
+.section-expand-enter-to,
+.section-expand-leave-from {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+}
+
+@media (max-width: 600px) {
+    .section-heading {
         flex-direction: column;
     }
 
-    .section-heading {
+    .section-tile {
+        min-height: 82px;
+        padding: 0.7rem 0.5rem;
+    }
+
+    .section-tile__name {
+        font-size: 0.9rem;
+    }
+
+    .workspace-header {
         flex-direction: column;
+        align-items: stretch;
+    }
+
+    .workspace-collapse-button {
+        align-self: flex-start;
+        width: auto;
+        padding: 0.45rem 0.65rem;
+        font-size: 0.78rem;
+    }
+
+    .section-grid-view {
+        grid-template-columns: repeat(2,
+                minmax(0, 1fr));
+        gap: 0.55rem;
+    }
+
+    .menu-item-row {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.75rem;
+    }
+
+    .menu-item-row>div:first-child {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .menu-item-actions {
+        width: 100%;
+        min-width: 0;
+
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.4rem;
+    }
+
+    .item-status {
+        width: 100%;
+        margin-bottom: 0.1rem;
+    }
+
+    .menu-item-actions button {
+        width: auto;
+        min-width: 0;
+
+        padding: 0.45rem 0.6rem;
+
+        font-size: 0.78rem;
+        line-height: 1.1;
+    }
+
+    .menu-item-row strong,
+    .menu-item-row p {
+        overflow-wrap: anywhere;
     }
 }
 </style>

@@ -149,18 +149,82 @@
       <div v-if="showAddOnEditor">
 
         <button v-if="!showAddOnForm" type="button" @click="startAddOn">
-          + Add Pricing Rule
+          + Add Extra
         </button>
 
-        <div v-if="menuStore.pizzaAddOns.length" class="pizza-size-list">
-          <div v-for="addOn in menuStore.pizzaAddOns" :key="addOn.id" class="pizza-size-row">
+        <div class="pizza-size-list">
+
+          <!-- PER-ITEM PRICE RULE -->
+
+          <div v-if="perItemRule" class="pizza-size-row">
+            <template v-if="editingAddOnId !== perItemRule.id">
+              <div>
+                <strong>{{ perItemRule.name }}</strong>
+                <span> — Per Item</span>
+
+                <span v-if="!perItemRule.active">
+                  — Inactive
+                </span>
+              </div>
+
+              <div class="pizza-size-row__actions">
+                <strong>
+                  +${{ Number(perItemRule.amount).toFixed(2) }}
+                </strong>
+
+                <button type="button" @click="startEditAddOn(perItemRule)">
+                  Edit
+                </button>
+              </div>
+            </template>
+
+            <form v-else class="pizza-size-form" @submit.prevent="saveAddOn">
+              <label>
+                Name
+
+                <input v-model="addOnForm.name" type="text" required />
+              </label>
+
+              <label>
+                Amount
+
+                <input v-model="addOnForm.amount" type="number" min="0.01" step="0.01" required />
+              </label>
+
+              <label class="checkbox-label">
+                <input v-model="addOnForm.active" type="checkbox" />
+
+                Active
+              </label>
+
+              <div class="pizza-size-form__actions">
+                <button type="submit">
+                  Save
+                </button>
+
+                <button type="button" @click="cancelAddOnForm">
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <div v-else class="pizza-empty-rule">
+            <p>
+              No per-item pizza price has been configured.
+            </p>
+
+            <button v-if="!showAddOnForm" type="button" @click="startPerItemRule">
+              Set Per-Item Price
+            </button>
+          </div>
+
+          <!-- EXTRAS -->
+
+          <div v-for="addOn in extraAddOns" :key="addOn.id" class="pizza-size-row">
             <template v-if="editingAddOnId !== addOn.id">
               <div>
                 <strong>{{ addOn.name }}</strong>
-
-                <span v-if="addOn.type === 'TOPPING'">
-                  — Per Item
-                </span>
 
                 <span v-if="!addOn.active">
                   — Inactive
@@ -191,20 +255,6 @@
                 <input v-model="addOnForm.amount" type="number" min="0.01" step="0.01" required />
               </label>
 
-              <label>
-                Type
-
-                <select v-model="addOnForm.type">
-                  <option value="TOPPING">
-                    Per Item
-                  </option>
-
-                  <option value="EXTRA">
-                    Extra
-                  </option>
-                </select>
-              </label>
-
               <label class="checkbox-label">
                 <input v-model="addOnForm.active" type="checkbox" />
 
@@ -223,55 +273,44 @@
             </form>
           </div>
         </div>
-        <p v-else-if="!showAddOnForm">
-          No pizza pricing rules have been added yet.
-        </p>
+        <form v-if="showAddOnForm && !editingAddOnId" class="pizza-size-form pizza-size-form--new"
+          @submit.prevent="saveAddOn">
+          <label>
+            Name
+
+            <input v-model="addOnForm.name" type="text" :placeholder="addOnForm.type === 'TOPPING'
+              ? 'Additional Item'
+              : 'Double Cheese'
+              " required />
+          </label>
+
+          <label>
+            Amount
+
+            <input v-model="addOnForm.amount" type="number" min="0.01" step="0.01" placeholder="2.00" required />
+          </label>
+
+          <label class="checkbox-label">
+            <input v-model="addOnForm.active" type="checkbox" />
+
+            Active
+          </label>
+
+          <div class="pizza-size-form__actions">
+            <button type="submit">
+              {{
+                addOnForm.type === 'TOPPING'
+                  ? 'Set Per-Item Price'
+                  : 'Add Extra'
+              }}
+            </button>
+
+            <button type="button" @click="cancelAddOnForm">
+              Cancel
+            </button>
+          </div>
+        </form>
       </div>
-
-      <form v-if="showAddOnForm && !editingAddOnId" class="pizza-size-form pizza-size-form--new"
-        @submit.prevent="saveAddOn">
-        <label>
-          Name
-
-          <input v-model="addOnForm.name" type="text" placeholder="Additional Item" required />
-        </label>
-
-        <label>
-          Amount
-
-          <input v-model="addOnForm.amount" type="number" min="0.01" step="0.01" placeholder="2.00" required />
-        </label>
-
-        <label>
-          Type
-
-          <select v-model="addOnForm.type">
-            <option value="TOPPING">
-              Per Item
-            </option>
-
-            <option value="EXTRA">
-              Extra
-            </option>
-          </select>
-        </label>
-
-        <label class="checkbox-label">
-          <input v-model="addOnForm.active" type="checkbox" />
-
-          Active
-        </label>
-
-        <div class="pizza-size-form__actions">
-          <button type="submit">
-            Add
-          </button>
-
-          <button type="button" @click="cancelAddOnForm">
-            Cancel
-          </button>
-        </div>
-      </form>
     </div>
 
     <!-- ==================== TOPPINGS ==================== -->
@@ -294,7 +333,7 @@
 
       <div v-if="showToppingEditor">
 
-        <button v-if="!showAddSize && !editingSizeId" type="button" @click="startAddSize">
+        <button v-if="!showToppingForm && !editingToppingId" type="button" @click="startAddTopping">
           + Add Topping
         </button>
 
@@ -435,7 +474,7 @@
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, computed } from 'vue'
 import { useMenuStore } from '@/stores/menuStore'
 import PizzaSpecialtyForm from './PizzaSpecialtyForm.vue'
 
@@ -445,6 +484,18 @@ const props = defineProps({
     required: true,
   },
 })
+
+const perItemRule = computed(() =>
+  menuStore.pizzaAddOns.find(
+    addOn => addOn.type === 'TOPPING'
+  )
+)
+
+const extraAddOns = computed(() =>
+  menuStore.pizzaAddOns.filter(
+    addOn => addOn.type === 'EXTRA'
+  )
+)
 
 const menuStore = useMenuStore()
 
@@ -546,6 +597,19 @@ function startAddOn() {
     name: '',
     amount: '',
     type: 'EXTRA',
+    active: true,
+  }
+
+  showAddOnForm.value = true
+}
+
+function startPerItemRule() {
+  editingAddOnId.value = null
+
+  addOnForm.value = {
+    name: 'Additional Item',
+    amount: '',
+    type: 'TOPPING',
     active: true,
   }
 
@@ -795,17 +859,6 @@ async function saveSpecialty(data) {
   margin-top: 1rem;
 }
 
-@media (max-width: 700px) {
-
-  .pizza-panel__header,
-  .pizza-size-row {
-    align-items: stretch;
-  }
-
-  .pizza-size-form {
-    grid-template-columns: 1fr;
-  }
-}
 
 .pizza-specialty-list {
   display: grid;
@@ -829,5 +882,105 @@ async function saveSpecialty(data) {
   display: grid;
   gap: 1rem;
   margin-top: 1rem;
+}
+
+@media (max-width: 700px) {
+
+  .pizza-panel__header,
+  .pizza-size-row {
+    align-items: stretch;
+  }
+
+  .pizza-size-form {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .section-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.4rem;
+  }
+
+  .section-actions button {
+    width: 100%;
+    min-width: 0;
+    padding: 0.5rem 0.6rem;
+    font-size: 0.78rem;
+    line-height: 1.15;
+    white-space: normal;
+  }
+
+  .menu-item-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.35rem;
+  }
+
+  .menu-item-actions button {
+    width: 100%;
+    min-width: 0;
+    padding: 0.45rem 0.5rem;
+    font-size: 0.75rem;
+  }
+
+  .pizza-panel {
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+
+  .pizza-panel__header,
+  .pizza-panel-header {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+
+  .pizza-panel__header>div,
+  .pizza-panel-header>div {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .pizza-panel__header h4,
+  .pizza-panel-header h4 {
+    margin-bottom: 0.35rem;
+  }
+
+  .pizza-panel__header p,
+  .pizza-panel-header p {
+    margin: 0;
+  }
+
+  .pizza-panel__header>button,
+  .pizza-panel-header>button {
+    align-self: flex-start;
+    width: auto;
+    max-width: 100%;
+    padding: 0.45rem 0.7rem;
+    font-size: 0.78rem;
+    line-height: 1.1;
+    white-space: nowrap;
+  }
+
+  .pizza-size-row {
+    min-width: 0;
+  }
+
+  .pizza-size-row__actions {
+    flex-shrink: 0;
+  }
+
+  .pizza-size-row button,
+  .pizza-specialty-row button,
+  .pizza-editor-actions button,
+  .pizza-size-form button {
+    padding: 0.45rem 0.6rem;
+    font-size: 0.78rem;
+    line-height: 1.1;
+  }
 }
 </style>
