@@ -18,6 +18,43 @@ export async function updateMenuSection(id, section) {
     })
 }
 
+// =========================
+// Menu Subsections
+// =========================
+
+export async function getMenuSubsections(sectionId) {
+    return apiRequest(
+        `/api/admin/menu/sections/${sectionId}/subsections`
+    )
+}
+
+export async function createMenuSubsection(
+    sectionId,
+    subsection
+) {
+    return apiRequest(
+        `/api/admin/menu/sections/${sectionId}/subsections`,
+        {
+            method: 'POST',
+            body: JSON.stringify(subsection)
+        }
+    )
+}
+
+export async function updateMenuSubsection(
+    sectionId,
+    subsectionId,
+    subsection
+) {
+    return apiRequest(
+        `/api/admin/menu/sections/${sectionId}/subsections/${subsectionId}`,
+        {
+            method: 'PUT',
+            body: JSON.stringify(subsection)
+        }
+    )
+}
+
 export async function getMenuItems(sectionId) {
     return apiRequest(
         `/api/admin/menu/sections/${sectionId}/items`

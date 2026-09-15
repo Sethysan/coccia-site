@@ -15,6 +15,7 @@ public interface MenuItemRepository
             SELECT DISTINCT menuItem
             FROM MenuItem menuItem
             JOIN FETCH menuItem.recipe
+            LEFT JOIN FETCH menuItem.menuSubsection
             LEFT JOIN FETCH menuItem.prices
             WHERE menuItem.menuSection.id = :menuSectionId
             ORDER BY menuItem.displayOrder
@@ -27,6 +28,7 @@ public interface MenuItemRepository
             SELECT DISTINCT menuItem
             FROM MenuItem menuItem
             JOIN FETCH menuItem.recipe
+            LEFT JOIN FETCH menuItem.menuSubsection
             LEFT JOIN FETCH menuItem.prices
             WHERE menuItem.menuSection.id = :menuSectionId
               AND menuItem.visible = true

@@ -8,6 +8,9 @@ public record MenuItemResponse(
 
         Long menuSectionId,
 
+        Long menuSubsectionId,
+        String menuSubsectionName,
+
         Long recipeId,
         String recipeName,
         String description,

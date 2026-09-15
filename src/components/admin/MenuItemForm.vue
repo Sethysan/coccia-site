@@ -47,7 +47,32 @@
             </div>
         </div>
 
-        <div>
+        <label v-if="subsections.length">
+            Subsection
+
+            <select v-model="form.menuSubsectionId">
+                <option :value="null">
+                    No subsection
+                </option>
+
+                <option v-for="subsection in subsections" :key="subsection.id" :value="subsection.id">
+                    {{ subsection.name }}
+                </option>
+            </select>
+        </label>
+
+        <div v-if="usesSharedSubsectionPrice" class="shared-subsection-price">
+            <strong>
+                {{ selectedSubsection.name }} ·
+                ${{ Number(selectedSubsection.price).toFixed(2) }}
+            </strong>
+
+            <span>
+                Items in this subsection use its shared price.
+            </span>
+        </div>
+
+        <div v-if="!usesSharedSubsectionPrice">
             <h4>Prices</h4>
 
             <div v-for="(price, index) in form.prices" :key="index" class="price-row">
@@ -122,6 +147,11 @@ const props = defineProps({
     defaultDisplayOrder: {
         type: Number,
         default: 0
+    },
+
+    subsections: {
+        type: Array,
+        default: () => []
     }
 })
 
@@ -142,6 +172,7 @@ const editing = computed(() => Boolean(props.item))
 
 const form = reactive({
     recipeId: null,
+    menuSubsectionId: null,
     displayOrder: 0,
     visible: true,
     prices: [
@@ -152,6 +183,22 @@ const form = reactive({
         }
     ]
 })
+
+const selectedSubsection = computed(() => {
+    if (form.menuSubsectionId == null) {
+        return null
+    }
+
+    return props.subsections.find(
+        subsection =>
+            Number(subsection.id) ===
+            Number(form.menuSubsectionId)
+    ) ?? null
+})
+
+const usesSharedSubsectionPrice = computed(() =>
+    selectedSubsection.value?.price != null
+)
 
 watch(
     () => props.item,
@@ -179,6 +226,7 @@ function populateForm(item) {
     }
 
     form.recipeId = item.recipeId
+    form.menuSubsectionId = item.menuSubsectionId ?? null
     form.displayOrder = item.displayOrder
     form.visible = item.visible
 
@@ -193,6 +241,7 @@ function populateForm(item) {
 
 function resetForm() {
     form.recipeId = null
+    form.menuSubsectionId = null
     form.displayOrder = props.defaultDisplayOrder
     form.visible = true
 
@@ -274,20 +323,23 @@ function submitForm() {
 
     emit('submit', {
         recipeId: form.recipeId,
+        menuSubsectionId: form.menuSubsectionId,
         displayOrder: form.displayOrder,
         visible: form.visible,
 
-        prices: form.prices.map(
-            (price, index) => ({
-                label:
-                    price.label?.trim()
-                        ? price.label.trim()
-                        : null,
+        prices: usesSharedSubsectionPrice.value
+            ? []
+            : form.prices.map(
+                (price, index) => ({
+                    label:
+                        price.label?.trim()
+                            ? price.label.trim()
+                            : null,
 
-                amount: Number(price.amount),
-                displayOrder: index
-            })
-        )
+                    amount: Number(price.amount),
+                    displayOrder: index
+                })
+            )
     })
 }
 </script>

@@ -5,9 +5,11 @@ import com.cocciahouse.api.dto.menu.MenuItemRequest;
 import com.cocciahouse.api.model.MenuItem;
 import com.cocciahouse.api.model.MenuSection;
 import com.cocciahouse.api.model.Recipe;
+import com.cocciahouse.api.model.MenuSubsection;
 import com.cocciahouse.api.repository.MenuItemRepository;
 import com.cocciahouse.api.repository.MenuSectionRepository;
 import com.cocciahouse.api.repository.RecipeRepository;
+import com.cocciahouse.api.repository.MenuSubsectionRepository;
 import com.cocciahouse.api.exception.MenuItemNotFoundException;
 import com.cocciahouse.api.exception.MenuSectionNotFoundException;
 import com.cocciahouse.api.exception.RecipeNotFoundException;
@@ -39,6 +41,9 @@ class MenuItemServiceTest {
     @Mock
     private RecipeRepository recipeRepository;
 
+    @Mock
+    private MenuSubsectionRepository menuSubsectionRepository;
+
     private MenuItemService menuItemService;
 
     @BeforeEach
@@ -47,7 +52,8 @@ class MenuItemServiceTest {
                 new MenuItemService(
                         menuItemRepository,
                         menuSectionRepository,
-                        recipeRepository
+                        recipeRepository,
+                        menuSubsectionRepository
                 );
     }
 
@@ -251,6 +257,380 @@ class MenuItemServiceTest {
                 result,
                 result.getPrices().get(1).getMenuItem()
         );
+    }
+
+    @Test
+    void createMenuItem_assignsValidSubsection() {
+
+        Long sectionId = 2L;
+        Long subsectionId = 5L;
+        Long recipeId = 10L;
+
+        MenuSection section =
+                new MenuSection("Beverages");
+
+        MenuSubsection subsection =
+                new MenuSubsection(
+                        section,
+                        "Beer"
+                );
+
+        Recipe recipe =
+                new Recipe("Bud Light");
+
+        recipe.setActive(true);
+
+        MenuItemRequest request =
+                new MenuItemRequest(
+                        recipeId,
+                        subsectionId,
+                        0,
+                        true,
+                        List.of(
+                                new MenuItemPriceRequest(
+                                        null,
+                                        new BigDecimal("4.00"),
+                                        0
+                                )
+                        )
+                );
+
+        when(
+                menuSectionRepository.findById(sectionId)
+        ).thenReturn(
+                Optional.of(section)
+        );
+
+        when(
+                recipeRepository.findById(recipeId)
+        ).thenReturn(
+                Optional.of(recipe)
+        );
+
+        when(
+                menuItemRepository
+                        .existsByMenuSectionIdAndRecipeId(
+                                sectionId,
+                                recipe.getId()
+                        )
+        ).thenReturn(false);
+
+        when(
+                menuSubsectionRepository
+                        .findByIdAndMenuSectionId(
+                                subsectionId,
+                                sectionId
+                        )
+        ).thenReturn(
+                Optional.of(subsection)
+        );
+
+        when(
+                menuItemRepository
+                        .findByMenuSectionIdOrderByDisplayOrderAsc(
+                                sectionId
+                        )
+        ).thenReturn(
+                List.of()
+        );
+
+        when(
+                menuItemRepository.save(any(MenuItem.class))
+        ).thenAnswer(
+                invocation -> invocation.getArgument(0)
+        );
+
+        MenuItem result =
+                menuItemService.createMenuItem(
+                        sectionId,
+                        request
+                );
+
+        assertSame(
+                section,
+                result.getMenuSection()
+        );
+
+        assertSame(
+                recipe,
+                result.getRecipe()
+        );
+
+        assertSame(
+                subsection,
+                result.getMenuSubsection()
+        );
+
+        assertEquals(
+                0,
+                result.getDisplayOrder()
+        );
+
+        assertTrue(
+                result.isVisible()
+        );
+    }
+
+    @Test
+    void createMenuItem_throwsWhenSubsectionBelongsToDifferentSection() {
+
+        Long sectionId = 2L;
+        Long subsectionId = 5L;
+        Long recipeId = 10L;
+
+        MenuSection section =
+                new MenuSection("Starters");
+
+        Recipe recipe =
+                new Recipe("Garlic Bread");
+
+        recipe.setActive(true);
+
+        MenuItemRequest request =
+                new MenuItemRequest(
+                        recipeId,
+                        subsectionId,
+                        0,
+                        true,
+                        List.of(
+                                new MenuItemPriceRequest(
+                                        null,
+                                        new BigDecimal("6.00"),
+                                        0
+                                )
+                        )
+                );
+
+        when(
+                menuSectionRepository.findById(sectionId)
+        ).thenReturn(
+                Optional.of(section)
+        );
+
+        when(
+                recipeRepository.findById(recipeId)
+        ).thenReturn(
+                Optional.of(recipe)
+        );
+
+        when(
+                menuItemRepository
+                        .existsByMenuSectionIdAndRecipeId(
+                                sectionId,
+                                recipe.getId()
+                        )
+        ).thenReturn(false);
+
+        when(
+                menuSubsectionRepository
+                        .findByIdAndMenuSectionId(
+                                subsectionId,
+                                sectionId
+                        )
+        ).thenReturn(
+                Optional.empty()
+        );
+
+        IllegalArgumentException exception =
+                assertThrows(
+                        IllegalArgumentException.class,
+                        () ->
+                                menuItemService.createMenuItem(
+                                        sectionId,
+                                        request
+                                )
+                );
+
+        assertEquals(
+                "Menu subsection does not belong to that menu section.",
+                exception.getMessage()
+        );
+
+        verify(
+                menuItemRepository,
+                never()
+        ).save(any());
+    }
+
+    @Test
+    void createMenuItem_allowsNoItemPriceWhenSubsectionHasSharedPrice() {
+
+        Long sectionId = 2L;
+        Long subsectionId = 5L;
+        Long recipeId = 10L;
+
+        MenuSection section =
+                new MenuSection("Beverages");
+
+        MenuSubsection subsection =
+                new MenuSubsection(
+                        section,
+                        "Pop"
+                );
+
+        subsection.setPrice(
+                new BigDecimal("3.00")
+        );
+
+        Recipe recipe =
+                new Recipe("Coke");
+
+        recipe.setActive(true);
+
+        MenuItemRequest request =
+                new MenuItemRequest(
+                        recipeId,
+                        subsectionId,
+                        0,
+                        true,
+                        List.of()
+                );
+
+        when(
+                menuSectionRepository.findById(sectionId)
+        ).thenReturn(
+                Optional.of(section)
+        );
+
+        when(
+                recipeRepository.findById(recipeId)
+        ).thenReturn(
+                Optional.of(recipe)
+        );
+
+        when(
+                menuItemRepository
+                        .existsByMenuSectionIdAndRecipeId(
+                                sectionId,
+                                recipe.getId()
+                        )
+        ).thenReturn(false);
+
+        when(
+                menuSubsectionRepository
+                        .findByIdAndMenuSectionId(
+                                subsectionId,
+                                sectionId
+                        )
+        ).thenReturn(
+                Optional.of(subsection)
+        );
+
+        when(
+                menuItemRepository
+                        .findByMenuSectionIdOrderByDisplayOrderAsc(
+                                sectionId
+                        )
+        ).thenReturn(
+                List.of()
+        );
+
+        when(
+                menuItemRepository.save(any(MenuItem.class))
+        ).thenAnswer(
+                invocation -> invocation.getArgument(0)
+        );
+
+        MenuItem result =
+                menuItemService.createMenuItem(
+                        sectionId,
+                        request
+                );
+
+        assertSame(
+                subsection,
+                result.getMenuSubsection()
+        );
+
+        assertTrue(
+                result.getPrices().isEmpty()
+        );
+
+        assertEquals(
+                new BigDecimal("3.00"),
+                result.getMenuSubsection().getPrice()
+        );
+    }
+
+    @Test
+    void createMenuItem_requiresItemPriceWhenSubsectionHasNoSharedPrice() {
+
+        Long sectionId = 2L;
+        Long subsectionId = 5L;
+        Long recipeId = 10L;
+
+        MenuSection section =
+                new MenuSection("Beverages");
+
+        MenuSubsection subsection =
+                new MenuSubsection(
+                        section,
+                        "Beer"
+                );
+
+        Recipe recipe =
+                new Recipe("Bud Light");
+
+        recipe.setActive(true);
+
+        MenuItemRequest request =
+                new MenuItemRequest(
+                        recipeId,
+                        subsectionId,
+                        0,
+                        true,
+                        List.of()
+                );
+
+        when(
+                menuSectionRepository.findById(sectionId)
+        ).thenReturn(
+                Optional.of(section)
+        );
+
+        when(
+                recipeRepository.findById(recipeId)
+        ).thenReturn(
+                Optional.of(recipe)
+        );
+
+        when(
+                menuItemRepository
+                        .existsByMenuSectionIdAndRecipeId(
+                                sectionId,
+                                recipe.getId()
+                        )
+        ).thenReturn(false);
+
+        when(
+                menuSubsectionRepository
+                        .findByIdAndMenuSectionId(
+                                subsectionId,
+                                sectionId
+                        )
+        ).thenReturn(
+                Optional.of(subsection)
+        );
+
+        IllegalArgumentException exception =
+                assertThrows(
+                        IllegalArgumentException.class,
+                        () ->
+                                menuItemService.createMenuItem(
+                                        sectionId,
+                                        request
+                                )
+                );
+
+        assertEquals(
+                "At least one price is required unless the menu subsection has a shared price.",
+                exception.getMessage()
+        );
+
+        verify(
+                menuItemRepository,
+                never()
+        ).save(any());
     }
 
     @Test

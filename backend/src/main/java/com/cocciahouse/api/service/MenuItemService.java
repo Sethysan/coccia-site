@@ -5,10 +5,12 @@ import com.cocciahouse.api.dto.menu.MenuItemRequest;
 import com.cocciahouse.api.model.MenuItem;
 import com.cocciahouse.api.model.MenuItemPrice;
 import com.cocciahouse.api.model.MenuSection;
+import com.cocciahouse.api.model.MenuSubsection;
 import com.cocciahouse.api.model.Recipe;
 import com.cocciahouse.api.repository.MenuItemRepository;
 import com.cocciahouse.api.repository.MenuSectionRepository;
 import com.cocciahouse.api.repository.RecipeRepository;
+import com.cocciahouse.api.repository.MenuSubsectionRepository;
 import com.cocciahouse.api.exception.MenuItemNotFoundException;
 import com.cocciahouse.api.exception.MenuSectionNotFoundException;
 import com.cocciahouse.api.exception.RecipeNotFoundException;
@@ -26,15 +28,18 @@ public class MenuItemService {
     private final MenuItemRepository menuItemRepository;
     private final MenuSectionRepository menuSectionRepository;
     private final RecipeRepository recipeRepository;
+    private final MenuSubsectionRepository menuSubsectionRepository;
 
     public MenuItemService(
             MenuItemRepository menuItemRepository,
             MenuSectionRepository menuSectionRepository,
-            RecipeRepository recipeRepository
+            RecipeRepository recipeRepository,
+            MenuSubsectionRepository menuSubsectionRepository
     ) {
         this.menuItemRepository = menuItemRepository;
         this.menuSectionRepository = menuSectionRepository;
         this.recipeRepository = recipeRepository;
+        this.menuSubsectionRepository = menuSubsectionRepository;
     }
 
     @Transactional(readOnly = true)
@@ -104,6 +109,22 @@ public class MenuItemService {
 
         menuItem.setMenuSection(section);
         menuItem.setRecipe(recipe);
+
+        MenuSubsection menuSubsection =
+                resolveMenuSubsection(
+                        menuSectionId,
+                        request.menuSubsectionId()
+                );
+
+        validatePrices(
+                menuSubsection,
+                request.prices()
+        );
+
+        menuItem.setMenuSubsection(
+                menuSubsection
+        );
+
         List<MenuItem> existingItems =
                 menuItemRepository
                         .findByMenuSectionIdOrderByDisplayOrderAsc(
@@ -209,6 +230,21 @@ public class MenuItemService {
 
         menuItem.setRecipe(recipe);
 
+        MenuSubsection menuSubsection =
+                resolveMenuSubsection(
+                        menuSectionId,
+                        request.menuSubsectionId()
+                );
+
+        validatePrices(
+                menuSubsection,
+                request.prices()
+        );
+
+        menuItem.setMenuSubsection(
+                menuSubsection
+        );
+
         menuItem.setDisplayOrder(
                 request.displayOrder()
         );
@@ -245,6 +281,44 @@ public class MenuItemService {
         }
 
         return menuItemRepository.save(menuItem);
+    }
+
+    private MenuSubsection resolveMenuSubsection(
+            Long menuSectionId,
+            Long menuSubsectionId
+    ) {
+
+        if (menuSubsectionId == null) {
+            return null;
+        }
+
+        return menuSubsectionRepository
+                .findByIdAndMenuSectionId(
+                        menuSubsectionId,
+                        menuSectionId
+                )
+                .orElseThrow(() ->
+                        new IllegalArgumentException(
+                                "Menu subsection does not belong to that menu section."
+                        )
+                );
+    }
+
+    private void validatePrices(
+            MenuSubsection menuSubsection,
+            List<MenuItemPriceRequest> prices
+    ) {
+        if (!prices.isEmpty()) {
+            return;
+        }
+
+        if (menuSubsection != null && menuSubsection.getPrice() != null) {
+            return;
+        }
+
+        throw new IllegalArgumentException(
+                "At least one price is required unless the menu subsection has a shared price."
+        );
     }
 
     private String cleanNullableText(

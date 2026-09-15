@@ -8,6 +8,9 @@ import {
     getMenuItems,
     createMenuItem,
     updateMenuItem,
+    getMenuSubsections,
+    createMenuSubsection,
+    updateMenuSubsection,
     moveMenuItem,
     getPizzaSizes,
     createPizzaSize,
@@ -28,6 +31,7 @@ import {
 
 export const useMenuStore = defineStore('menu', () => {
     const sections = ref([])
+    const subsectionsBySection = ref({})
     const itemsBySection = ref({})
     const loading = ref(false)
     const error = ref(null)
@@ -127,6 +131,119 @@ export const useMenuStore = defineStore('menu', () => {
             sortSections()
 
             return updatedSection
+
+        } catch (err) {
+            console.error(err)
+            error.value = err.message
+
+            return null
+        }
+    }
+
+    function sortSubsections(sectionId) {
+        const subsections =
+            subsectionsBySection.value[sectionId] ?? []
+
+        subsectionsBySection.value = {
+            ...subsectionsBySection.value,
+            [sectionId]: [...subsections].sort(
+                (a, b) =>
+                    a.displayOrder - b.displayOrder
+            )
+        }
+    }
+
+    async function fetchSubsections(sectionId) {
+        error.value = null
+
+        try {
+            const subsections =
+                await getMenuSubsections(sectionId)
+
+            subsectionsBySection.value = {
+                ...subsectionsBySection.value,
+                [sectionId]: subsections
+            }
+
+            sortSubsections(sectionId)
+
+            return subsectionsBySection.value[sectionId]
+
+        } catch (err) {
+            console.error(err)
+            error.value = err.message
+
+            return []
+        }
+    }
+
+    async function addSubsection(
+        sectionId,
+        subsection
+    ) {
+        error.value = null
+
+        try {
+            const createdSubsection =
+                await createMenuSubsection(
+                    sectionId,
+                    subsection
+                )
+
+            const existingSubsections =
+                subsectionsBySection.value[sectionId] ?? []
+
+            subsectionsBySection.value = {
+                ...subsectionsBySection.value,
+                [sectionId]: [
+                    ...existingSubsections,
+                    createdSubsection
+                ]
+            }
+
+            sortSubsections(sectionId)
+
+            return createdSubsection
+
+        } catch (err) {
+            console.error(err)
+            error.value = err.message
+
+            return null
+        }
+    }
+
+    async function saveSubsection(
+        sectionId,
+        subsectionId,
+        subsection
+    ) {
+        error.value = null
+
+        try {
+            const updatedSubsection =
+                await updateMenuSubsection(
+                    sectionId,
+                    subsectionId,
+                    subsection
+                )
+
+            const existingSubsections =
+                subsectionsBySection.value[sectionId] ?? []
+
+            subsectionsBySection.value = {
+                ...subsectionsBySection.value,
+                [sectionId]:
+                    existingSubsections.map(existing =>
+                        existing.id === updatedSubsection.id
+                            ? updatedSubsection
+                            : existing
+                    )
+            }
+
+            sortSubsections(sectionId)
+
+            return updatedSubsection
 
         } catch (err) {
             console.error(err)
@@ -420,12 +537,16 @@ export const useMenuStore = defineStore('menu', () => {
 
     return {
         sections,
+        subsectionsBySection,
         itemsBySection,
         loading,
         error,
         fetchSections,
         addSection,
         saveSection,
+        fetchSubsections,
+        addSubsection,
+        saveSubsection,
         fetchItems,
         addItem,
         saveItem,

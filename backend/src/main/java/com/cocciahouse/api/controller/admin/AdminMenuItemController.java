@@ -98,6 +98,15 @@ public class AdminMenuItemController {
                 menuItem
                         .getMenuSection()
                         .getId(),
+
+                menuItem.getMenuSubsection() != null
+                        ? menuItem.getMenuSubsection().getId()
+                        : null,
+
+                menuItem.getMenuSubsection() != null
+                        ? menuItem.getMenuSubsection().getName()
+                        : null,
+
                 menuItem
                         .getRecipe()
                         .getId(),

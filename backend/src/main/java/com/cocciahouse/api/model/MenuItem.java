@@ -28,6 +28,10 @@ public class MenuItem {
     )
     private Recipe recipe;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "menu_subsection_id")
+    private MenuSubsection menuSubsection;
+
     @Column(
             name = "display_order",
             nullable = false
@@ -89,6 +93,14 @@ public class MenuItem {
 
     public void setRecipe(Recipe recipe) {
         this.recipe = recipe;
+    }
+
+    public MenuSubsection getMenuSubsection() {
+        return menuSubsection;
+    }
+
+    public void setMenuSubsection(MenuSubsection menuSubsection) {
+        this.menuSubsection = menuSubsection;
     }
 
     public int getDisplayOrder() {

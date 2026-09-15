@@ -216,6 +216,104 @@
                         <section v-if="
                             openSectionId === section.id
                             && editingSectionId !== section.id
+                        " class="subsection-panel">
+                            <div class="admin-section-heading">
+                                <div>
+                                    <h3>Subsections</h3>
+
+                                    <span class="subsection-help">
+                                        Optional groups within this section
+                                    </span>
+                                </div>
+
+                                <button v-if="!showSubsectionForm" type="button" @click="startAddingSubsection">
+                                    + Add Subsection
+                                </button>
+                            </div>
+
+                            <form v-if="showSubsectionForm" class="admin-form subsection-form" @submit.prevent="
+                                handleSaveSubsection(section.id)
+                                ">
+                                <label>
+                                    Subsection name
+
+                                    <input v-model="subsectionForm.name" type="text" maxlength="100"
+                                        placeholder="Example: Beer" required>
+                                </label>
+
+                                <label>
+                                    Shared price
+
+                                    <input v-model="subsectionForm.price" type="number" min="0.01" step="0.01"
+                                        placeholder="Optional, e.g. 3.00">
+
+                                    <span class="subsection-help">
+                                        Leave blank when items have individual prices.
+                                    </span>
+                                </label>
+
+                                <label class="admin-checkbox-label">
+                                    <input v-model="subsectionForm.active" type="checkbox">
+
+                                    Active
+                                </label>
+
+                                <div class="admin-form-actions">
+                                    <button type="submit" class="primary-button" :disabled="savingSubsection">
+                                        {{
+                                            savingSubsection
+                                                ? 'Saving...'
+                                                : editingSubsectionId
+                                                    ? 'Save Changes'
+                                                    : 'Add Subsection'
+                                        }}
+                                    </button>
+
+                                    <button type="button" :disabled="savingSubsection" @click="cancelSubsectionForm">
+                                        Cancel
+                                    </button>
+                                </div>
+                            </form>
+
+                            <div v-if="
+                                (menuStore.subsectionsBySection[section.id] ?? [])
+                                    .length
+                            " class="subsection-list">
+                                <div v-for="subsection in
+                                    menuStore.subsectionsBySection[section.id]" :key="subsection.id"
+                                    class="subsection-chip" :class="{ inactive: !subsection.active }">
+                                    <span>
+                                        {{ subsection.name }}
+                                        <span v-if="subsection.price != null" class="subsection-price">
+                                            · ${{ formatPrice(subsection.price) }}
+                                        </span>
+                                    </span>
+
+                                    <div class="subsection-chip-actions">
+                                        <button type="button" @click="startEditingSubsection(subsection)">
+                                            Edit
+                                        </button>
+
+                                        <button type="button" :disabled="savingSubsection" @click="
+                                            toggleSubsectionActive(
+                                                section.id,
+                                                subsection
+                                            )
+                                            ">
+                                            {{
+                                                subsection.active
+                                                    ? 'Deactivate'
+                                                    : 'Reactivate'
+                                            }}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        <section v-if="
+                            openSectionId === section.id
+                            && editingSectionId !== section.id
                         " class="menu-items-panel">
 
                             <div class="admin-section-heading">
@@ -242,10 +340,11 @@
 
                             <div v-if="addingItemSectionId === section.id" class="menu-item-form-panel">
                                 <MenuItemForm :item="editingMenuItem" :saving="savingMenuItem" :default-display-order="(menuStore.itemsBySection[section.id] ?? []).length
-                                    " @submit="
-                                        payload =>
-                                            handleSaveMenuItem(section.id, payload)
-                                    " @cancel="cancelMenuItemForm" />
+                                    " :subsections="menuStore.subsectionsBySection[section.id] ?? []
+                                        " @submit="
+                                            payload =>
+                                                handleSaveMenuItem(section.id, payload)
+                                        " @cancel="cancelMenuItemForm" />
                             </div>
 
                             <p v-if="
@@ -364,6 +463,16 @@ const addingItemSectionId = ref(null)
 const editingMenuItem = ref(null)
 const savingMenuItem = ref(false)
 const movingMenuItemId = ref(null)
+
+const showSubsectionForm = ref(false)
+const editingSubsectionId = ref(null)
+const savingSubsection = ref(false)
+
+const subsectionForm = ref({
+    name: '',
+    price: null,
+    active: true
+})
 
 const editSection = ref({
     name: '',
@@ -491,6 +600,109 @@ async function toggleSectionActive(section) {
     }
 }
 
+function startAddingSubsection() {
+    editingSubsectionId.value = null
+
+    subsectionForm.value = {
+        name: '',
+        price: null,
+        active: true
+    }
+
+    showSubsectionForm.value = true
+    menuStore.clearError()
+}
+
+function startEditingSubsection(subsection) {
+    editingSubsectionId.value = subsection.id
+
+    subsectionForm.value = {
+        name: subsection.name,
+        price: subsection.price ?? null,
+        active: subsection.active
+    }
+
+    showSubsectionForm.value = true
+    menuStore.clearError()
+}
+
+function cancelSubsectionForm() {
+    showSubsectionForm.value = false
+    editingSubsectionId.value = null
+
+    subsectionForm.value = {
+        name: '',
+        active: true
+    }
+
+    menuStore.clearError()
+}
+
+async function handleSaveSubsection(sectionId) {
+    const name = subsectionForm.value.name.trim()
+
+    if (!name) {
+        return
+    }
+
+    savingSubsection.value = true
+    menuStore.clearError()
+
+    try {
+        const payload = {
+            name,
+            price:
+                subsectionForm.value.price === null
+                    || subsectionForm.value.price === ''
+                    ? null
+                    : Number(subsectionForm.value.price),
+            active: subsectionForm.value.active
+        }
+
+        const savedSubsection =
+            editingSubsectionId.value
+                ? await menuStore.saveSubsection(
+                    sectionId,
+                    editingSubsectionId.value,
+                    payload
+                )
+                : await menuStore.addSubsection(
+                    sectionId,
+                    payload
+                )
+
+        if (savedSubsection) {
+            cancelSubsectionForm()
+        }
+
+    } finally {
+        savingSubsection.value = false
+    }
+}
+
+async function toggleSubsectionActive(
+    sectionId,
+    subsection
+) {
+    savingSubsection.value = true
+    menuStore.clearError()
+
+    try {
+        await menuStore.saveSubsection(
+            sectionId,
+            subsection.id,
+            {
+                name: subsection.name,
+                price: subsection.price ?? null,
+                active: !subsection.active
+            }
+        )
+
+    } finally {
+        savingSubsection.value = false
+    }
+}
+
 function startAddingMenuItem(sectionId) {
     editingMenuItem.value = null
     addingItemSectionId.value = sectionId
@@ -571,6 +783,7 @@ async function toggleMenuItemVisibility(sectionId, item) {
             item.id,
             {
                 recipeId: item.recipeId,
+                menuSubsectionId: item.menuSubsectionId ?? null,
                 displayOrder: item.displayOrder,
                 visible: !item.visible,
 
@@ -638,7 +851,10 @@ async function openSectionWorkspace(section) {
     openPizzaSectionId.value = null
     openSectionId.value = section.id
 
-    await menuStore.fetchItems(section.id)
+    await Promise.all([
+        menuStore.fetchItems(section.id),
+        menuStore.fetchSubsections(section.id)
+    ])
 }
 
 function collapseSectionWorkspace() {
@@ -892,6 +1108,72 @@ function collapseSectionWorkspace() {
 .section-expand-leave-from {
     opacity: 1;
     transform: scale(1) translateY(0);
+}
+
+.subsection-panel {
+    margin-top: 1.25rem;
+    padding-top: 1.25rem;
+
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.subsection-panel h3 {
+    margin: 0;
+}
+
+.subsection-help {
+    font-size: 0.85rem;
+    opacity: 0.7;
+}
+
+.subsection-form {
+    margin-top: 1rem;
+    padding: 1rem;
+
+    background: rgba(255, 255, 255, 0.04);
+
+    border: 1px solid var(--bronze-color);
+    border-radius: 0.5rem;
+}
+
+.subsection-list {
+    display: grid;
+    gap: 0.5rem;
+
+    margin-top: 1rem;
+}
+
+.subsection-chip {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+
+    padding: 0.65rem 0.75rem;
+
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 0.4rem;
+}
+
+.subsection-price {
+    margin-left: 0.25rem;
+    font-weight: 700;
+    opacity: 0.8;
+}
+
+.subsection-chip.inactive {
+    opacity: 0.55;
+}
+
+.subsection-chip-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+}
+
+.subsection-chip-actions button {
+    padding: 0.4rem 0.6rem;
+    font-size: 0.8rem;
 }
 
 @media (max-width: 600px) {
