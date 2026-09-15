@@ -111,7 +111,7 @@
                         ? 'Saving...'
                         : editing
                             ? 'Save Changes'
-                            : 'Add Menu Item'
+                            : addButtonLabel
                 }}
             </button>
 
@@ -199,6 +199,14 @@ const selectedSubsection = computed(() => {
 const usesSharedSubsectionPrice = computed(() =>
     selectedSubsection.value?.price != null
 )
+
+const addButtonLabel = computed(() => {
+    if (selectedSubsection.value) {
+        return `Add ${selectedSubsection.value.name}`
+    }
+
+    return `Add to ${props.sectionName}`
+})
 
 watch(
     () => props.item,

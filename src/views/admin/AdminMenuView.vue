@@ -10,11 +10,37 @@
             </div>
         </header>
 
-        <div class="page-actions">
-            <button type="button" class="primary-button" @click="showCreateForm = !showCreateForm">
-                {{ showCreateForm ? 'Cancel' : '+ Add Section' }}
-            </button>
-        </div>
+        <section class="quick-find">
+            <label for="menu-quick-find">
+                Quick Find
+            </label>
+
+            <input id="menu-quick-find" v-model="quickFindQuery" type="search"
+                placeholder="Search menu, recipes or subsections..." autocomplete="off">
+
+            <div v-if="quickFindQuery.trim()" class="quick-find-results">
+                <p v-if="quickFindResults.length === 0" class="state-message">
+                    No matches found.
+                </p>
+
+                <button v-for="result in quickFindResults" v-else :key="`${result.type}-${result.id}`" type="button"
+                    class="quick-find-result" @click="handleQuickFindResult(result)">
+                    <span class="quick-find-result__name">
+                        {{ result.name }}
+                    </span>
+
+                    <span class="quick-find-result__context">
+                        {{
+                            result.type === 'section'
+                                ? 'Section'
+                                : result.type === 'subsection'
+                                    ? `Subsection · ${result.context}`
+                                    : `Menu Item · ${result.context}`
+                        }}
+                    </span>
+                </button>
+            </div>
+        </section>
 
         <section v-if="showCreateForm" class="admin-card create-card">
             <div class="admin-section-heading">
@@ -84,7 +110,7 @@
 
             <!-- COLLAPSED GRID -->
 
-            <Transition name="section-expand" mode="out-in">
+            <Transition name="section-expand" mode="out-in" @after-enter="handleWorkspaceEntered">
 
                 <!-- GRID VIEW -->
 
@@ -97,6 +123,13 @@
 
                         <span v-if="!section.active" class="section-tile__status">
                             Inactive
+                        </span>
+                    </button>
+
+                    <button type="button" class="section-tile section-tile--add"
+                        @click="showCreateForm = !showCreateForm">
+                        <span class="section-tile__name">
+                            {{ showCreateForm ? 'Cancel' : '+ Add Section' }}
                         </span>
                     </button>
                 </div>
@@ -216,6 +249,7 @@
                         <section v-if="
                             openSectionId === section.id
                             && editingSectionId !== section.id
+                            && managingSubsections
                         " class="subsection-panel">
                             <div class="admin-section-heading">
                                 <div>
@@ -231,9 +265,8 @@
                                 </button>
                             </div>
 
-                            <form v-if="showSubsectionForm" class="admin-form subsection-form" @submit.prevent="
-                                handleSaveSubsection(section.id)
-                                ">
+                            <form v-if="showSubsectionForm" id="menu-subsection-editor"
+                                class="admin-form subsection-form" @submit.prevent="handleSaveSubsection(section.id)">
                                 <label>
                                     Subsection name
 
@@ -332,19 +365,31 @@
                                     </span>
                                 </div>
 
-                                <button v-if="addingItemSectionId !== section.id" type="button" class="primary-button"
-                                    @click="startAddingMenuItem(section.id)">
-                                    + Add Menu Item
-                                </button>
+                                <div class="menu-items-heading-actions">
+                                    <button v-if="(menuStore.subsectionsBySection[section.id] ?? []).length"
+                                        type="button" @click="managingSubsections = !managingSubsections">
+                                        {{
+                                            managingSubsections
+                                                ? 'Done Managing'
+                                                : 'Manage Subsections'
+                                        }}
+                                    </button>
+
+                                    <button v-if="addingItemSectionId !== section.id" type="button"
+                                        class="primary-button" @click="startAddingMenuItem(section.id)">
+                                        + Add to {{ section.name }}
+                                    </button>
+                                </div>
                             </div>
 
-                            <div v-if="addingItemSectionId === section.id" class="menu-item-form-panel">
-                                <MenuItemForm :item="editingMenuItem" :saving="savingMenuItem" :default-display-order="(menuStore.itemsBySection[section.id] ?? []).length
-                                    " :subsections="menuStore.subsectionsBySection[section.id] ?? []
-                                        " @submit="
-                                            payload =>
-                                                handleSaveMenuItem(section.id, payload)
-                                        " @cancel="cancelMenuItemForm" />
+                            <div v-if="addingItemSectionId === section.id && !editingMenuItem"
+                                class="menu-item-form-panel">
+                                <MenuItemForm :item="editingMenuItem" :saving="savingMenuItem"
+                                    :default-display-order="(menuStore.itemsBySection[section.id] ?? []).length"
+                                    :subsections="menuStore.subsectionsBySection[section.id] ?? []" @submit="
+                                        payload =>
+                                            handleSaveMenuItem(section.id, payload)
+                                    " @cancel="cancelMenuItemForm" />
                             </div>
 
                             <p v-if="
@@ -353,68 +398,175 @@
                                 No items in this section yet.
                             </p>
 
-                            <div v-else class="menu-item-list">
-                                <article v-for="(item, itemIndex) in
-                                    menuStore.itemsBySection[section.id]" :key="item.id" class="menu-item-row">
+                            <div v-else>
+                                <!-- GROUPED ITEMS -->
+                                <div v-if="groupedMenuItems.length" class="menu-subsection-groups">
+                                    <section v-for="group in groupedMenuItems" :key="group.subsection.id"
+                                        class="menu-subsection-group" :class="{ inactive: !group.subsection.active }">
+                                        <div class="menu-subsection-group-header">
+                                            <div>
+                                                <h4>
+                                                    {{ group.subsection.name }}
 
-                                    <div>
-                                        <strong>{{ item.recipeName }}</strong>
+                                                    <span v-if="group.subsection.price != null"
+                                                        class="subsection-price">
+                                                        · ${{ formatPrice(group.subsection.price) }}
+                                                    </span>
+                                                </h4>
 
-                                        <p v-if="item.description">
-                                            {{ item.description }}
+                                                <span class="subsection-help">
+                                                    {{ group.items.length }}
+                                                    {{
+                                                        group.items.length === 1
+                                                            ? 'item'
+                                                            : 'items'
+                                                    }}
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        <p v-if="group.items.length === 0"
+                                            class="state-message subsection-empty-message">
+                                            No items in this subsection yet.
                                         </p>
 
-                                        <ul class="menu-item-prices">
-                                            <li v-for="price in item.prices" :key="price.id">
-                                                <span v-if="price.label">
-                                                    {{ price.label }}:
-                                                </span>
+                                        <div v-else class="menu-item-list">
+                                            <template v-for="item in group.items" :key="item.id">
+                                                <article class="menu-item-row">
+                                                    <div>
+                                                        <strong>{{ item.recipeName }}</strong>
 
-                                                ${{ formatPrice(price.amount) }}
-                                            </li>
-                                        </ul>
+                                                        <p v-if="item.description">
+                                                            {{ item.description }}
+                                                        </p>
+
+                                                        <ul class="menu-item-prices">
+                                                            <li v-for="price in item.prices" :key="price.id">
+                                                                <span v-if="price.label">
+                                                                    {{ price.label }}:
+                                                                </span>
+
+                                                                ${{ formatPrice(price.amount) }}
+                                                            </li>
+                                                        </ul>
+                                                    </div>
+
+                                                    <div class="menu-item-actions">
+                                                        <span class="item-status" :class="{ hidden: !item.visible }">
+                                                            {{ item.visible ? 'Visible' : 'Hidden' }}
+                                                        </span>
+
+                                                        <button type="button" :disabled="savingMenuItem" @click="
+                                                            toggleMenuItemVisibility(
+                                                                section.id,
+                                                                item
+                                                            )
+                                                            ">
+                                                            {{ item.visible ? 'Hide' : 'Show' }}
+                                                        </button>
+
+                                                        <button type="button" :disabled="savingMenuItem" @click="
+                                                            startEditingMenuItem(
+                                                                section.id,
+                                                                item
+                                                            )
+                                                            ">
+                                                            Edit
+                                                        </button>
+                                                    </div>
+                                                </article>
+                                                <div v-if="editingMenuItem?.id === item.id"
+                                                    :id="`menu-item-editor-${item.id}`"
+                                                    class="menu-item-form-panel menu-item-form-panel--inline">
+                                                    <MenuItemForm :item="editingMenuItem" :saving="savingMenuItem"
+                                                        :default-display-order="item.displayOrder"
+                                                        :subsections="menuStore.subsectionsBySection[section.id] ?? []"
+                                                        @submit="
+                                                            payload =>
+                                                                handleSaveMenuItem(section.id, payload)
+                                                        " @cancel="cancelMenuItemForm" />
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </section>
+                                </div>
+
+                                <!-- ITEMS WITHOUT A SUBSECTION -->
+                                <section v-if="ungroupedMenuItems.length" class="menu-subsection-group">
+                                    <div v-if="groupedMenuItems.length" class="menu-subsection-group-header">
+                                        <div>
+                                            <h4> Other Items </h4>
+
+                                            <span class="subsection-help">
+                                                {{ ungroupedMenuItems.length }}
+                                                {{
+                                                    ungroupedMenuItems.length === 1
+                                                        ? 'item'
+                                                        : 'items'
+                                                }}
+                                            </span>
+                                        </div>
                                     </div>
 
-                                    <div class="menu-item-actions">
-                                        <span class="item-status" :class="{ hidden: !item.visible }">
-                                            {{ item.visible ? 'Visible' : 'Hidden' }}
-                                        </span>
+                                    <div class="menu-item-list">
+                                        <template v-for="item in ungroupedMenuItems" :key="item.id">
+                                            <article class="menu-item-row">
+                                                <div>
+                                                    <strong>{{ item.recipeName }}</strong>
 
-                                        <button v-if="itemIndex > 0" type="button"
-                                            :disabled="movingMenuItemId === item.id" @click="
-                                                handleMoveMenuItem(
-                                                    section.id,
-                                                    item.id,
-                                                    'UP'
-                                                )
-                                                ">
-                                            ↑
-                                        </button>
+                                                    <p v-if="item.description">
+                                                        {{ item.description }}
+                                                    </p>
 
-                                        <button v-if="
-                                            itemIndex <
-                                            (menuStore.itemsBySection[section.id] ?? []).length - 1
-                                        " type="button" :disabled="movingMenuItemId === item.id" @click="
-                                            handleMoveMenuItem(
-                                                section.id,
-                                                item.id,
-                                                'DOWN'
-                                            )
-                                            ">
-                                            ↓
-                                        </button>
+                                                    <ul class="menu-item-prices">
+                                                        <li v-for="price in item.prices" :key="price.id">
+                                                            <span v-if="price.label">
+                                                                {{ price.label }}:
+                                                            </span>
 
-                                        <button type="button" :disabled="savingMenuItem"
-                                            @click="toggleMenuItemVisibility(section.id, item)">
-                                            {{ item.visible ? 'Hide' : 'Show' }}
-                                        </button>
+                                                            ${{ formatPrice(price.amount) }}
+                                                        </li>
+                                                    </ul>
+                                                </div>
 
-                                        <button type="button" :disabled="savingMenuItem"
-                                            @click="startEditingMenuItem(section.id, item)">
-                                            Edit
-                                        </button>
+                                                <div class="menu-item-actions">
+                                                    <span class="item-status" :class="{ hidden: !item.visible }">
+                                                        {{ item.visible ? 'Visible' : 'Hidden' }}
+                                                    </span>
+
+                                                    <button type="button" :disabled="savingMenuItem" @click="
+                                                        toggleMenuItemVisibility(
+                                                            section.id,
+                                                            item
+                                                        )
+                                                        ">
+                                                        {{ item.visible ? 'Hide' : 'Show' }}
+                                                    </button>
+
+                                                    <button type="button" :disabled="savingMenuItem" @click="
+                                                        startEditingMenuItem(
+                                                            section.id,
+                                                            item
+                                                        )
+                                                        ">
+                                                        Edit
+                                                    </button>
+                                                </div>
+                                            </article>
+                                            <div v-if="editingMenuItem?.id === item.id"
+                                                :id="`menu-item-editor-${item.id}`"
+                                                class="menu-item-form-panel menu-item-form-panel--inline">
+                                                <MenuItemForm :item="editingMenuItem" :saving="savingMenuItem"
+                                                    :default-display-order="item.displayOrder"
+                                                    :subsections="menuStore.subsectionsBySection[section.id] ?? []"
+                                                    @submit="
+                                                        payload =>
+                                                            handleSaveMenuItem(section.id, payload)
+                                                    " @cancel="cancelMenuItemForm" />
+                                            </div>
+                                        </template>
                                     </div>
-                                </article>
+                                </section>
                             </div>
                         </section>
 
@@ -433,13 +585,17 @@
 
 <script setup>
 
-import { computed, onMounted, ref } from 'vue'
+import { computed, nextTick, onMounted, ref } from 'vue'
 
 import { useMenuStore } from '@/stores/menuStore'
 import MenuItemForm from '@/components/admin/MenuItemForm.vue'
 import PizzaManager from '@/components/admin/PizzaManager.vue'
 
 const menuStore = useMenuStore()
+
+const quickFindQuery = ref('')
+
+const pendingQuickFindTarget = ref(null)
 
 const showCreateForm = ref(false)
 
@@ -459,11 +615,113 @@ const expandedSection = computed(() =>
     ) ?? null
 )
 
+const quickFindResults = computed(() => {
+    const query = quickFindQuery.value.trim().toLowerCase()
+
+    if (!query) {
+        return []
+    }
+
+    const results = []
+
+    menuStore.sections.forEach(section => {
+        if (section.name.toLowerCase().includes(query)) {
+            results.push({
+                type: 'section',
+                id: section.id,
+                name: section.name,
+                context: 'Menu Section',
+                section
+            })
+        }
+
+        const subsections =
+            menuStore.subsectionsBySection[section.id] ?? []
+
+        subsections.forEach(subsection => {
+            if (subsection.name.toLowerCase().includes(query)) {
+                results.push({
+                    type: 'subsection',
+                    id: subsection.id,
+                    name: subsection.name,
+                    context: section.name,
+                    section,
+                    subsection
+                })
+            }
+        })
+
+        const items =
+            menuStore.itemsBySection[section.id] ?? []
+
+        items.forEach(item => {
+            const searchableText = [
+                item.recipeName,
+                item.description,
+                item.menuSubsectionName
+            ]
+                .filter(Boolean)
+                .join(' ')
+                .toLowerCase()
+
+            if (searchableText.includes(query)) {
+                results.push({
+                    type: 'item',
+                    id: item.id,
+                    name: item.recipeName,
+                    context: item.menuSubsectionName
+                        ? `${section.name} › ${item.menuSubsectionName}`
+                        : section.name,
+                    section,
+                    item
+                })
+            }
+        })
+    })
+
+    return results
+})
+
 const addingItemSectionId = ref(null)
 const editingMenuItem = ref(null)
 const savingMenuItem = ref(false)
 const movingMenuItemId = ref(null)
 
+const groupedMenuItems = computed(() => {
+    if (!expandedSectionId.value) {
+        return []
+    }
+
+    const subsections =
+        menuStore.subsectionsBySection[expandedSectionId.value] ?? []
+
+    const items =
+        menuStore.itemsBySection[expandedSectionId.value] ?? []
+
+    return subsections.map(subsection => ({
+        subsection,
+        items: items.filter(
+            item =>
+                Number(item.menuSubsectionId) ===
+                Number(subsection.id)
+        )
+    }))
+})
+
+const ungroupedMenuItems = computed(() => {
+    if (!expandedSectionId.value) {
+        return []
+    }
+
+    const items =
+        menuStore.itemsBySection[expandedSectionId.value] ?? []
+
+    return items.filter(
+        item => item.menuSubsectionId == null
+    )
+})
+
+const managingSubsections = ref(false)
 const showSubsectionForm = ref(false)
 const editingSubsectionId = ref(null)
 const savingSubsection = ref(false)
@@ -491,6 +749,15 @@ const newSection = ref({
 
 onMounted(async () => {
     await menuStore.fetchSections()
+
+    await Promise.all(
+        menuStore.sections.map(section =>
+            Promise.all([
+                menuStore.fetchItems(section.id),
+                menuStore.fetchSubsections(section.id)
+            ])
+        )
+    )
 })
 
 function cancelCreateSection() {
@@ -632,6 +899,7 @@ function cancelSubsectionForm() {
 
     subsectionForm.value = {
         name: '',
+        price: null,
         active: true
     }
 
@@ -831,12 +1099,80 @@ async function handleCreateSection() {
     }
 }
 
+async function handleQuickFindResult(result) {
+    quickFindQuery.value = ''
+
+    pendingQuickFindTarget.value =
+        result.type === 'section'
+            ? null
+            : result
+
+    await openSectionWorkspace(result.section)
+
+    if (result.type === 'section') {
+        return
+    }
+
+    if (result.type === 'subsection') {
+        managingSubsections.value = true
+        startEditingSubsection(result.subsection)
+        return
+    }
+
+    if (result.type === 'item') {
+        startEditingMenuItem(
+            result.section.id,
+            result.item
+        )
+    }
+}
+
+async function handleWorkspaceEntered() {
+    const target = pendingQuickFindTarget.value
+
+    if (!target) {
+        return
+    }
+
+    await nextTick()
+
+    const element =
+        target.type === 'subsection'
+            ? document.getElementById(
+                'menu-subsection-editor'
+            )
+            : document.getElementById(
+                `menu-item-editor-${target.item.id}`
+            )
+
+    if (!element) {
+        return
+    }
+
+    element.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center'
+    })
+
+    pendingQuickFindTarget.value = null
+}
+
 async function openSectionWorkspace(section) {
     expandedSectionId.value = section.id
 
     editingSectionId.value = null
     addingItemSectionId.value = null
     editingMenuItem.value = null
+
+    managingSubsections.value = false
+    showSubsectionForm.value = false
+    editingSubsectionId.value = null
+
+    subsectionForm.value = {
+        name: '',
+        price: null,
+        active: true
+    }
 
     const isPizza =
         section.name.trim().toLowerCase() === 'pizza'
@@ -866,17 +1202,57 @@ function collapseSectionWorkspace() {
     addingItemSectionId.value = null
     editingMenuItem.value = null
 
+    managingSubsections.value = false
+    showSubsectionForm.value = false
+    editingSubsectionId.value = null
+
+    subsectionForm.value = {
+        name: '',
+        price: null,
+        active: true
+    }
+
     menuStore.clearError()
 }
 
 </script>
 
 <style scoped>
-.page-actions {
+.quick-find {
+    display: grid;
+    gap: 0.5rem;
+
+    margin-top: 1rem;
+}
+
+.quick-find>label {
+    font-weight: 700;
+}
+
+.quick-find-results {
+    display: grid;
+    gap: 0.4rem;
+}
+
+.quick-find-result {
     display: flex;
-    justify-content: flex-end;
+    justify-content: space-between;
     align-items: center;
     gap: 1rem;
+
+    width: 100%;
+    padding: 0.7rem 0.8rem;
+
+    text-align: left;
+}
+
+.quick-find-result__name {
+    font-weight: 700;
+}
+
+.quick-find-result__context {
+    font-size: 0.8rem;
+    opacity: 0.7;
 }
 
 .create-card {
@@ -971,6 +1347,13 @@ function collapseSectionWorkspace() {
     gap: 0.75rem;
 }
 
+.menu-items-heading-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
 .menu-item-prices {
     margin: 0.5rem 0 0;
     padding: 0;
@@ -1046,6 +1429,10 @@ function collapseSectionWorkspace() {
 .section-tile__status {
     font-size: 0.75rem;
     opacity: 0.7;
+}
+
+.section-tile--add {
+    background: var(--bronze-color);
 }
 
 .section-card--workspace {
@@ -1179,6 +1566,12 @@ function collapseSectionWorkspace() {
 @media (max-width: 600px) {
     .section-heading {
         flex-direction: column;
+    }
+
+    .quick-find-result {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.2rem;
     }
 
     .section-tile {
