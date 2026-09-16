@@ -1340,8 +1340,10 @@ class MenuItemServiceTest {
         MenuItem second = mock(MenuItem.class);
 
         when(first.getId()).thenReturn(1L);
+        when(first.getDisplayOrder()).thenReturn(0);
 
         when(second.getId()).thenReturn(2L);
+        when(second.getDisplayOrder()).thenReturn(1);
 
         when(
                 menuItemRepository
@@ -1373,6 +1375,9 @@ class MenuItemServiceTest {
         MenuItem second = mock(MenuItem.class);
 
         when(first.getId()).thenReturn(1L);
+        when(first.getDisplayOrder()).thenReturn(0);
+
+        when(second.getDisplayOrder()).thenReturn(1);
 
         when(
                 menuItemRepository
@@ -1396,6 +1401,146 @@ class MenuItemServiceTest {
 
         assertEquals(second, result.get(0));
         assertEquals(first, result.get(1));
+    }
+
+    @Test
+    void moveMenuItem_movesOnlyWithinSameSubsection() {
+        MenuSubsection pop =
+                mock(MenuSubsection.class);
+
+        MenuSubsection beer =
+                mock(MenuSubsection.class);
+
+        when(pop.getId()).thenReturn(100L);
+        when(beer.getId()).thenReturn(200L);
+
+        MenuItem coke =
+                mock(MenuItem.class);
+
+        MenuItem budLight =
+                mock(MenuItem.class);
+
+        MenuItem dietCoke =
+                mock(MenuItem.class);
+
+        MenuItem millerLite =
+                mock(MenuItem.class);
+
+        when(coke.getId()).thenReturn(1L);
+        when(coke.getMenuSubsection()).thenReturn(pop);
+        when(coke.getDisplayOrder()).thenReturn(0);
+
+        when(budLight.getMenuSubsection()).thenReturn(beer);
+
+        when(dietCoke.getMenuSubsection()).thenReturn(pop);
+        when(dietCoke.getDisplayOrder()).thenReturn(2);
+
+        when(millerLite.getMenuSubsection()).thenReturn(beer);
+
+        when(
+                menuItemRepository
+                        .findByMenuSectionIdOrderByDisplayOrderAsc(10L)
+        )
+                .thenReturn(
+                        List.of(
+                                coke,
+                                budLight,
+                                dietCoke,
+                                millerLite
+                        )
+                )
+                .thenReturn(
+                        List.of(
+                                dietCoke,
+                                budLight,
+                                coke,
+                                millerLite
+                        )
+                );
+
+        List<MenuItem> result =
+                menuItemService.moveMenuItem(
+                        10L,
+                        1L,
+                        MenuItemMoveDirection.DOWN
+                );
+
+        verify(coke).setDisplayOrder(2);
+        verify(dietCoke).setDisplayOrder(0);
+
+        verify(menuItemRepository).save(coke);
+        verify(menuItemRepository).save(dietCoke);
+
+        verify(menuItemRepository, never()).save(budLight);
+        verify(menuItemRepository, never()).save(millerLite);
+
+        assertEquals(dietCoke, result.get(0));
+        assertEquals(coke, result.get(2));
+    }
+
+    @Test
+    void moveMenuItem_movesOnlyWithinUngroupedItems() {
+        MenuSubsection subsection =
+                mock(MenuSubsection.class);
+
+        when(subsection.getId()).thenReturn(100L);
+
+        MenuItem firstUngrouped =
+                mock(MenuItem.class);
+
+        MenuItem groupedItem =
+                mock(MenuItem.class);
+
+        MenuItem secondUngrouped =
+                mock(MenuItem.class);
+
+        when(firstUngrouped.getId()).thenReturn(1L);
+        when(firstUngrouped.getDisplayOrder()).thenReturn(0);
+
+        when(groupedItem.getMenuSubsection())
+                .thenReturn(subsection);
+
+        when(secondUngrouped.getDisplayOrder())
+                .thenReturn(2);
+
+        when(
+                menuItemRepository
+                        .findByMenuSectionIdOrderByDisplayOrderAsc(10L)
+        )
+                .thenReturn(
+                        List.of(
+                                firstUngrouped,
+                                groupedItem,
+                                secondUngrouped
+                        )
+                )
+                .thenReturn(
+                        List.of(
+                                secondUngrouped,
+                                groupedItem,
+                                firstUngrouped
+                        )
+                );
+
+        List<MenuItem> result =
+                menuItemService.moveMenuItem(
+                        10L,
+                        1L,
+                        MenuItemMoveDirection.DOWN
+                );
+
+        verify(firstUngrouped).setDisplayOrder(2);
+        verify(secondUngrouped).setDisplayOrder(0);
+
+        verify(menuItemRepository).save(firstUngrouped);
+        verify(menuItemRepository).save(secondUngrouped);
+
+        verify(menuItemRepository, never())
+                .save(groupedItem);
+
+        assertEquals(secondUngrouped, result.get(0));
+        assertEquals(groupedItem, result.get(1));
+        assertEquals(firstUngrouped, result.get(2));
     }
 
     @Test

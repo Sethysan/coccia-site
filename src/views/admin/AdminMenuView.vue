@@ -375,6 +375,15 @@
                                         }}
                                     </button>
 
+                                    <button v-if="(menuStore.itemsBySection[section.id] ?? []).length > 1" type="button"
+                                        @click="rearrangingMenuItems = !rearrangingMenuItems">
+                                        {{
+                                            rearrangingMenuItems
+                                                ? 'Done Rearranging'
+                                                : 'Rearrange'
+                                        }}
+                                    </button>
+
                                     <button v-if="addingItemSectionId !== section.id" type="button"
                                         class="primary-button" @click="startAddingMenuItem(section.id)">
                                         + Add to {{ section.name }}
@@ -456,6 +465,33 @@
                                                             {{ item.visible ? 'Visible' : 'Hidden' }}
                                                         </span>
 
+                                                        <button
+                                                            v-if="rearrangingMenuItems && group.items.indexOf(item) > 0"
+                                                            type="button" :disabled="movingMenuItemId === item.id"
+                                                            @click="
+                                                                handleMoveMenuItem(
+                                                                    section.id,
+                                                                    item.id,
+                                                                    'UP'
+                                                                )
+                                                                ">
+                                                            ↑
+                                                        </button>
+
+                                                        <button v-if="
+                                                            rearrangingMenuItems
+                                                            && group.items.indexOf(item) < group.items.length - 1
+                                                        " type="button" :disabled="movingMenuItemId === item.id"
+                                                            @click="
+                                                                handleMoveMenuItem(
+                                                                    section.id,
+                                                                    item.id,
+                                                                    'DOWN'
+                                                                )
+                                                                ">
+                                                            ↓
+                                                        </button>
+
                                                         <button type="button" :disabled="savingMenuItem" @click="
                                                             toggleMenuItemVisibility(
                                                                 section.id,
@@ -533,6 +569,33 @@
                                                     <span class="item-status" :class="{ hidden: !item.visible }">
                                                         {{ item.visible ? 'Visible' : 'Hidden' }}
                                                     </span>
+
+                                                    <button v-if="
+                                                        rearrangingMenuItems
+                                                        && ungroupedMenuItems.indexOf(item) > 0
+                                                    " type="button" :disabled="movingMenuItemId === item.id" @click="
+                                                        handleMoveMenuItem(
+                                                            section.id,
+                                                            item.id,
+                                                            'UP'
+                                                        )
+                                                        ">
+                                                        ↑
+                                                    </button>
+
+                                                    <button v-if="
+                                                        rearrangingMenuItems
+                                                        && ungroupedMenuItems.indexOf(item)
+                                                        < ungroupedMenuItems.length - 1
+                                                    " type="button" :disabled="movingMenuItemId === item.id" @click="
+                                                        handleMoveMenuItem(
+                                                            section.id,
+                                                            item.id,
+                                                            'DOWN'
+                                                        )
+                                                        ">
+                                                        ↓
+                                                    </button>
 
                                                     <button type="button" :disabled="savingMenuItem" @click="
                                                         toggleMenuItemVisibility(
@@ -722,6 +785,7 @@ const ungroupedMenuItems = computed(() => {
 })
 
 const managingSubsections = ref(false)
+const rearrangingMenuItems = ref(false)
 const showSubsectionForm = ref(false)
 const editingSubsectionId = ref(null)
 const savingSubsection = ref(false)
@@ -1165,6 +1229,7 @@ async function openSectionWorkspace(section) {
     editingMenuItem.value = null
 
     managingSubsections.value = false
+    openSectionWorkspace
     showSubsectionForm.value = false
     editingSubsectionId.value = null
 
@@ -1203,6 +1268,7 @@ function collapseSectionWorkspace() {
     editingMenuItem.value = null
 
     managingSubsections.value = false
+    rearrangingMenuItems.value = false
     showSubsectionForm.value = false
     editingSubsectionId.value = null
 

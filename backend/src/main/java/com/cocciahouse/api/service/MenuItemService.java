@@ -349,7 +349,7 @@ public class MenuItemService {
             );
         }
 
-        List<MenuItem> items =
+        List<MenuItem> allItems =
                 new ArrayList<>(
                         menuItemRepository
                                 .findByMenuSectionIdOrderByDisplayOrderAsc(
@@ -357,41 +357,73 @@ public class MenuItemService {
                                 )
                 );
 
-        int currentIndex = -1;
+        MenuItem currentItem =
+                allItems.stream()
+                        .filter(item ->
+                                item.getId().equals(menuItemId)
+                        )
+                        .findFirst()
+                        .orElseThrow(() ->
+                                new MenuItemNotFoundException(
+                                        "Menu item not found in that menu section."
+                                )
+                        );
 
-        for (int index = 0; index < items.size(); index++) {
-            if (items.get(index).getId().equals(menuItemId)) {
-                currentIndex = index;
-                break;
-            }
-        }
+        Long currentSubsectionId =
+                currentItem.getMenuSubsection() == null
+                        ? null
+                        : currentItem
+                        .getMenuSubsection()
+                        .getId();
 
-        if (currentIndex == -1) {
-            throw new MenuItemNotFoundException(
-                    "Menu item not found in that menu section."
-            );
-        }
+        List<MenuItem> groupItems =
+                allItems.stream()
+                        .filter(item -> {
+                            Long itemSubsectionId =
+                                    item.getMenuSubsection() == null
+                                            ? null
+                                            : item
+                                            .getMenuSubsection()
+                                            .getId();
 
-        int targetIndex =
+                            return java.util.Objects.equals(
+                                    currentSubsectionId,
+                                    itemSubsectionId
+                            );
+                        })
+                        .toList();
+
+        int currentGroupIndex =
+                groupItems.indexOf(currentItem);
+
+        int targetGroupIndex =
                 direction == MenuItemMoveDirection.UP
-                        ? currentIndex - 1
-                        : currentIndex + 1;
+                        ? currentGroupIndex - 1
+                        : currentGroupIndex + 1;
 
-        if (targetIndex < 0 || targetIndex >= items.size()) {
-            return items;
+        if (
+                targetGroupIndex < 0
+                        || targetGroupIndex >= groupItems.size()
+        ) {
+            return allItems;
         }
 
-        MenuItem currentItem = items.get(currentIndex);
+        MenuItem targetItem =
+                groupItems.get(targetGroupIndex);
 
-        items.remove(currentIndex);
-        items.add(targetIndex, currentItem);
+        int currentDisplayOrder =
+                currentItem.getDisplayOrder();
 
-        for (int index = 0; index < items.size(); index++) {
-            MenuItem item = items.get(index);
+        currentItem.setDisplayOrder(
+                targetItem.getDisplayOrder()
+        );
 
-            item.setDisplayOrder(index);
-            menuItemRepository.save(item);
-        }
+        targetItem.setDisplayOrder(
+                currentDisplayOrder
+        );
+
+        menuItemRepository.save(currentItem);
+        menuItemRepository.save(targetItem);
 
         return menuItemRepository
                 .findByMenuSectionIdOrderByDisplayOrderAsc(
