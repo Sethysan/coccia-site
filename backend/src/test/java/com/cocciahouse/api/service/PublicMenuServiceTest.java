@@ -398,6 +398,101 @@ class PublicMenuServiceTest {
     }
 
     @Test
+    void getMenu_ordersItemPricesByDisplayOrder() {
+
+        MenuSection pasta =
+                mock(MenuSection.class);
+
+        when(pasta.getId())
+                .thenReturn(1L);
+
+        when(pasta.getName())
+                .thenReturn("Pasta");
+
+        when(menuSectionRepository
+                .findByActiveTrueOrderByDisplayOrderAsc())
+                .thenReturn(List.of(pasta));
+
+        when(menuSubsectionRepository
+                .findByMenuSectionIdAndActiveTrueOrderByDisplayOrderAscIdAsc(1L))
+                .thenReturn(List.of());
+
+        Recipe spaghetti =
+                new Recipe("Homemade Spaghetti");
+
+        MenuItem menuItem =
+                new MenuItem(
+                        pasta,
+                        spaghetti
+                );
+
+        MenuItemPrice large =
+                new MenuItemPrice(
+                        menuItem,
+                        "Large",
+                        new BigDecimal("20.00")
+                );
+
+        large.setDisplayOrder(1);
+
+        MenuItemPrice regular =
+                new MenuItemPrice(
+                        menuItem,
+                        "Regular",
+                        new BigDecimal("16.00")
+                );
+
+        regular.setDisplayOrder(0);
+
+        /*
+         * Deliberately add these in the wrong order.
+         * PublicMenuService must use displayOrder,
+         * not collection/insertion order.
+         */
+        menuItem.getPrices().add(large);
+        menuItem.getPrices().add(regular);
+
+        when(menuItemRepository
+                .findByMenuSectionIdAndVisibleTrueOrderByDisplayOrderAsc(1L))
+                .thenReturn(List.of(menuItem));
+
+        var response =
+                publicMenuService.getMenu();
+
+        var prices =
+                response.sections()
+                        .getFirst()
+                        .items()
+                        .getFirst()
+                        .prices();
+
+        assertEquals(
+                2,
+                prices.size()
+        );
+
+        assertEquals(
+                "Regular",
+                prices.get(0).label()
+        );
+
+        assertEquals(
+                new BigDecimal("16.00"),
+                prices.get(0).amount()
+        );
+
+        assertEquals(
+                "Large",
+                prices.get(1).label()
+        );
+
+        assertEquals(
+                new BigDecimal("20.00"),
+                prices.get(1).amount()
+        );
+    }
+
+    @Test
     void getMenu_mapsActivePizzaSizesIntoSectionPizzaData() {
 
         MenuSection pizzaSection = mock(MenuSection.class);

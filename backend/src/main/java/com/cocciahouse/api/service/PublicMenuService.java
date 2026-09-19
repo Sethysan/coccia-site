@@ -336,6 +336,13 @@ public class PublicMenuService {
                 item.getRecipe().getImageAlt(),
                 item.getPrices()
                         .stream()
+                        .sorted(
+                                (left, right) ->
+                                        Integer.compare(
+                                                left.getDisplayOrder(),
+                                                right.getDisplayOrder()
+                                        )
+                        )
                         .map(price ->
                                 new com.cocciahouse.api.dto.menu.PublicMenuItemPriceResponse(
                                         price.getLabel(),
