@@ -1,5 +1,19 @@
 import { apiRequest } from '@/api/apiClient'
 
+// -----------------------------------------------------------------------------
+// Public
+// -----------------------------------------------------------------------------
+
+export const getPublicMenu = () => {
+  return apiRequest("/api/public/menu", {
+    method: "GET"
+  })
+}
+
+// -----------------------------------------------------------------------------
+// Admin
+// -----------------------------------------------------------------------------
+
 export async function getMenuSections() {
     return apiRequest('/api/admin/menu/sections')
 }

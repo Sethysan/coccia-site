@@ -52,10 +52,6 @@
                 <img v-if="item.imageUrl" :src="item.imageUrl" :alt="item.imageAlt || item.recipeName"
                     class="weekly-offering-image" />
 
-                <p v-if="item.publicDescription">
-                    {{ item.publicDescription }}
-                </p>
-
                 <p v-if="item.includedSidesText">
                     {{ item.includedSidesText }}
                 </p>
@@ -69,6 +65,10 @@
                         ${{ price.amount }}
                     </li>
                 </ul>
+                <p v-if="item.publicDescription">
+                    {{ item.publicDescription }}
+                </p>
+
             </article>
         </div><!--  -->
     </section>
@@ -143,6 +143,7 @@ function formatOfferingType(type) {
     padding: 1.5rem;
     margin: 2rem auto 1rem;
 
+    color: var(--text-primary);
     background-color: var(--background-dark-trans);
 
     border: 1px solid var(--bronze-color);
@@ -180,7 +181,7 @@ function formatOfferingType(type) {
 .featured-dinner .weekly-offering-image {
     grid-column: 1;
     grid-row: 1 / span 5;
-    
+
     width: 100%;
     aspect-ratio: 4 / 3;
     height: auto;
@@ -222,7 +223,7 @@ function formatOfferingType(type) {
 
 .weekly-offering-item p {
     line-height: 1.6;
-    
+
 }
 
 .weekly-offering-image {
@@ -242,6 +243,8 @@ function formatOfferingType(type) {
    ========================================================== */
 
 .weekly-offering-item ul {
+    display: inline-block;
+
     margin: 1rem 0 0;
     padding: 0;
 
@@ -249,6 +252,10 @@ function formatOfferingType(type) {
 }
 
 .weekly-offering-item li {
+    display: flex;
+    justify-content: space-between;
+    gap: 1.5rem;
+
     margin: 0.25rem 0;
 
     font-weight: 700;
@@ -268,6 +275,11 @@ function formatOfferingType(type) {
 
 .secondary-feature {
     padding: 0 1.5rem;
+}
+
+.secondary-feature .weekly-offering-type,
+.secondary-feature h3 {
+    text-align: center;
 }
 
 .secondary-feature:first-child {
@@ -296,7 +308,7 @@ function formatOfferingType(type) {
    MOBILE
    ========================================================== */
 
-@media (max-width:  800px) {
+@media (max-width: 800px) {
     .weekly-offering {
         padding: 1.25rem;
     }

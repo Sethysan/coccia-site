@@ -1,95 +1,101 @@
 <template>
   <main class="menu-page">
-    <nav class="menu-destination" aria-label="Menu categories">
-      <div class="menu-category-buttons">
-        <button v-for="menu in menuPages" :key="menu.id" type="button" class="menu-category-button"
-          :class="{ active: selectedMenu === menu.id }" @click="selectMenu(menu.id)">
-          {{ menu.label }}
+    <LiveMenu v-if="!liveMenuLoading && liveMenuAvailable" :menu="liveMenu" />
+
+    <template v-else-if="!liveMenuLoading">
+      <nav class="menu-destination" aria-label="Menu categories">
+        <div class="menu-category-buttons">
+          <button v-for="menu in menuPages" :key="menu.id" type="button" class="menu-category-button"
+            :class="{ active: selectedMenu === menu.id }" @click="selectMenu(menu.id)">
+            {{ menu.label }}
+          </button>
+        </div>
+
+        <button type="button" class="menu-fullscreen-link" aria-label="View menu in fullscreen"
+          @click="openFullscreen('menu_navigation')">
+          <span aria-hidden="true">⛶</span>
+          View Menu in Fullscreen
         </button>
-      </div>
+      </nav>
 
-      <button type="button" class="menu-fullscreen-link" aria-label="View menu in fullscreen"
-        @click="openFullscreen('menu_navigation')">
-        <span aria-hidden="true">⛶</span>
-        View Menu in Fullscreen
-      </button>
-    </nav>
+      <section class="menu-panel">
+        <Teleport to="body" :disabled="!isFullscreen">
+          <div class="vintage-menu" :class="{ 'is-fullscreen': isFullscreen }">
+            <div v-if="isFullscreen" class="menu-toolbar">
+              <div class="menu-zoom-controls" aria-label="Menu zoom controls">
+                <button type="button" class="fullscreen-button zoom-button" aria-label="Zoom out"
+                  :disabled="zoomScale <= minimumZoom" @click="zoomOut">
+                  <span aria-hidden="true">−</span>
+                </button>
 
-    <section class="menu-panel">
-      <Teleport to="body" :disabled="!isFullscreen">
-        <div class="vintage-menu" :class="{ 'is-fullscreen': isFullscreen }">
-          <div v-if="isFullscreen" class="menu-toolbar">
-            <div class="menu-zoom-controls" aria-label="Menu zoom controls">
-              <button type="button" class="fullscreen-button zoom-button" aria-label="Zoom out"
-                :disabled="zoomScale <= minimumZoom" @click="zoomOut">
-                <span aria-hidden="true">−</span>
-              </button>
+                <button type="button" class="fullscreen-button zoom-level" aria-label="Reset menu zoom"
+                  @click="resetZoom">
+                  {{ Math.round(zoomScale * 100) }}%
+                </button>
 
-              <button type="button" class="fullscreen-button zoom-level" aria-label="Reset menu zoom"
-                @click="resetZoom">
-                {{ Math.round(zoomScale * 100) }}%
-              </button>
+                <button type="button" class="fullscreen-button zoom-button" aria-label="Zoom in"
+                  :disabled="zoomScale >= maximumZoom" @click="zoomIn">
+                  <span aria-hidden="true">+</span>
+                </button>
+              </div>
 
-              <button type="button" class="fullscreen-button zoom-button" aria-label="Zoom in"
-                :disabled="zoomScale >= maximumZoom" @click="zoomIn">
-                <span aria-hidden="true">+</span>
+              <button type="button" class="fullscreen-button" aria-label="Exit fullscreen menu"
+                @click="closeFullscreen">
+                <span aria-hidden="true">×</span>
+                Close
               </button>
             </div>
+            <div class="menu-binding" aria-hidden="true"></div>
 
-            <button type="button" class="fullscreen-button" aria-label="Exit fullscreen menu" @click="closeFullscreen">
-              <span aria-hidden="true">×</span>
-              Close
-            </button>
-          </div>
-          <div class="menu-binding" aria-hidden="true"></div>
-
-          <div ref="menuBook" class="menu-book" :class="{
-            'can-open-fullscreen': !isFullscreen,
-            'is-zoomed': isFullscreen && zoomScale > minimumZoom
-          }" :role="isFullscreen ? undefined : 'button'" :tabindex="isFullscreen ? undefined : 0" :aria-label="isFullscreen
+            <div ref="menuBook" class="menu-book" :class="{
+              'can-open-fullscreen': !isFullscreen,
+              'is-zoomed': isFullscreen && zoomScale > minimumZoom
+            }" :role="isFullscreen ? undefined : 'button'" :tabindex="isFullscreen ? undefined : 0" :aria-label="isFullscreen
             ? zoomScale > minimumZoom
               ? `${currentMenu.alt}. Drag to explore the enlarged menu. Use the mouse wheel to zoom.`
               : `${currentMenu.alt}. Swipe to change pages. Pinch or use the mouse wheel to zoom.`
             : `${currentMenu.alt}. Select to view fullscreen.`
             " v-drag-scroll="isFullscreen && zoomScale > minimumZoom" @click="handleMenuBookClick"
-            @keydown.enter.prevent="handleMenuBookKeyboardOpen" @keydown.space.prevent="handleMenuBookKeyboardOpen"
-            @wheel="handleZoomWheel" @pointerdown="handleSwipeStart" @pointerup="handleSwipeEnd"
-            @pointercancel="resetSwipe" @touchstart="handleZoomTouchStart" @touchmove="handleZoomTouchMove"
-            @touchend="handleZoomTouchEnd" @touchcancel="handleZoomTouchEnd">
+              @keydown.enter.prevent="handleMenuBookKeyboardOpen" @keydown.space.prevent="handleMenuBookKeyboardOpen"
+              @wheel="handleZoomWheel" @pointerdown="handleSwipeStart" @pointerup="handleSwipeEnd"
+              @pointercancel="resetSwipe" @touchstart="handleZoomTouchStart" @touchmove="handleZoomTouchMove"
+              @touchend="handleZoomTouchEnd" @touchcancel="handleZoomTouchEnd">
 
-            <Transition :name="transitionName">
-              <div :key="currentMenu.id" class="menu-page-sheet" :style="menuPageZoomStyle">
-                <img :src="currentMenu.image" :alt="currentMenu.alt" class="menu-image" draggable="false" />
+              <Transition :name="transitionName">
+                <div :key="currentMenu.id" class="menu-page-sheet" :style="menuPageZoomStyle">
+                  <img :src="currentMenu.image" :alt="currentMenu.alt" class="menu-image" draggable="false" />
 
-                <div class="paper-shading" aria-hidden="true"></div>
-              </div>
-            </Transition>
+                  <div class="paper-shading" aria-hidden="true"></div>
+                </div>
+              </Transition>
+            </div>
+
+            <!-- Controls belong AFTER the closing menu-book div -->
+            <div class="menu-controls">
+              <button type="button" class="page-control" :disabled="currentIndex === 0" @click="previousPage">
+                <span aria-hidden="true">←</span>
+                Previous
+              </button>
+
+              <p class="page-number">
+                Page {{ currentIndex + 1 }} of {{ menuPages.length }}
+              </p>
+
+              <button type="button" class="page-control" :disabled="currentIndex === menuPages.length - 1"
+                @click="nextPage">
+                Next
+                <span aria-hidden="true">→</span>
+              </button>
+            </div>
           </div>
-
-          <!-- Controls belong AFTER the closing menu-book div -->
-          <div class="menu-controls">
-            <button type="button" class="page-control" :disabled="currentIndex === 0" @click="previousPage">
-              <span aria-hidden="true">←</span>
-              Previous
-            </button>
-
-            <p class="page-number">
-              Page {{ currentIndex + 1 }} of {{ menuPages.length }}
-            </p>
-
-            <button type="button" class="page-control" :disabled="currentIndex === menuPages.length - 1"
-              @click="nextPage">
-              Next
-              <span aria-hidden="true">→</span>
-            </button>
-          </div>
-        </div>
-      </Teleport>
-    </section>
+        </Teleport>
+      </section>
+    </template>
   </main>
 </template>
 
 <script setup>
+
 import {
   computed,
   ref,
@@ -105,8 +111,42 @@ import favorites from '@/assets/menu/house-favorites.png'
 import sandwiches from '@/assets/menu/sandwiches.png'
 import desserts from '@/assets/menu/desserts-drinks.png'
 import { trackMenuSectionClick, trackMenuFullscreenOpen } from "@/utils/analytics"
+import { getPublicMenu } from "@/api/menuApi"
+import LiveMenu from "@/components/menu/LiveMenu.vue"
+
+const liveMenu = ref(null)
+const liveMenuLoading = ref(true)
+const liveMenuAvailable = ref(false)
+
+async function loadPublicMenu() {
+  liveMenuLoading.value = true
+
+  try {
+    const response = await getPublicMenu()
+
+    if (
+      response &&
+      Array.isArray(response.sections) &&
+      response.sections.length > 0
+    ) {
+      liveMenu.value = response
+      liveMenuAvailable.value = true
+    }
+  } catch (error) {
+    /*
+     * The existing image menu remains our fallback.
+     * A public API outage should not prevent customers
+     * from seeing the menu.
+     */
+    liveMenu.value = null
+    liveMenuAvailable.value = false
+  } finally {
+    liveMenuLoading.value = false
+  }
+}
 
 // Menu Label Section
+
 const menuPages = [
   {
     id: 'starters',
@@ -216,6 +256,8 @@ onMounted(() => {
   window.addEventListener('keydown', handleFullscreenKeydown)
 
   document.body.classList.add('menu-view-active')
+
+  loadPublicMenu()
 })
 
 onBeforeUnmount(() => {
