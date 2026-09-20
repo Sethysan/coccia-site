@@ -32,28 +32,32 @@
             </p>
 
             <!-- Ungrouped menu items -->
-            <div v-for="item in selectedSection.items" :key="item.name" class="menu-item">
-                <div class="menu-item-content">
-                    <h3>{{ item.name }}</h3>
 
-                    <p v-if="item.description">
-                        {{ item.description }}
-                    </p>
-                </div>
+            <div class="menu-item-grid">
+                <article v-for="item in selectedSection.items" :key="item.name" class="menu-item">
+                    <div class="menu-item-content">
+                        <h3>{{ item.name }}</h3>
 
-                <div class="menu-item-prices">
-                    <span v-for="price in item.prices" :key="`${item.name}-${price.label ?? 'price'}`"
-                        class="menu-item-price">
-                        <span v-if="price.label">
-                            {{ price.label }}
+                        <p v-if="item.description">
+                            {{ item.description }}
+                        </p>
+                    </div>
+
+                    <div class="menu-item-prices">
+                        <span v-for="price in item.prices" :key="`${item.name}-${price.label ?? 'price'}`"
+                            class="menu-item-price">
+                            <span v-if="price.label">
+                                {{ price.label }}
+                            </span>
+
+                            ${{ Number(price.amount).toFixed(2) }}
                         </span>
-
-                        ${{ Number(price.amount).toFixed(2) }}
-                    </span>
-                </div>
+                    </div>
+                </article>
             </div>
 
             <!-- Subsections -->
+
             <div v-for="subsection in selectedSection.subsections" :key="subsection.name" class="menu-subsection">
                 <div class="menu-subsection-heading">
                     <h3>{{ subsection.name }}</h3>
@@ -277,14 +281,28 @@ const selectedSection = computed(() => {
    MENU ITEMS
    ========================================================== */
 
-.menu-item {
+.menu-item-grid {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    gap: 0.35rem 1.5rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+}
 
-    padding: 1.25rem 0;
+.menu-item {
+    display: flex;
+    flex-direction: column;
 
-    border-bottom: 1px solid rgba(138, 106, 50, 0.45);
+    min-width: 0;
+    padding: 1.25rem;
+
+    background: rgba(20, 15, 12, 0.55);
+
+    border: 1px solid rgba(138, 106, 50, 0.65);
+    border-radius: 0.4rem;
+}
+
+.menu-item-grid .menu-item-prices {
+    margin-top: auto;
+    padding-top: 1rem;
 }
 
 .menu-item-content {
@@ -451,12 +469,17 @@ const selectedSection = computed(() => {
         font-size: 0.9rem;
     }
 
+    .menu-item-grid {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+    }
+
     /* On phones, don't force descriptions and prices
        to compete for the same horizontal space. */
     .menu-item {
         display: block;
 
-        padding: 1rem 0;
+        padding: 1rem;
     }
 
     .menu-item-content h3,

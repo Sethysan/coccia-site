@@ -1,5 +1,8 @@
 <template>
     <section>
+
+        <input ref="photoInput" type="file" accept="image/*" hidden @change="handleMenuItemPhotoSelected">
+
         <header class="page-header">
             <div>
                 <h1>Menu</h1>
@@ -394,6 +397,7 @@
                             <div v-if="addingItemSectionId === section.id && !editingMenuItem"
                                 class="menu-item-form-panel">
                                 <MenuItemForm :item="editingMenuItem" :saving="savingMenuItem"
+                                    :section-name="section.name"
                                     :default-display-order="(menuStore.itemsBySection[section.id] ?? []).length"
                                     :subsections="menuStore.subsectionsBySection[section.id] ?? []" @submit="
                                         payload =>
@@ -442,22 +446,45 @@
                                         <div v-else class="menu-item-list">
                                             <template v-for="item in group.items" :key="item.id">
                                                 <article class="menu-item-row">
-                                                    <div>
-                                                        <strong>{{ item.recipeName }}</strong>
+                                                    <div class="menu-item-summary">
+                                                        <div class="menu-item-thumbnail">
+                                                            <img v-if="item.imageUrl" :src="item.imageUrl"
+                                                                :alt="item.imageAlt || item.recipeName">
 
-                                                        <p v-if="item.description">
-                                                            {{ item.description }}
-                                                        </p>
+                                                            <span v-else>
+                                                                No Photo
+                                                            </span>
+                                                        </div>
 
-                                                        <ul class="menu-item-prices">
-                                                            <li v-for="price in item.prices" :key="price.id">
-                                                                <span v-if="price.label">
-                                                                    {{ price.label }}:
-                                                                </span>
+                                                        <div class="menu-item-details">
+                                                            <strong>{{ item.recipeName }}</strong>
 
-                                                                ${{ formatPrice(price.amount) }}
-                                                            </li>
-                                                        </ul>
+                                                            <button type="button" class="menu-item-photo-action"
+                                                                :disabled="uploadingPhotoRecipeId === item.recipeId"
+                                                                @click="chooseMenuItemPhoto(item)">
+                                                                {{
+                                                                    uploadingPhotoRecipeId === item.recipeId
+                                                                        ? 'Uploading...'
+                                                                        : item.imageUrl
+                                                                            ? 'Replace Photo'
+                                                                            : 'Needs Photo · Add Photo'
+                                                                }}
+                                                            </button>
+
+                                                            <p v-if="item.description">
+                                                                {{ item.description }}
+                                                            </p>
+
+                                                            <ul class="menu-item-prices">
+                                                                <li v-for="price in item.prices" :key="price.id">
+                                                                    <span v-if="price.label">
+                                                                        {{ price.label }}:
+                                                                    </span>
+
+                                                                    ${{ formatPrice(price.amount) }}
+                                                                </li>
+                                                            </ul>
+                                                        </div>
                                                     </div>
 
                                                     <div class="menu-item-actions">
@@ -547,22 +574,45 @@
                                     <div class="menu-item-list">
                                         <template v-for="item in ungroupedMenuItems" :key="item.id">
                                             <article class="menu-item-row">
-                                                <div>
-                                                    <strong>{{ item.recipeName }}</strong>
+                                                <div class="menu-item-summary">
+                                                    <div class="menu-item-thumbnail">
+                                                        <img v-if="item.imageUrl" :src="item.imageUrl"
+                                                            :alt="item.imageAlt || item.recipeName">
 
-                                                    <p v-if="item.description">
-                                                        {{ item.description }}
-                                                    </p>
+                                                        <span v-else>
+                                                            No Photo
+                                                        </span>
+                                                    </div>
 
-                                                    <ul class="menu-item-prices">
-                                                        <li v-for="price in item.prices" :key="price.id">
-                                                            <span v-if="price.label">
-                                                                {{ price.label }}:
-                                                            </span>
+                                                    <div class="menu-item-details">
+                                                        <strong>{{ item.recipeName }}</strong>
 
-                                                            ${{ formatPrice(price.amount) }}
-                                                        </li>
-                                                    </ul>
+                                                        <button type="button" class="menu-item-photo-action"
+                                                            :disabled="uploadingPhotoRecipeId === item.recipeId"
+                                                            @click="chooseMenuItemPhoto(item)">
+                                                            {{
+                                                                uploadingPhotoRecipeId === item.recipeId
+                                                                    ? 'Uploading...'
+                                                                    : item.imageUrl
+                                                                        ? 'Replace Photo'
+                                                                        : 'Needs Photo · Add Photo'
+                                                            }}
+                                                        </button>
+
+                                                        <p v-if="item.description">
+                                                            {{ item.description }}
+                                                        </p>
+
+                                                        <ul class="menu-item-prices">
+                                                            <li v-for="price in item.prices" :key="price.id">
+                                                                <span v-if="price.label">
+                                                                    {{ price.label }}:
+                                                                </span>
+
+                                                                ${{ formatPrice(price.amount) }}
+                                                            </li>
+                                                        </ul>
+                                                    </div>
                                                 </div>
 
                                                 <div class="menu-item-actions">
@@ -651,6 +701,7 @@
 import { computed, nextTick, onMounted, ref } from 'vue'
 
 import { useMenuStore } from '@/stores/menuStore'
+import { uploadRecipeImage } from '@/api/recipesApi'
 import MenuItemForm from '@/components/admin/MenuItemForm.vue'
 import PizzaManager from '@/components/admin/PizzaManager.vue'
 
@@ -749,6 +800,10 @@ const addingItemSectionId = ref(null)
 const editingMenuItem = ref(null)
 const savingMenuItem = ref(false)
 const movingMenuItemId = ref(null)
+
+const photoInput = ref(null)
+const photoUploadItem = ref(null)
+const uploadingPhotoRecipeId = ref(null)
 
 const groupedMenuItems = computed(() => {
     if (!expandedSectionId.value) {
@@ -1079,6 +1134,43 @@ async function handleSaveMenuItem(sectionId, payload) {
 
     } finally {
         savingMenuItem.value = false
+    }
+}
+
+function chooseMenuItemPhoto(item) {
+    photoUploadItem.value = item
+
+    if (photoInput.value) {
+        photoInput.value.value = ''
+        photoInput.value.click()
+    }
+}
+
+async function handleMenuItemPhotoSelected(event) {
+    const file = event.target.files?.[0]
+    const item = photoUploadItem.value
+
+    if (!file || !item) {
+        return
+    }
+
+    uploadingPhotoRecipeId.value = item.recipeId
+    menuStore.clearError()
+
+    try {
+        await uploadRecipeImage(item.recipeId, file)
+
+        await menuStore.fetchItems(expandedSectionId.value)
+    } catch (error) {
+        menuStore.error =
+            error?.message || 'Unable to upload recipe photo.'
+    } finally {
+        uploadingPhotoRecipeId.value = null
+        photoUploadItem.value = null
+
+        if (photoInput.value) {
+            photoInput.value.value = ''
+        }
     }
 }
 
@@ -1629,6 +1721,77 @@ function collapseSectionWorkspace() {
     font-size: 0.8rem;
 }
 
+.menu-item-summary {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+
+    min-width: 0;
+}
+
+.menu-item-thumbnail {
+    display: flex;
+    flex: 0 0 90px;
+    align-items: center;
+    justify-content: center;
+
+    width: 90px;
+    height: 72px;
+
+    overflow: hidden;
+
+    color: var(--text-secondary);
+    background: rgba(255, 255, 255, 0.04);
+
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 0.4rem;
+
+    font-size: 0.75rem;
+}
+
+.menu-item-thumbnail img {
+    width: 100%;
+    height: 100%;
+
+    object-fit: cover;
+}
+
+.menu-item-details {
+    min-width: 0;
+}
+
+.menu-item-photo-action {
+    display: block;
+
+    margin: 0.2rem 0 0;
+    padding: 0;
+
+    color: var(--bronze-hover);
+    background: transparent;
+
+    border: 0;
+
+    font: inherit;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-align: left;
+
+    cursor: pointer;
+}
+
+.menu-item-photo-action:hover{
+    color: var(--text-secondary);
+}
+
+.menu-item-photo-action:hover:not(:disabled) {
+    text-decoration: underline;
+}
+
+.menu-item-photo-action:disabled {
+    cursor: wait;
+    opacity: 0.65;
+}
+
 @media (max-width: 600px) {
     .section-heading {
         flex-direction: column;
@@ -1706,6 +1869,17 @@ function collapseSectionWorkspace() {
     .menu-item-row strong,
     .menu-item-row p {
         overflow-wrap: anywhere;
+    }
+
+    .menu-item-summary {
+        align-items: flex-start;
+    }
+
+    .menu-item-thumbnail {
+        flex-basis: 72px;
+
+        width: 72px;
+        height: 60px;
     }
 }
 </style>
