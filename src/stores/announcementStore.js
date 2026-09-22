@@ -8,7 +8,8 @@ import {
     updateAnnouncement as updateAnnouncementApi,
     scheduleAnnouncement as scheduleAnnouncementApi,
     archiveAnnouncement as archiveAnnouncementApi,
-    deleteAnnouncement as deleteAnnouncementApi
+    deleteAnnouncement as deleteAnnouncementApi,
+    uploadAnnouncementImage as uploadAnnouncementImageApi
 } from "@/api/announcementsApi"
 
 import {
@@ -164,6 +165,36 @@ export const useAnnouncementStore = defineStore("announcements", {
 
                 this.error = error.message
                 return false
+            }
+        },
+
+        async uploadAnnouncementImage(id, file) {
+            this.error = null
+
+            try {
+                const updated =
+                    await uploadAnnouncementImageApi(
+                        id,
+                        file
+                    )
+
+                const announcement =
+                    normalizeAnnouncement(updated)
+
+                this.currentAnnouncement =
+                    announcement
+
+                this.replaceAdminAnnouncement(
+                    announcement
+                )
+
+                return announcement
+
+            } catch (error) {
+                console.error(error)
+
+                this.error = error.message
+                return null
             }
         },
 

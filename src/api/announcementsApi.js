@@ -84,3 +84,20 @@ export const deleteAnnouncement = (id) => {
         }
     )
 }
+
+export const uploadAnnouncementImage = (
+    id,
+    file
+) => {
+    const formData = new FormData()
+
+    formData.append("file", file)
+
+    return apiRequest(
+        `/api/admin/announcements/${id}/image`,
+        {
+            method: "POST",
+            body: formData
+        }
+    )
+}

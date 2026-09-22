@@ -4,9 +4,15 @@ import com.cocciahouse.api.dto.announcement.AnnouncementCreateRequest;
 import com.cocciahouse.api.dto.announcement.AnnouncementResponse;
 import com.cocciahouse.api.dto.announcement.AnnouncementUpdateRequest;
 import com.cocciahouse.api.service.AnnouncementService;
+import com.cocciahouse.api.model.Announcement;
+import com.cocciahouse.api.service.ImageService;
+import com.cocciahouse.api.service.ImageUploadResult;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
 
 import java.net.URI;
 import java.util.List;
@@ -16,11 +22,14 @@ import java.util.List;
 public class AnnouncementController {
 
     private final AnnouncementService announcementService;
+    private final ImageService imageService;
 
     public AnnouncementController(
-            AnnouncementService announcementService
+            AnnouncementService announcementService,
+            ImageService imageService
     ) {
         this.announcementService = announcementService;
+        this.imageService = imageService;
     }
 
     @GetMapping
@@ -62,6 +71,65 @@ public class AnnouncementController {
         return announcementService.update(
                 id,
                 request
+        );
+    }
+
+    @PostMapping("/{id}/image")
+    public AnnouncementResponse uploadAnnouncementImage(
+            @PathVariable Long id,
+            @RequestParam("file") MultipartFile file
+    ) throws IOException {
+
+        Announcement existingAnnouncement =
+                announcementService.getAnnouncementById(id);
+
+        String oldImagePublicId =
+                existingAnnouncement.getImagePublicId();
+
+        ImageUploadResult uploadResult =
+                imageService.uploadAnnouncementImage(file);
+
+        Announcement updatedAnnouncement;
+
+        try {
+            updatedAnnouncement =
+                    announcementService.updateAnnouncementImage(
+                            id,
+                            uploadResult.url(),
+                            uploadResult.publicId()
+                    );
+        } catch (RuntimeException exception) {
+
+            try {
+                imageService.deleteImage(
+                        uploadResult.publicId()
+                );
+            } catch (IOException cleanupException) {
+                exception.addSuppressed(cleanupException);
+            }
+
+            throw exception;
+        }
+
+        if (
+                oldImagePublicId != null
+                        && !oldImagePublicId.isBlank()
+                        && !oldImagePublicId.equals(
+                        uploadResult.publicId()
+                )
+        ) {
+            try {
+                imageService.deleteImage(
+                        oldImagePublicId
+                );
+            } catch (IOException ignored) {
+                // The new announcement image is already saved.
+                // A failed cleanup should not make the upload appear to fail.
+            }
+        }
+
+        return announcementService.getById(
+                updatedAnnouncement.getId()
         );
     }
 

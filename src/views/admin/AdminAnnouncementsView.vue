@@ -110,9 +110,11 @@
 
                 <div class="announcement-actions">
 
-                    <button v-if="announcement.status === 'draft'" type="button"
-                        @click="handleSchedule(announcement.id)">
-                        Schedule
+                    <button v-if="
+                        announcement.status === 'draft' ||
+                        announcement.status === 'scheduled'
+                    " type="button" @click="editingAnnouncement = announcement">
+                        Edit
                     </button>
 
                     <button v-if="announcement.status === 'draft'" type="button"
@@ -164,19 +166,37 @@ onMounted(() => {
     announcementStore.loadAdminAnnouncements()
 })
 
-async function handleCreateAnnouncement(data) {
+async function handleCreateAnnouncement({
+    announcement,
+    imageFile
+}) {
     creatingAnnouncement.value = true
     announcementStore.clearError()
 
     try {
         const created =
-            await announcementStore.createAnnouncement(data)
+            await announcementStore.createAnnouncement(
+                announcement
+            )
 
-        if (created) {
-
-            selectedFilter.value = "drafts"
-            showCreateForm.value = false
+        if (!created) {
+            return
         }
+
+        if (imageFile) {
+            const uploaded =
+                await announcementStore.uploadAnnouncementImage(
+                    created.id,
+                    imageFile
+                )
+
+            if (!uploaded) {
+                return
+            }
+        }
+
+        selectedFilter.value = "drafts"
+        showCreateForm.value = false
 
     } finally {
         creatingAnnouncement.value = false
@@ -229,20 +249,40 @@ async function handleDelete(id) {
     await announcementStore.deleteAnnouncement(id)
 }
 
-async function handleUpdateAnnouncement(id, data) {
+async function handleUpdateAnnouncement(
+    id,
+    {
+        announcement,
+        imageFile
+    }
+) {
     updatingAnnouncement.value = true
     announcementStore.clearError()
 
     try {
-        const success =
+        const updated =
             await announcementStore.updateAnnouncement(
                 id,
-                data
+                announcement
             )
 
-        if (success) {
-            editingAnnouncement.value = null
+        if (!updated) {
+            return
         }
+
+        if (imageFile) {
+            const uploaded =
+                await announcementStore.uploadAnnouncementImage(
+                    id,
+                    imageFile
+                )
+
+            if (!uploaded) {
+                return
+            }
+        }
+
+        editingAnnouncement.value = null
 
     } finally {
         updatingAnnouncement.value = false

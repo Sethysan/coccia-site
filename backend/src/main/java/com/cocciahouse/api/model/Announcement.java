@@ -49,6 +49,9 @@ public class Announcement {
     @Column(name = "image_url")
     private String imageUrl;
 
+    @Column(name = "image_public_id")
+    private String imagePublicId;
+
     @Column(name = "image_alt")
     private String imageAlt;
 
@@ -158,6 +161,16 @@ public class Announcement {
             String imageUrl
     ) {
         this.imageUrl = imageUrl;
+    }
+
+    public String getImagePublicId() {
+        return imagePublicId;
+    }
+
+    public void setImagePublicId(
+            String imagePublicId
+    ) {
+        this.imagePublicId = imagePublicId;
     }
 
     public String getImageAlt() {

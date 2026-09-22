@@ -75,6 +75,27 @@ public class AnnouncementService {
         );
     }
 
+    @Transactional(readOnly = true)
+    public Announcement getAnnouncementById(Long id) {
+        return findAnnouncement(id);
+    }
+
+    public Announcement updateAnnouncementImage(
+            Long id,
+            String imageUrl,
+            String imagePublicId
+    ) {
+        Announcement announcement =
+                findAnnouncement(id);
+
+        announcement.setImageUrl(imageUrl);
+        announcement.setImagePublicId(imagePublicId);
+
+        return announcementRepository.save(
+                announcement
+        );
+    }
+
     public AnnouncementResponse update(
             Long id,
             AnnouncementUpdateRequest request

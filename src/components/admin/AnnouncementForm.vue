@@ -16,6 +16,43 @@
             <textarea id="announcement-message" v-model.trim="form.message" rows="5" required />
         </div>
 
+        <div class="form-field">
+            <label for="announcement-image">
+                Image
+            </label>
+
+            <div v-if="props.announcement?.imageUrl" class="current-announcement-image">
+                <span>Current image</span>
+
+                <img :src="props.announcement.imageUrl" :alt="form.imageAlt ||
+                    'Current announcement image'
+                    " />
+            </div>
+
+            <input id="announcement-image" type="file" accept="image/*" @change="handleImageChange" />
+
+            <small v-if="props.announcement?.imageUrl && !imageFile">
+                Choose a new image only if you want to replace the current one.
+            </small>
+
+            <small v-else>
+                Optional · Maximum 5 MB
+            </small>
+        </div>
+
+        <div class="form-field">
+            <label for="announcement-image-alt">
+                Image description
+            </label>
+
+            <input id="announcement-image-alt" v-model.trim="form.imageAlt" type="text" maxlength="255"
+                placeholder="Describe what is shown in the image" />
+
+            <small>
+                Used for accessibility.
+            </small>
+        </div>
+
         <div class="form-grid">
             <div class="form-field">
                 <label for="announcement-placement">
@@ -153,8 +190,12 @@ const form = reactive({
         props.announcement?.endDateTime
     ),
     displayOrder:
-        props.announcement?.displayOrder ?? 0
+        props.announcement?.displayOrder ?? 0,
+    imageAlt:
+        props.announcement?.imageAlt ?? ""
 })
+
+const imageFile = ref(null)
 
 function toInstant(value) {
     if (!value) {
@@ -165,6 +206,11 @@ function toInstant(value) {
 }
 
 const validationError = ref(null)
+
+function handleImageChange(event) {
+    imageFile.value =
+        event.target.files?.[0] ?? null
+}
 
 function handleSubmit() {
     validationError.value = null
@@ -182,13 +228,19 @@ function handleSubmit() {
     }
 
     emit("submit", {
-        title: form.title,
-        message: form.message,
-        placement: form.placement,
-        type: form.type,
-        startDateTime: toInstant(form.startDateTime),
-        endDateTime: toInstant(form.endDateTime),
-        displayOrder: form.displayOrder
+        announcement: {
+            title: form.title,
+            message: form.message,
+            placement: form.placement,
+            type: form.type,
+            startDateTime: toInstant(form.startDateTime),
+            endDateTime: toInstant(form.endDateTime),
+            displayOrder: form.displayOrder,
+            imageUrl:
+                props.announcement?.imageUrl ?? null,
+            imageAlt: form.imageAlt || null
+        },
+        imageFile: imageFile.value
     })
 }
 
@@ -245,6 +297,27 @@ function toLocalDateTime(value) {
     display: flex;
     justify-content: flex-end;
     gap: 0.75rem;
+}
+
+.current-announcement-image {
+    display: grid;
+    gap: 0.5rem;
+    max-width: 32rem;
+}
+
+.current-announcement-image span {
+    font-size: 0.85rem;
+    opacity: 0.75;
+}
+
+.current-announcement-image img {
+    display: block;
+    width: 100%;
+    max-height: 18rem;
+    object-fit: contain;
+
+    border: 1px solid var(--bronze-bold);
+    border-radius: 0.5rem;
 }
 
 @media (max-width: 600px) {

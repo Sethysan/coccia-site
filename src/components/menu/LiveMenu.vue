@@ -76,36 +76,53 @@
                     </span>
                 </div>
 
-                <div v-for="item in subsection.items" :key="item.name" class="menu-item">
-                    <div class="menu-item-content">
-                        <h4>{{ item.name }}</h4>
-
-                        <p v-if="item.description">
-                            {{ item.description }}
-                        </p>
-                    </div>
-
-                    <div class="menu-item-prices">
-                        <span v-for="price in item.prices" :key="`${item.name}-${price.label ?? 'price'}`"
-                            class="menu-item-price">
-                            <span v-if="price.label">
-                                {{ price.label }}
-                            </span>
-
-                            ${{ Number(price.amount).toFixed(2) }}
+                <!-- Simple items: shared subsection price, no descriptions or individual prices -->
+                <div v-if="isSimpleSubsection(subsection)" class="menu-subsection-items">
+                    <template v-for="(item, index) in subsection.items" :key="item.name">
+                        <span class="menu-subsection-item">
+                            {{ item.name }}
                         </span>
-                    </div>
+
+                        <span v-if="index < subsection.items.length - 1" class="menu-subsection-separator"
+                            aria-hidden="true">
+                            •
+                        </span>
+                    </template>
+                </div>
+
+                <!-- Detailed items: descriptions and/or individual prices -->
+                <div v-else class="menu-subsection-detailed-items">
+                    <article v-for="item in subsection.items" :key="item.name" class="menu-subsection-detailed-item">
+                        <div class="menu-subsection-detailed-content">
+                            <h4>{{ item.name }}</h4>
+
+                            <p v-if="item.description">
+                                {{ item.description }}
+                            </p>
+                        </div>
+
+                        <div v-if="item.prices?.length" class="menu-item-prices">
+                            <span v-for="price in item.prices" :key="`${item.name}-${price.label ?? 'price'}`"
+                                class="menu-item-price">
+                                <span v-if="price.label">
+                                    {{ price.label }}
+                                </span>
+
+                                ${{ Number(price.amount).toFixed(2) }}
+                            </span>
+                        </div>
+                    </article>
                 </div>
             </div>
 
             <p v-if="selectedSection.footerText" class="section-footer">
                 {{ selectedSection.footerText }}
             </p>
+
+            <FullscreenImageViewer :open="fullscreenImage !== null" :src="fullscreenImage?.src || ''"
+                :alt="fullscreenImage?.alt || ''" :caption="fullscreenImage?.caption || ''"
+                @close="closeFullscreenImage" />
         </div>
-
-        <FullscreenImageViewer :open="fullscreenImage !== null" :src="fullscreenImage?.src || ''"
-            :alt="fullscreenImage?.alt || ''" :caption="fullscreenImage?.caption || ''" @close="closeFullscreenImage" />
-
     </section>
 </template>
 
@@ -151,6 +168,16 @@ async function loadWeeklyOffering() {
     } finally {
         weeklyOfferingLoading.value = false
     }
+}
+
+function isSimpleSubsection(subsection) {
+    return (
+        subsection.price != null &&
+        subsection.items.every(item =>
+            !item.description &&
+            (!item.prices || item.prices.length === 0)
+        )
+    )
 }
 
 onMounted(() => {
@@ -452,27 +479,76 @@ const selectedSection = computed(() => {
     font-weight: 700;
 }
 
-.menu-subsection .menu-item {
-    display: inline-block;
+.menu-subsection-items {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.35rem 0.65rem;
 
-    margin: 0.75rem 1.5rem 0 0;
-    padding: 0;
-
-    border-bottom: 0;
+    margin-top: 0.7rem;
 }
 
-.menu-subsection .menu-item-content h4 {
-    margin: 0;
-
+.menu-subsection-item {
     color: var(--text-secondary);
 
     font-size: 1rem;
     font-weight: 600;
+    line-height: 1.4;
 }
 
-.menu-subsection .menu-item-content p,
-.menu-subsection .menu-item-prices {
-    margin-top: 0.35rem;
+.menu-subsection-separator {
+    color: var(--bronze-hover);
+    line-height: 1;
+}
+
+.menu-subsection-detailed-items {
+    display: grid;
+    gap: 0.85rem;
+
+    margin-top: 0.85rem;
+}
+
+.menu-subsection-detailed-item {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+    gap: 0.75rem 1.5rem;
+
+    padding-bottom: 0.85rem;
+
+    border-bottom: 1px solid rgba(138, 106, 50, 0.35);
+}
+
+.menu-subsection-detailed-item:last-child {
+    padding-bottom: 0;
+
+    border-bottom: 0;
+}
+
+.menu-subsection-detailed-content {
+    min-width: 0;
+}
+
+.menu-subsection-detailed-content h4 {
+    margin: 0;
+
+    color: var(--text-primary);
+
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+.menu-subsection-detailed-content p {
+    margin: 0.3rem 0 0;
+
+    color: var(--text-secondary);
+
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+.menu-subsection-detailed-item .menu-item-prices {
+    margin: 0;
 }
 
 /* ==========================================================
@@ -610,20 +686,17 @@ const selectedSection = computed(() => {
         overflow-wrap: anywhere;
     }
 
-    .menu-subsection .menu-item {
-        display: inline-block;
-
-        max-width: 100%;
-        margin: 0.65rem 1rem 0 0;
-        padding: 0;
-
-        white-space: normal;
-
-        border-bottom: 0;
-    }
-
     .menu-subsection .menu-item-content h4 {
         font-size: 0.95rem;
+    }
+
+    .menu-subsection-detailed-item {
+        grid-template-columns: 1fr;
+        gap: 0.45rem;
+    }
+
+    .menu-subsection-detailed-item .menu-item-prices {
+        margin-top: 0;
     }
 
     .section-footer {

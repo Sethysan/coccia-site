@@ -30,6 +30,16 @@ public class ImageService {
         );
     }
 
+    public ImageUploadResult uploadAnnouncementImage(
+            MultipartFile file
+    ) throws IOException {
+
+        return uploadImage(
+                file,
+                "coccia-house/announcements"
+        );
+    }
+
     private ImageUploadResult uploadImage(
             MultipartFile file,
             String folder
