@@ -100,15 +100,16 @@ class RecipeControllerTest {
         Recipe porkChop = new Recipe("Pork Chop");
         porkChop.setDescription("Grilled pork chop.");
         porkChop.setImageAlt("Grilled pork chop on a dinner plate");
+        porkChop.setImageCaption("Pictured with cannellini beans.");
 
         when(
                 recipeService.createRecipe(
                         "Pork Chop",
                         "Grilled pork chop.",
-                        "Grilled pork chop on a dinner plate"
+                        "Grilled pork chop on a dinner plate",
+                        "Pictured with cannellini beans."
                 )
         ).thenReturn(porkChop);
-
         mockMvc.perform(
                         post("/api/admin/recipes")
                                 .contentType("application/json")
@@ -116,7 +117,8 @@ class RecipeControllerTest {
                                         {
                                           "name": "Pork Chop",
                                           "description": "Grilled pork chop.",
-                                          "imageAlt": "Grilled pork chop on a dinner plate"
+                                          "imageAlt": "Grilled pork chop on a dinner plate",
+                                          "imageCaption": "Pictured with cannellini beans."
                                         }
                                         """)
                 )
@@ -127,12 +129,15 @@ class RecipeControllerTest {
                         .value("Grilled pork chop."))
                 .andExpect(jsonPath("$.imageAlt")
                         .value("Grilled pork chop on a dinner plate"))
+                .andExpect(jsonPath("$.imageCaption")
+                        .value("Pictured with cannellini beans."))
                 .andExpect(jsonPath("$.active").value(true));
 
         verify(recipeService).createRecipe(
                 "Pork Chop",
                 "Grilled pork chop.",
-                "Grilled pork chop on a dinner plate"
+                "Grilled pork chop on a dinner plate",
+                "Pictured with cannellini beans."
         );
     }
 
@@ -172,6 +177,7 @@ class RecipeControllerTest {
                 recipeService.createRecipe(
                         "Baked Ziti",
                         null,
+                        null,
                         null
                 )
         ).thenThrow(
@@ -199,6 +205,7 @@ class RecipeControllerTest {
         verify(recipeService).createRecipe(
                 "Baked Ziti",
                 null,
+                null,
                 null
         );
     }
@@ -213,6 +220,7 @@ class RecipeControllerTest {
                         "Chicken Cacciatore",
                         OfferingType.DINNER,
                         "Slow-cooked chicken.",
+                        null,
                         null,
                         null,
                         true,
@@ -321,6 +329,7 @@ class RecipeControllerTest {
                         "Chicken Parm",
                         "Breaded chicken with sauce and cheese.",
                         "Chicken parmesan covered in melted cheese",
+                        null,
                         false
                 )
         ).thenReturn(updatedRecipe);
@@ -351,6 +360,7 @@ class RecipeControllerTest {
                 "Chicken Parm",
                 "Breaded chicken with sauce and cheese.",
                 "Chicken parmesan covered in melted cheese",
+                null,
                 false
         );
     }
@@ -363,6 +373,7 @@ class RecipeControllerTest {
                 recipeService.updateRecipe(
                         1L,
                         "Baked Ziti",
+                        null,
                         null,
                         null,
                         true
@@ -395,6 +406,7 @@ class RecipeControllerTest {
         verify(recipeService).updateRecipe(
                 1L,
                 "Baked Ziti",
+                null,
                 null,
                 null,
                 true

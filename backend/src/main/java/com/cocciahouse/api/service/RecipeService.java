@@ -49,7 +49,8 @@ public class RecipeService {
     public Recipe createRecipe(
             String name,
             String description,
-            String imageAlt
+            String imageAlt,
+            String imageCaption
     ) {
 
         String cleanedName = name.trim();
@@ -64,30 +65,9 @@ public class RecipeService {
 
         recipe.setDescription(cleanNullableText(description));
         recipe.setImageAlt(cleanNullableText(imageAlt));
+        recipe.setImageCaption(cleanNullableText(imageCaption));
 
         return recipeRepository.save(recipe);
-    }
-
-    @Transactional(readOnly = true)
-    public Optional<WeeklyOfferingItemResponse> getLatestOfferingItem(
-            Long recipeId
-    ) {
-
-        if (!recipeRepository.existsById(recipeId)) {
-            throw new RecipeNotFoundException(
-                    "Recipe not found."
-            );
-        }
-
-        return weeklyOfferingItemRepository
-                .findFirstByRecipeIdAndWeeklyOfferingStatusInOrderByWeeklyOfferingStartDateDesc(
-                        recipeId,
-                        List.of(
-                                WeeklyOfferingStatus.SCHEDULED,
-                                WeeklyOfferingStatus.PUBLISHED
-                        )
-                )
-                .map(weeklyOfferingMapper::toItemResponse);
     }
 
     @Transactional(readOnly = true)
@@ -101,12 +81,39 @@ public class RecipeService {
                 .findByNameContainingIgnoreCaseOrderByNameAsc(search);
     }
 
+    @Transactional(readOnly = true)
+    public Recipe getRecipeById(Long id) {
+        return recipeRepository.findById(id)
+                .orElseThrow(() ->
+                        new RecipeNotFoundException("Recipe not found.")
+                );
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<WeeklyOfferingItemResponse> getLatestOfferingItem(Long recipeId) {
+
+        if (!recipeRepository.existsById(recipeId)) {
+            throw new RecipeNotFoundException("Recipe not found.");
+        }
+
+        return weeklyOfferingItemRepository
+                .findFirstByRecipeIdAndWeeklyOfferingStatusInOrderByWeeklyOfferingStartDateDesc(
+                        recipeId,
+                        List.of(
+                                WeeklyOfferingStatus.PUBLISHED,
+                                WeeklyOfferingStatus.SCHEDULED
+                        )
+                )
+                .map(weeklyOfferingMapper::toItemResponse);
+    }
+
     @Transactional
     public Recipe updateRecipe(
             Long id,
             String name,
             String description,
             String imageAlt,
+            String imageCaption,
             boolean active
     ) {
         Recipe recipe = recipeRepository.findById(id)
@@ -129,17 +136,27 @@ public class RecipeService {
         recipe.setName(cleanedName);
         recipe.setDescription(cleanNullableText(description));
         recipe.setImageAlt(cleanNullableText(imageAlt));
+        recipe.setImageCaption(cleanNullableText(imageCaption));
         recipe.setActive(active);
 
         return recipeRepository.save(recipe);
     }
 
-    @Transactional(readOnly = true)
-    public Recipe getRecipeById(Long id) {
-        return recipeRepository.findById(id)
+    @Transactional
+    public Recipe updateRecipeImageDetails(
+            Long id,
+            String imageAlt,
+            String imageCaption
+    ) {
+        Recipe recipe = recipeRepository.findById(id)
                 .orElseThrow(() ->
                         new RecipeNotFoundException("Recipe not found.")
                 );
+
+        recipe.setImageAlt(cleanNullableText(imageAlt));
+        recipe.setImageCaption(cleanNullableText(imageCaption));
+
+        return recipeRepository.save(recipe);
     }
 
     @Transactional

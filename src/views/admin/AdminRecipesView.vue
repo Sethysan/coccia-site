@@ -44,6 +44,13 @@
                         placeholder="Example: Chicken Marsala with mushrooms">
                 </label>
 
+                <label>
+                    Photo caption
+
+                    <input v-model="newImageCaption" type="text" maxlength="255"
+                        placeholder="Example: Pictured with cannellini beans.">
+                </label>
+
                 <div class="admin-form-actions">
                     <button type="submit" class="primary-button" :disabled="creating">
                         {{ creating ? 'Adding...' : 'Add Recipe' }}
@@ -165,6 +172,13 @@
                             placeholder="Describe what appears in the photo">
                     </label>
 
+                    <label>
+                        Photo caption
+
+                        <input v-model="editImageCaption" type="text" maxlength="255"
+                            placeholder="Example: Pictured with cannellini beans.">
+                    </label>
+
                     <div class="admin-form-actions">
                         <button type="submit" class="primary-button" :disabled="savingId === recipe.id">
                             {{
@@ -206,6 +220,7 @@
     const newRecipeName = ref('')
     const newDescription = ref('')
     const newImageAlt = ref('')
+    const newImageCaption = ref('')
     const creating = ref(false)
     const successMessage = ref('')
     const successRecipeId = ref(null)
@@ -214,6 +229,7 @@
     const editName = ref('')
     const editDescription = ref('')
     const editImageAlt = ref('')
+    const editImageCaption = ref('')
 
     const savingId = ref(null)
     const uploadingId = ref(null)
@@ -272,6 +288,7 @@
         newRecipeName.value = ''
         newDescription.value = ''
         newImageAlt.value = ''
+        newImageCaption.value = ''
 
         recipeStore.clearError()
     }
@@ -291,7 +308,8 @@
                 await recipeStore.addRecipe(
                     name,
                     newDescription.value,
-                    newImageAlt.value
+                    newImageAlt.value,
+                    newImageCaption.value
                 )
 
             if (createdRecipe) {
@@ -309,6 +327,7 @@
         editName.value = recipe.name
         editDescription.value = recipe.description || ''
         editImageAlt.value = recipe.imageAlt || ''
+        editImageCaption.value = recipe.imageCaption || ''
 
         recipeStore.clearError()
     }
@@ -318,6 +337,7 @@
         editName.value = ''
         editDescription.value = ''
         editImageAlt.value = ''
+        editImageCaption.value = ''
 
         recipeStore.clearError()
     }
@@ -339,6 +359,7 @@
                     name,
                     editDescription.value,
                     editImageAlt.value,
+                    editImageCaption.value,
                     recipe.active
                 )
 
@@ -368,6 +389,7 @@
                     recipe.name,
                     recipe.description || '',
                     recipe.imageAlt || '',
+                    recipe.imageCaption || '',
                     !recipe.active
                 )
 

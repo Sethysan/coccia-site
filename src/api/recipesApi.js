@@ -40,6 +40,13 @@ export async function updateRecipe(id, recipe) {
     })
 }
 
+export async function updateRecipeImageDetails(id, imageDetails) {
+    return apiRequest(`/api/admin/recipes/${id}/image-details`, {
+        method: 'PUT',
+        body: JSON.stringify(imageDetails)
+    })
+}
+
 export async function uploadRecipeImage(id, file) {
     const formData = new FormData()
 

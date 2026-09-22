@@ -21,6 +21,12 @@ public record UpdateRecipeRequest(
         )
         String imageAlt,
 
+        @Size(
+                max = 255,
+                message = "Image caption must be 255 characters or fewer."
+        )
+        String imageCaption,
+
         @NotNull(message = "Recipe active status is required.")
         Boolean active
 ) {

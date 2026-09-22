@@ -37,14 +37,17 @@ export const useRecipeStore = defineStore('recipes', () => {
         }
     }
 
-    async function addRecipe(name, description = '', imageAlt = '') {
+    async function addRecipe(
+        name, description = '', imageAlt = '', imageCaption = ''
+    ) {
         error.value = null
 
         try {
             const createdRecipe = await createRecipe({
                 name,
                 description,
-                imageAlt
+                imageAlt,
+                imageCaption
             })
 
             recipes.value = [
@@ -80,6 +83,7 @@ export const useRecipeStore = defineStore('recipes', () => {
         name,
         description,
         imageAlt,
+        imageCaption,
         active
     ) {
         error.value = null
@@ -91,6 +95,7 @@ export const useRecipeStore = defineStore('recipes', () => {
                     name,
                     description,
                     imageAlt,
+                    imageCaption,
                     active
                 }
             )

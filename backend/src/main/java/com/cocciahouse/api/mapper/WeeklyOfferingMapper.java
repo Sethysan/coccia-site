@@ -64,6 +64,7 @@ public class WeeklyOfferingMapper {
                 item.getRecipe().getDescription(),
                 item.getRecipe().getImageUrl(),
                 item.getRecipe().getImageAlt(),
+                item.getRecipe().getImageCaption(),
                 item.isIncludesHouseSalad(),
                 item.isIncludesHomemadeBread(),
                 buildIncludedSidesText(item),

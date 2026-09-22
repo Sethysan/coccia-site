@@ -105,7 +105,8 @@ class RecipeServiceTest {
                 recipeService.createRecipe(
                         "   Pork Chop   ",
                         "  Grilled pork chop.  ",
-                        "  Pork chop on a plate  "
+                        "  Pork chop on a plate  ",
+                        "  Pictured with cannellini beans.  "
                 );
 
         assertEquals("Pork Chop", result.getName());
@@ -113,6 +114,10 @@ class RecipeServiceTest {
         assertEquals(
                 "Pork chop on a plate",
                 result.getImageAlt()
+        );
+        assertEquals(
+                "Pictured with cannellini beans.",
+                result.getImageCaption()
         );
 
         verify(recipeRepository)
@@ -124,6 +129,8 @@ class RecipeServiceTest {
                         .equals("Grilled pork chop.")
                         && recipe.getImageAlt()
                         .equals("Pork chop on a plate")
+                        && recipe.getImageCaption()
+                        .equals("Pictured with cannellini beans.")
         ));
     }
 
@@ -140,11 +147,13 @@ class RecipeServiceTest {
                 recipeService.createRecipe(
                         "Lasagna",
                         "   ",
+                        "   ",
                         "   "
                 );
 
         assertNull(result.getDescription());
         assertNull(result.getImageAlt());
+        assertNull(result.getImageCaption());
     }
 
     @Test
@@ -160,7 +169,8 @@ class RecipeServiceTest {
                 recipeService.createRecipe(
                         "Lasagna",
                         "Layers of pasta, sauce, and cheese.",
-                        "Slice of lasagna"
+                        "Slice of lasagna",
+                        "Pictured with a side salad."
                 );
 
         assertEquals("Lasagna", result.getName());
@@ -171,6 +181,10 @@ class RecipeServiceTest {
         assertEquals(
                 "Slice of lasagna",
                 result.getImageAlt()
+        );
+        assertEquals(
+                "Pictured with a side salad.",
+                result.getImageCaption()
         );
         assertTrue(result.isActive());
 
@@ -192,6 +206,7 @@ class RecipeServiceTest {
                         DuplicateRecipeException.class,
                         () -> recipeService.createRecipe(
                                 "Baked Ziti",
+                                null,
                                 null,
                                 null
                         )
@@ -219,7 +234,8 @@ class RecipeServiceTest {
                 assertThrows(
                         DuplicateRecipeException.class,
                         () -> recipeService.createRecipe(
-                                "   Baked Ziti   ",
+                                "Baked Ziti",
+                                null,
                                 null,
                                 null
                         )
@@ -332,6 +348,7 @@ class RecipeServiceTest {
                         "Chicken Parm",
                         "  Breaded chicken with sauce and cheese.  ",
                         "  Chicken parmesan on a plate  ",
+                        "  Pictured with spaghetti and Classic Red Sauce.  ",
                         false
                 );
 
@@ -348,6 +365,11 @@ class RecipeServiceTest {
         assertEquals(
                 "Chicken parmesan on a plate",
                 updatedRecipe.getImageAlt()
+        );
+
+        assertEquals(
+                "Pictured with spaghetti and Classic Red Sauce.",
+                updatedRecipe.getImageCaption()
         );
 
         assertFalse(updatedRecipe.isActive());
@@ -378,12 +400,14 @@ class RecipeServiceTest {
                         "Chicken Parmesan",
                         "   ",
                         "   ",
+                        "   ",
                         true
                 );
 
         verify(recipe).setName("Chicken Parmesan");
         verify(recipe).setDescription(null);
         verify(recipe).setImageAlt(null);
+        verify(recipe).setImageCaption(null);
         verify(recipe).setActive(true);
         verify(recipeRepository).save(recipe);
 
@@ -412,12 +436,77 @@ class RecipeServiceTest {
                         "Chicken Parm",
                         null,
                         null,
+                        null,
                         true
                 )
         );
 
         verify(recipeRepository, never())
                 .save(any());
+    }
+
+    @Test
+    void updateRecipeImageDetails_updatesOnlyImageMetadata() {
+
+        Recipe recipe = new Recipe("Broiled Salmon Filet");
+
+        recipe.setDescription(
+                "Fresh salmon broiled to perfection."
+        );
+        recipe.setImageUrl(
+                "https://example.com/salmon.jpg"
+        );
+        recipe.setImagePublicId(
+                "coccia-house/recipes/salmon"
+        );
+        recipe.setActive(false);
+
+        when(recipeRepository.findById(1L))
+                .thenReturn(Optional.of(recipe));
+
+        when(recipeRepository.save(recipe))
+                .thenReturn(recipe);
+
+        Recipe updatedRecipe =
+                recipeService.updateRecipeImageDetails(
+                        1L,
+                        "  Blackened salmon with cannellini beans  ",
+                        "  Pictured blackened with cannellini beans.  "
+                );
+
+        assertEquals(
+                "Blackened salmon with cannellini beans",
+                updatedRecipe.getImageAlt()
+        );
+
+        assertEquals(
+                "Pictured blackened with cannellini beans.",
+                updatedRecipe.getImageCaption()
+        );
+
+        assertEquals(
+                "Broiled Salmon Filet",
+                updatedRecipe.getName()
+        );
+
+        assertEquals(
+                "Fresh salmon broiled to perfection.",
+                updatedRecipe.getDescription()
+        );
+
+        assertEquals(
+                "https://example.com/salmon.jpg",
+                updatedRecipe.getImageUrl()
+        );
+
+        assertEquals(
+                "coccia-house/recipes/salmon",
+                updatedRecipe.getImagePublicId()
+        );
+
+        assertFalse(updatedRecipe.isActive());
+
+        verify(recipeRepository).save(recipe);
     }
 
     @Test

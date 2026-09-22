@@ -35,6 +35,9 @@ public class Recipe {
     @Column(name = "image_alt", length = 255)
     private String imageAlt;
 
+    @Column(name = "image_caption", length = 255)
+    private String imageCaption;
+
     @Column(nullable = false)
     private boolean active = true;
 
@@ -106,6 +109,14 @@ public class Recipe {
 
     public void setImageAlt(String imageAlt) {
         this.imageAlt = imageAlt;
+    }
+
+    public String getImageCaption() {
+        return imageCaption;
+    }
+
+    public void setImageCaption(String imageCaption) {
+        this.imageCaption = imageCaption;
     }
 
     public boolean isActive() {

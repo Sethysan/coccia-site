@@ -9,6 +9,7 @@ public record PublicMenuItemResponse(
         String description,
         String imageUrl,
         String imageAlt,
+        String imageCaption,
 
         List<PublicMenuItemPriceResponse> prices
 

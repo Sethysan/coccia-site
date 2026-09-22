@@ -6,6 +6,7 @@ public record RecipeResponse(
         String description,
         String imageUrl,
         String imageAlt,
+        String imageCaption,
         boolean active
 ) {
 }

@@ -51,6 +51,13 @@
                         placeholder="Optional description of the photo">
                 </label>
 
+                <label>
+                    Photo caption
+
+                    <input v-model="newRecipeImageCaption" type="text" maxlength="255"
+                        placeholder="Example: Pictured with cannellini beans.">
+                </label>
+
                 <div class="admin-form-actions">
                     <button type="button" class="primary-button" :disabled="creatingRecipe" @click="createRecipe">
                         {{
@@ -192,6 +199,7 @@ const showCreateRecipe = ref(false)
 const newRecipeName = ref('')
 const newRecipeDescription = ref('')
 const newRecipeImageAlt = ref('')
+const newRecipeImageCaption = ref('')
 const newRecipePhoto = ref(null)
 const creatingRecipe = ref(false)
 
@@ -293,6 +301,7 @@ function beginCreateRecipe(name) {
     newRecipeName.value = name
     newRecipeDescription.value = ''
     newRecipeImageAlt.value = ''
+    newRecipeImageCaption.value = ''
     newRecipePhoto.value = null
     showCreateRecipe.value = true
 
@@ -308,6 +317,7 @@ function cancelCreateRecipe() {
     newRecipeName.value = ''
     newRecipeDescription.value = ''
     newRecipeImageAlt.value = ''
+    newRecipeImageCaption.value = ''
     newRecipePhoto.value = null
 
     recipeStore.clearError()
@@ -328,7 +338,8 @@ async function createRecipe() {
             await recipeStore.addRecipe(
                 name,
                 newRecipeDescription.value,
-                newRecipeImageAlt.value
+                newRecipeImageAlt.value,
+                newRecipeImageCaption.value
             )
 
         if (createdRecipe) {

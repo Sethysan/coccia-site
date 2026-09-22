@@ -464,12 +464,72 @@
                                                                 @click="chooseMenuItemPhoto(item)">
                                                                 {{
                                                                     uploadingPhotoRecipeId === item.recipeId
-                                                                        ? 'Uploading...'
+                                                                        ? 'Saving...'
                                                                         : item.imageUrl
                                                                             ? 'Replace Photo'
                                                                             : 'Needs Photo · Add Photo'
                                                                 }}
                                                             </button>
+
+                                                            <div v-if="photoUploadItem?.id === item.id"
+                                                                class="menu-item-photo-editor">
+
+                                                                <div class="recipe-photo-field">
+                                                                    <span class="recipe-photo-label">
+                                                                        Photo
+                                                                    </span>
+
+                                                            <button type="button" class="photo-picker-button"
+                                                                @click="openPhotoFilePicker">
+                                                                {{ item.imageUrl ? 'Choose Replacement' : '+ Choose Photo' }}
+                                                            </button>
+
+                                                                    <span class="photo-filename">
+                                                                        {{
+                                                                            selectedPhotoFile
+                                                                                ? selectedPhotoFile.name
+                                                                                : item.imageUrl
+                                                                                    ? 'Keep current photo'
+                                                                                    : 'No photo selected'
+                                                                        }}
+                                                                    </span>
+                                                                </div>
+
+                                                                <label>
+                                                                    Image description
+
+                                                                    <input v-model="photoImageAlt" type="text"
+                                                                        maxlength="255"
+                                                                        placeholder="Describe the photo for accessibility">
+                                                                </label>
+
+                                                                <label>
+                                                                    Photo caption
+
+                                                                    <input v-model="photoImageCaption" type="text"
+                                                                        maxlength="255"
+                                                                        placeholder="Example: Pictured with cannellini beans.">
+                                                                </label>
+
+                                                                <div class="admin-form-actions">
+                                                                    <button type="button" class="primary-button"
+                                                                        :disabled="uploadingPhotoRecipeId === item.recipeId
+                                                                            || (!item.imageUrl && !selectedPhotoFile)
+                                                                            " @click="saveMenuItemPhoto">
+                                                                        {{
+                                                                            uploadingPhotoRecipeId === item.recipeId
+                                                                                ? 'Saving...'
+                                                                                : 'Save Photo'
+                                                                        }}
+                                                                    </button>
+
+                                                                    <button type="button"
+                                                                        :disabled="uploadingPhotoRecipeId === item.recipeId"
+                                                                        @click="cancelMenuItemPhoto">
+                                                                        Cancel
+                                                                    </button>
+                                                                </div>
+                                                            </div>
 
                                                             <p v-if="item.description">
                                                                 {{ item.description }}
@@ -542,6 +602,7 @@
                                                     :id="`menu-item-editor-${item.id}`"
                                                     class="menu-item-form-panel menu-item-form-panel--inline">
                                                     <MenuItemForm :item="editingMenuItem" :saving="savingMenuItem"
+                                                        :section-name="section.name"
                                                         :default-display-order="item.displayOrder"
                                                         :subsections="menuStore.subsectionsBySection[section.id] ?? []"
                                                         @submit="
@@ -592,12 +653,71 @@
                                                             @click="chooseMenuItemPhoto(item)">
                                                             {{
                                                                 uploadingPhotoRecipeId === item.recipeId
-                                                                    ? 'Uploading...'
+                                                                    ? 'Saving...'
                                                                     : item.imageUrl
                                                                         ? 'Replace Photo'
                                                                         : 'Needs Photo · Add Photo'
                                                             }}
                                                         </button>
+
+                                                        <div v-if="photoUploadItem?.id === item.id"
+                                                            class="menu-item-photo-editor">
+
+                                                            <div class="recipe-photo-field">
+                                                                <span class="recipe-photo-label">
+                                                                    Photo
+                                                                </span>
+
+                                                        <button type="button" class="photo-picker-button"
+                                                            @click="openPhotoFilePicker">
+                                                            {{ item.imageUrl ? 'Choose Replacement' : '+ Choose Photo' }}
+                                                        </button>
+
+                                                                <span class="photo-filename">
+                                                                    {{
+                                                                        selectedPhotoFile
+                                                                            ? selectedPhotoFile.name
+                                                                            : item.imageUrl
+                                                                                ? 'Keep current photo'
+                                                                                : 'No photo selected'
+                                                                    }}
+                                                                </span>
+                                                            </div>
+
+                                                            <label>
+                                                                Image description
+
+                                                                <input v-model="photoImageAlt" type="text"
+                                                                    maxlength="255"
+                                                                    placeholder="Describe the photo for accessibility">
+                                                            </label>
+
+                                                            <label>
+                                                                Photo caption
+
+                                                                <input v-model="photoImageCaption" type="text"
+                                                                    maxlength="255"
+                                                                    placeholder="Example: Pictured with cannellini beans.">
+                                                            </label>
+
+                                                            <div class="admin-form-actions">
+                                                                <button type="button" class="primary-button" :disabled="uploadingPhotoRecipeId === item.recipeId
+                                                                    || (!item.imageUrl && !selectedPhotoFile)
+                                                                    " @click="saveMenuItemPhoto">
+                                                                    {{
+                                                                        uploadingPhotoRecipeId === item.recipeId
+                                                                            ? 'Saving...'
+                                                                            : 'Save Photo'
+                                                                    }}
+                                                                </button>
+
+                                                                <button type="button"
+                                                                    :disabled="uploadingPhotoRecipeId === item.recipeId"
+                                                                    @click="cancelMenuItemPhoto">
+                                                                    Cancel
+                                                                </button>
+                                                            </div>
+                                                        </div>
 
                                                         <p v-if="item.description">
                                                             {{ item.description }}
@@ -670,6 +790,7 @@
                                                 :id="`menu-item-editor-${item.id}`"
                                                 class="menu-item-form-panel menu-item-form-panel--inline">
                                                 <MenuItemForm :item="editingMenuItem" :saving="savingMenuItem"
+                                                    :section-name="section.name"
                                                     :default-display-order="item.displayOrder"
                                                     :subsections="menuStore.subsectionsBySection[section.id] ?? []"
                                                     @submit="
@@ -701,7 +822,10 @@
 import { computed, nextTick, onMounted, ref } from 'vue'
 
 import { useMenuStore } from '@/stores/menuStore'
-import { uploadRecipeImage } from '@/api/recipesApi'
+import {
+    updateRecipeImageDetails,
+    uploadRecipeImage
+} from '@/api/recipesApi'
 import MenuItemForm from '@/components/admin/MenuItemForm.vue'
 import PizzaManager from '@/components/admin/PizzaManager.vue'
 
@@ -803,6 +927,9 @@ const movingMenuItemId = ref(null)
 
 const photoInput = ref(null)
 const photoUploadItem = ref(null)
+const selectedPhotoFile = ref(null)
+const photoImageAlt = ref('')
+const photoImageCaption = ref('')
 const uploadingPhotoRecipeId = ref(null)
 
 const groupedMenuItems = computed(() => {
@@ -1139,18 +1266,46 @@ async function handleSaveMenuItem(sectionId, payload) {
 
 function chooseMenuItemPhoto(item) {
     photoUploadItem.value = item
+    selectedPhotoFile.value = null
+    photoImageAlt.value = item.imageAlt || ''
+    photoImageCaption.value = item.imageCaption || ''
 
+    if (photoInput.value) {
+        photoInput.value.value = ''
+    }
+
+    menuStore.clearError()
+}
+
+function handleMenuItemPhotoSelected(event) {
+    selectedPhotoFile.value =
+        event.target.files?.[0] ?? null
+}
+
+function openPhotoFilePicker() {
     if (photoInput.value) {
         photoInput.value.value = ''
         photoInput.value.click()
     }
 }
 
-async function handleMenuItemPhotoSelected(event) {
-    const file = event.target.files?.[0]
+function cancelMenuItemPhoto() {
+    photoUploadItem.value = null
+    selectedPhotoFile.value = null
+    photoImageAlt.value = ''
+    photoImageCaption.value = ''
+
+    if (photoInput.value) {
+        photoInput.value.value = ''
+    }
+
+    menuStore.clearError()
+}
+
+async function saveMenuItemPhoto() {
     const item = photoUploadItem.value
 
-    if (!file || !item) {
+    if (!item) {
         return
     }
 
@@ -1158,19 +1313,34 @@ async function handleMenuItemPhotoSelected(event) {
     menuStore.clearError()
 
     try {
-        await uploadRecipeImage(item.recipeId, file)
+        await updateRecipeImageDetails(
+    item.recipeId,
+    {
+        imageAlt: photoImageAlt.value,
+        imageCaption: photoImageCaption.value
+    }
+)
 
-        await menuStore.fetchItems(expandedSectionId.value)
+        if (selectedPhotoFile.value) {
+            await uploadRecipeImage(
+                item.recipeId,
+                selectedPhotoFile.value
+            )
+        }
+
+        await menuStore.fetchItems(
+            expandedSectionId.value
+        )
+
+        cancelMenuItemPhoto()
+
     } catch (error) {
         menuStore.error =
-            error?.message || 'Unable to upload recipe photo.'
+            error?.message
+            || 'Unable to save recipe photo.'
+
     } finally {
         uploadingPhotoRecipeId.value = null
-        photoUploadItem.value = null
-
-        if (photoInput.value) {
-            photoInput.value.value = ''
-        }
     }
 }
 
@@ -1779,7 +1949,7 @@ function collapseSectionWorkspace() {
     cursor: pointer;
 }
 
-.menu-item-photo-action:hover{
+.menu-item-photo-action:hover {
     color: var(--text-secondary);
 }
 
@@ -1790,6 +1960,63 @@ function collapseSectionWorkspace() {
 .menu-item-photo-action:disabled {
     cursor: wait;
     opacity: 0.65;
+}
+
+.menu-item-photo-editor {
+    display: grid;
+    gap: 0.8rem;
+
+    margin-top: 0.75rem;
+    padding: 0.85rem;
+
+    background: rgba(255, 255, 255, 0.04);
+
+    border: 1px solid rgba(181, 137, 55, 0.45);
+    border-radius: 0.5rem;
+}
+
+.recipe-photo-field {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+}
+
+.recipe-photo-label {
+    font-weight: 700;
+}
+
+.photo-picker-button {
+    width: auto;
+}
+
+.photo-filename {
+    font-size: 0.85rem;
+    opacity: 0.75;
+}
+
+.menu-item-photo-editor label {
+    display: grid;
+    gap: 0.35rem;
+
+    font-weight: 700;
+}
+
+.menu-item-photo-editor input {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.menu-item-photo-editor .admin-form-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+
+    margin-top: 0.15rem;
+}
+
+.menu-item-photo-editor .admin-form-actions button {
+    width: auto;
 }
 
 @media (max-width: 600px) {
@@ -1880,6 +2107,27 @@ function collapseSectionWorkspace() {
 
         width: 72px;
         height: 60px;
+    }
+
+    .menu-item-photo-editor {
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .recipe-photo-field {
+        align-items: stretch;
+    }
+
+    .recipe-photo-label {
+        width: 100%;
+    }
+
+    .photo-picker-button {
+        width: 100%;
+    }
+
+    .photo-filename {
+        width: 100%;
     }
 }
 </style>

@@ -10,6 +10,7 @@ public record PublicPizzaSpecialtyResponse(
         String description,
         String imageUrl,
         String imageAlt,
+        String imageCaption,
         PizzaSpecialtyPricingMode pricingMode,
         List<String> toppings,
         List<PublicPizzaSpecialtyAddOnResponse> addOns,

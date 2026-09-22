@@ -1,6 +1,6 @@
 <template>
     <section class="live-menu">
-        <nav class="live-menu-navigation" aria-label="Menu sections">
+        <nav class="live-menu-navigation branded-scrollbar" aria-label="Menu sections">
             <button type="button" class="live-menu-navigation-button" :class="{ active: selectedSectionName === null }"
                 @click="selectedSectionName = null">
                 Menu Home
@@ -35,6 +35,15 @@
 
             <div class="menu-item-grid">
                 <article v-for="item in selectedSection.items" :key="item.name" class="menu-item">
+                    <button v-if="item.imageUrl" type="button" class="menu-item-image-button"
+                        :aria-label="`View larger photo of ${item.name}`" @click="openFullscreenImage(item)">
+                        <img :src="item.imageUrl" :alt="item.imageAlt || item.name" class="menu-item-image">
+                    </button>
+
+                    <p v-if="item.imageUrl && item.imageCaption" class="menu-item-image-caption">
+                        {{ item.imageCaption }}
+                    </p>
+
                     <div class="menu-item-content">
                         <h3>{{ item.name }}</h3>
 
@@ -93,6 +102,10 @@
                 {{ selectedSection.footerText }}
             </p>
         </div>
+
+        <FullscreenImageViewer :open="fullscreenImage !== null" :src="fullscreenImage?.src || ''"
+            :alt="fullscreenImage?.alt || ''" :caption="fullscreenImage?.caption || ''" @close="closeFullscreenImage" />
+
     </section>
 </template>
 
@@ -101,9 +114,28 @@
 import { computed, onMounted, ref } from 'vue'
 import { getCurrentWeeklyOffering } from '@/api/weeklyOfferingsApi'
 import WeeklyOffering from '@/components/WeeklyOffering.vue'
+import FullscreenImageViewer from '@/components/FullscreenImageViewer.vue'
 
 const weeklyOffering = ref(null)
 const weeklyOfferingLoading = ref(true)
+
+const fullscreenImage = ref(null)
+
+function openFullscreenImage(item) {
+    if (!item.imageUrl) {
+        return
+    }
+
+    fullscreenImage.value = {
+        src: item.imageUrl,
+        alt: item.imageAlt || item.name,
+        caption: item.imageCaption || ''
+    }
+}
+
+function closeFullscreenImage() {
+    fullscreenImage.value = null
+}
 
 async function loadWeeklyOffering() {
     weeklyOfferingLoading.value = true
@@ -300,6 +332,41 @@ const selectedSection = computed(() => {
     border-radius: 0.4rem;
 }
 
+.menu-item-image-button {
+    display: block;
+
+    width: calc(100% + 2.5rem);
+    margin: -1.25rem -1.25rem 1rem;
+    padding: 0;
+
+    overflow: hidden;
+
+    background: transparent;
+    border: 0;
+    border-radius: 0.4rem 0.4rem 0 0;
+
+    cursor: zoom-in;
+}
+
+.menu-item-image {
+    display: block;
+
+    width: 100%;
+    height: 240px;
+
+    object-fit: cover;
+}
+
+.menu-item-image-caption {
+    margin: -0.35rem 0 0.9rem;
+
+    color: var(--text-secondary);
+
+    font-size: 0.8rem;
+    font-style: italic;
+    line-height: 1.35;
+}
+
 .menu-item-grid .menu-item-prices {
     margin-top: auto;
     padding-top: 1rem;
@@ -440,8 +507,6 @@ const selectedSection = computed(() => {
         border-right: 0;
         border-left: 0;
         border-radius: 0;
-
-        scrollbar-width: thin;
     }
 
     .live-menu-navigation-button {
@@ -480,6 +545,16 @@ const selectedSection = computed(() => {
         display: block;
 
         padding: 1rem;
+    }
+
+    .menu-item-image-button {
+        width: calc(100% + 2rem);
+        margin: -1rem -1rem 0.85rem;
+    }
+
+    .menu-item-image {
+        width: 100%;
+        height: 200px;
     }
 
     .menu-item-content h3,

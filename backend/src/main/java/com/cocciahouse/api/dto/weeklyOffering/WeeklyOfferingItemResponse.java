@@ -13,6 +13,7 @@ public record WeeklyOfferingItemResponse(
         String publicDescription,
         String imageUrl,
         String imageAlt,
+        String imageCaption,
         boolean includesHouseSalad,
         boolean includesHomemadeBread,
         String includedSidesText,

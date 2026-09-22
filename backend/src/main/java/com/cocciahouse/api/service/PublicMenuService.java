@@ -184,6 +184,7 @@ public class PublicMenuService {
                             specialty.getRecipe().getDescription(),
                             specialty.getRecipe().getImageUrl(),
                             specialty.getRecipe().getImageAlt(),
+                            specialty.getRecipe().getImageCaption(),
                             specialty.getPricingMode(),
                             toppings,
                             specialtyAddOns,
@@ -334,6 +335,7 @@ public class PublicMenuService {
                 item.getRecipe().getDescription(),
                 item.getRecipe().getImageUrl(),
                 item.getRecipe().getImageAlt(),
+                item.getRecipe().getImageCaption(),
                 item.getPrices()
                         .stream()
                         .sorted(

@@ -16,6 +16,7 @@ public record MenuItemResponse(
         String description,
         String imageUrl,
         String imageAlt,
+        String imageCaption,
 
         int displayOrder,
         boolean visible,

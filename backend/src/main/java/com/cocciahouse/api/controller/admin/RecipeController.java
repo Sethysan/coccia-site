@@ -3,6 +3,7 @@ package com.cocciahouse.api.controller.admin;
 import com.cocciahouse.api.dto.recipe.RecipeRequest;
 import com.cocciahouse.api.dto.recipe.RecipeResponse;
 import com.cocciahouse.api.dto.recipe.UpdateRecipeRequest;
+import com.cocciahouse.api.dto.recipe.UpdateRecipeImageDetailsRequest;
 import com.cocciahouse.api.dto.weeklyOffering.WeeklyOfferingItemResponse;
 import com.cocciahouse.api.model.Recipe;
 import com.cocciahouse.api.service.RecipeService;
@@ -89,7 +90,8 @@ public class RecipeController {
         Recipe recipe = recipeService.createRecipe(
                 request.name(),
                 request.description(),
-                request.imageAlt()
+                request.imageAlt(),
+                request.imageCaption()
         );
 
         return ResponseEntity
@@ -108,10 +110,28 @@ public class RecipeController {
                 request.name(),
                 request.description(),
                 request.imageAlt(),
+                request.imageCaption(),
                 request.active()
         );
 
         return ResponseEntity.ok(toResponse(recipe));
+    }
+
+    @PutMapping("/{id}/image-details")
+    public ResponseEntity<RecipeResponse> updateRecipeImageDetails(
+            @PathVariable Long id,
+            @Valid @RequestBody UpdateRecipeImageDetailsRequest request
+    ) {
+
+        Recipe recipe = recipeService.updateRecipeImageDetails(
+                id,
+                request.imageAlt(),
+                request.imageCaption()
+        );
+
+        return ResponseEntity.ok(
+                toResponse(recipe)
+        );
     }
 
     @PostMapping("/{id}/image")
@@ -180,6 +200,7 @@ public class RecipeController {
                 recipe.getDescription(),
                 recipe.getImageUrl(),
                 recipe.getImageAlt(),
+                recipe.getImageCaption(),
                 recipe.isActive()
         );
     }
