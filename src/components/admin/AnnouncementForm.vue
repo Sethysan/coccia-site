@@ -21,15 +21,36 @@
                 Image
             </label>
 
-            <div v-if="props.announcement?.imageUrl" class="current-announcement-image">
-                <span>Current image</span>
+            <div v-if="imagePreviewUrl" class="current-announcement-image">
+                <span>
+                    {{
+                        imageFile
+                            ? "Selected image"
+                    : "Current image"
+                    }}
+                </span>
 
-                <img :src="props.announcement.imageUrl" :alt="form.imageAlt ||
+                <img :src="imagePreviewUrl" :alt="form.imageAlt ||
                     'Current announcement image'
                     " />
             </div>
 
-            <input id="announcement-image" type="file" accept="image/*" @change="handleImageChange" />
+            <div class="announcement-image-picker">
+                <input id="announcement-image" class="announcement-image-input" type="file" accept="image/*"
+                    @change="handleImageChange" />
+
+                <label for="announcement-image" class="announcement-image-button">
+                    {{
+                        imageFile || props.announcement?.imageUrl
+                            ? "Replace Image"
+                            : "Choose Image"
+                    }}
+                </label>
+
+                <span v-if="imageFile" class="announcement-image-filename">
+                    {{ imageFile.name }}
+                </span>
+            </div>
 
             <small v-if="props.announcement?.imageUrl && !imageFile">
                 Choose a new image only if you want to replace the current one.
@@ -150,7 +171,13 @@
 </template>
 
 <script setup>
-import { reactive, ref } from "vue"
+
+import {
+    onBeforeUnmount,
+    reactive,
+    ref
+} from "vue"
+
 
 const props = defineProps({
     announcement: {
@@ -197,6 +224,10 @@ const form = reactive({
 
 const imageFile = ref(null)
 
+const imagePreviewUrl = ref(
+    props.announcement?.imageUrl ?? null
+)
+
 function toInstant(value) {
     if (!value) {
         return null
@@ -208,9 +239,37 @@ function toInstant(value) {
 const validationError = ref(null)
 
 function handleImageChange(event) {
-    imageFile.value =
+    const file =
         event.target.files?.[0] ?? null
+
+    if (
+        imagePreviewUrl.value &&
+        imagePreviewUrl.value !==
+        props.announcement?.imageUrl
+    ) {
+        URL.revokeObjectURL(
+            imagePreviewUrl.value
+        )
+    }
+
+    imageFile.value = file
+
+    imagePreviewUrl.value = file
+        ? URL.createObjectURL(file)
+        : props.announcement?.imageUrl ?? null
 }
+
+onBeforeUnmount(() => {
+    if (
+        imagePreviewUrl.value &&
+        imagePreviewUrl.value !==
+        props.announcement?.imageUrl
+    ) {
+        URL.revokeObjectURL(
+            imagePreviewUrl.value
+        )
+    }
+})
 
 function handleSubmit() {
     validationError.value = null
@@ -318,6 +377,58 @@ function toLocalDateTime(value) {
 
     border: 1px solid var(--bronze-bold);
     border-radius: 0.5rem;
+}
+
+.announcement-image-picker {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.announcement-image-input {
+    position: absolute;
+
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+
+    border: 0;
+}
+
+.announcement-image-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    min-height: 2.75rem;
+    padding: 0.65rem 1rem;
+
+    color: var(--default-color);
+    background-color: var(--background-dark-trans);
+
+    border: 1px solid var(--bronze-bold);
+    border-radius: 0.4rem;
+
+    font-weight: 700;
+
+    cursor: pointer;
+}
+
+.announcement-image-button:hover,
+.announcement-image-button:focus-visible {
+    color: var(--background-color);
+    background-color: var(--bronze-bold);
+}
+
+.announcement-image-filename {
+    opacity: 0.75;
+    font-size: 0.9rem;
 }
 
 @media (max-width: 600px) {

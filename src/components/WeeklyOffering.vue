@@ -1,5 +1,6 @@
 <template>
-    <section v-if="displayOffering" class="weekly-offering" aria-labelledby="weekly-offering-title">
+    <section v-if="displayOffering" class="weekly-offering" :class="{ 'is-compact': compact }"
+        aria-labelledby="weekly-offering-title">
         <p class="section-eyebrow">
             This Week at Coccia House
         </p>
@@ -82,6 +83,11 @@ const props = defineProps({
     offering: {
         type: Object,
         default: null
+    },
+
+    compact: {
+        type: Boolean,
+        default: false
     }
 })
 
@@ -302,6 +308,76 @@ function formatOfferingType(type) {
 
 .secondary-feature p {
     margin: 0.6rem 0;
+}
+
+/* ==========================================================
+   COMPACT
+   ========================================================== */
+
+.weekly-offering.is-compact {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+}
+
+.weekly-offering.is-compact>h2 {
+    margin-bottom: 1rem;
+    font-size: clamp(1.6rem, 3vw, 2rem);
+}
+
+.weekly-offering.is-compact .featured-dinner {
+    grid-template-columns: 150px minmax(0, 1fr);
+    gap: 1rem;
+
+    padding-bottom: 1rem;
+}
+
+.weekly-offering.is-compact .featured-dinner .weekly-offering-image {
+    grid-row: 1 / span 5;
+
+    aspect-ratio: 1 / 1;
+}
+
+.weekly-offering.is-compact .weekly-offering-item h3 {
+    font-size: 1.25rem;
+}
+
+.weekly-offering.is-compact .weekly-offering-item p {
+    margin: 0.3rem 0;
+    line-height: 1.4;
+}
+
+.weekly-offering.is-compact .weekly-offering-item ul {
+    margin-top: 0.4rem;
+}
+
+.weekly-offering.is-compact .secondary-features {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.5rem;
+
+    margin-top: 1rem;
+}
+
+.weekly-offering.is-compact .secondary-feature {
+    flex: 1 1 180px;
+
+    padding: 0;
+
+    border: 0;
+}
+
+.weekly-offering.is-compact .secondary-feature .weekly-offering-type,
+.weekly-offering.is-compact .secondary-feature h3 {
+    text-align: left;
+}
+
+.weekly-offering.is-compact .secondary-feature .weekly-offering-image {
+    display: none;
+}
+
+.weekly-offering.is-compact .secondary-feature p {
+    margin: 0.25rem 0;
 }
 
 /* ==========================================================

@@ -117,9 +117,9 @@
                         Edit
                     </button>
 
-                    <button v-if="announcement.status === 'draft'" type="button"
-                        @click="editingAnnouncement = announcement">
-                        Edit
+                    <button v-if="announcement.status === 'draft'" type="button" class="primary-button"
+                        @click="handleSchedule(announcement.id)">
+                        Schedule
                     </button>
 
                     <button v-if="announcement.status === 'scheduled'" type="button"

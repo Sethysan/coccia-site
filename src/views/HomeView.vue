@@ -1,151 +1,149 @@
 <template>
   <main class="home-page">
 
-    <!-- ========================================================
+    <div class="home-layout">
+
+      <aside class="home-news-rail">
+        <NewsAnnouncements />
+      </aside>
+
+      <div class="home-main">
+
+        <!-- ========================================================
          TODAY AT COCCIA HOUSE
          ======================================================== -->
 
-    <section class="today-card" aria-labelledby="today-title">
-      <h2 id="today-title">Today at Coccia House</h2>
+        <section class="today-card today-strip" aria-labelledby="today-title">
+          <h2 id="today-title">Today at Coccia House</h2>
 
-      <p class="today-status" :class="`is-${restaurantStatus.state}`">
-        <span class="status-dot" aria-hidden="true"></span>
-        {{ restaurantStatus.label }}
-      </p>
+          <div class="today-strip-details">
+            <p class="today-status" :class="`is-${restaurantStatus.state}`">
+              <span class="status-dot" aria-hidden="true"></span>
 
-      <p class="today-day">
-        {{ todayHours.name }}
-      </p>
+              {{ restaurantStatus.label }}
+            </p>
 
-      <p class="today-hours">
-        {{ todayHours.hours }}
-      </p>
-      <!-- todo -->
-      <!-- <p class="today-message">
-        {{ todayHours.note }}
-      </p> -->
+            <span class="today-divider" aria-hidden="true">•</span>
 
-      <p class="today-message">
-        {{ restaurantStatus.message }}
-      </p>
-    </section>
+            <p class="today-day">
+              {{ todayHours.name }}
+            </p>
 
+            <span class="today-divider" aria-hidden="true">•</span>
 
-    <!-- ========================================================
-         Weekly Offering
-         ======================================================== -->
+            <p class="today-message">
+              {{ restaurantStatus.message }}
+            </p>
+          </div>
+        </section>
 
-    <WeeklyOffering />
+        <WeeklyOffering />
 
-    <!-- ========================================================
+        <!-- ========================================================
          QUICK ACTIONS
          ======================================================== -->
 
-    <nav class="home-actions" aria-label="Restaurant actions">
-      <RouterLink to="/menu" class="home-action primary-action">
-        View Menu
-      </RouterLink>
+        <nav class="home-actions" aria-label="Restaurant actions">
+          <RouterLink to="/menu" class="home-action primary-action">
+            View Menu
+          </RouterLink>
 
-      <a href="tel:13302627136" @click="trackPhoneClick('homeView')" class="home-action">
-        Call for Carryout
-      </a>
+          <a href="tel:13302627136" @click="trackPhoneClick('homeView')" class="home-action">
+            Call for Carryout
+          </a>
 
-      <a href="https://www.google.com/maps/search/?api=1&query=Coccia+House+Wooster+Ohio" target="_blank"
-        rel="noopener noreferrer" @click="trackDirectionsClick('homeView')" class="home-action">
-        Get Directions
-      </a>
-    </nav>
+          <a href="https://www.google.com/maps/search/?api=1&query=Coccia+House+Wooster+Ohio" target="_blank"
+            rel="noopener noreferrer" @click="trackDirectionsClick('homeView')" class="home-action">
+            Get Directions
+          </a>
+        </nav>
+
+        <DecorativeDivider class="home-content-divider" />
 
 
-    <!-- ========================================================
+        <!-- ========================================================
          WELCOME
          ======================================================== -->
 
-    <section class="home-intro">
-      <p class="section-eyebrow">
-        {{ homeContent.intro.kicker }}
-      </p>
+        <section class="home-intro">
+          <p class="section-eyebrow">
+            {{ homeContent.intro.kicker }}
+          </p>
 
-      <h1>
-        {{ homeContent.intro.title }}
-      </h1>
+          <h1>
+            {{ homeContent.intro.title }}
+          </h1>
 
-      <p class="home-intro-text">
-        {{ homeContent.intro.text }}
-      </p>
-    </section>
+          <p class="home-intro-text">
+            {{ homeContent.intro.text }}
+          </p>
+        </section>
 
 
-    <!-- ========================================================
+        <!-- ========================================================
          STORY PREVIEW
          ======================================================== -->
 
-    <section class="story-preview" aria-labelledby="story-title">
-      <!-- <p class="section-eyebrow">
+        <section class="story-preview" aria-labelledby="story-title">
+          <!-- <p class="section-eyebrow">
         {{ homeContent.story.eyebrow }}
       </p> -->
 
-      <h2 class="section-eyebrow">
-        {{ homeContent.story.title }}
-      </h2>
+          <h2 class="section-eyebrow">
+            {{ homeContent.story.title }}
+          </h2>
 
-      <p class="story-text">
-        {{ homeContent.story.text }}
-      </p>
+          <p class="story-text">
+            {{ homeContent.story.text }}
+          </p>
 
-      <RouterLink to="/about" class="story-link">
-        {{ homeContent.story.buttonText }}
-      </RouterLink>
-    </section>
+          <RouterLink to="/about" class="story-link">
+            {{ homeContent.story.buttonText }}
+          </RouterLink>
+        </section>
 
 
-    <!-- ========================================================
+        <!-- ========================================================
          HISTORIC PHOTOGRAPHS
          ======================================================== -->
 
-    <section class="family-album" aria-labelledby="album-title">
-      <header class="family-album-heading">
-        <h2 id="album-title">
-          {{ homeContent.gallery.title }}
-        </h2>
-      </header>
+        <section class="family-album" aria-labelledby="album-title">
+          <header class="family-album-heading">
+            <h2 id="album-title">
+              {{ homeContent.gallery.title }}
+            </h2>
+          </header>
 
-      <HomeGallery />
-    </section>
+          <HomeGallery />
+        </section>
 
-
-    <!-- ========================================================
-         LATEST NEWS
-         ======================================================== -->
-
-      <NewsAnnouncements />
-
-
-    <!-- ========================================================
+        <!-- ========================================================
          MISSION
          ======================================================== -->
 
-    <section class="mission-section" aria-labelledby="mission-title">
-      <h2 id="mission-title">
-        {{ homeContent.mission.title }}
-      </h2>
+        <section class="mission-section" aria-labelledby="mission-title">
+          <h2 id="mission-title">
+            {{ homeContent.mission.title }}
+          </h2>
 
-      <p>
-        {{ homeContent.mission.text }}
-      </p>
-    </section>
+          <p>
+            {{ homeContent.mission.text }}
+          </p>
+        </section>
 
 
-    <!-- ========================================================
+        <!-- ========================================================
          SLOGAN
          ======================================================== -->
 
-    <footer class="home-closing">
-      <p class="home-slogan">
-        {{ homeContent.slogan }}
-      </p>
-    </footer>
+        <footer class="home-closing">
+          <p class="home-slogan">
+            {{ homeContent.slogan }}
+          </p>
+        </footer>
 
+      </div>
+    </div>
   </main>
 </template>
 
@@ -159,6 +157,7 @@ import HomeGallery from '@/components/HomeGallery.vue'
 import { trackPhoneClick } from "@/utils/analytics"
 import { trackDirectionsClick } from "@/utils/analytics"
 import NewsAnnouncements from '@/components/NewsAnnouncements.vue'
+import DecorativeDivider from '@/components/DecorativeDivider.vue'
 
 const {
   todayHours,
@@ -199,6 +198,10 @@ const {
 .home-page h3,
 .home-page p {
   overflow-wrap: break-word;
+}
+
+.home-content-divider {
+  margin-top: 4rem;
 }
 
 
@@ -287,6 +290,63 @@ const {
   line-height: 1.5;
 }
 
+.today-card.today-strip {
+  width: min(92%, 900px);
+  padding: 0.85rem 1.25rem;
+  margin: 0 auto 1rem;
+}
+.today-strip h2 {
+  margin: 0 0 0.5rem;
+
+  font-size: 1.15rem;
+}
+
+.today-strip-details {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.4rem 0.65rem;
+}
+
+.today-strip .today-status,
+.today-strip .today-day,
+.today-strip .today-message {
+  margin: 0;
+}
+
+.today-strip .today-status {
+  font-size: 1rem;
+}
+
+.today-divider {
+  color: var(--bronze-bold);
+}
+
+/* ==========================================================
+   HOME LAYOUT
+   ========================================================== */
+
+.home-layout {
+  display: grid;
+  grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
+  align-items: start;
+  gap: 2rem;
+
+  width: min(100%, 1400px);
+  margin: 0 auto;
+}
+
+.home-news-rail {
+  position: sticky;
+  top: 1.5rem;
+
+  min-width: 0;
+}
+
+.home-main {
+  min-width: 0;
+}
 
 /* ==========================================================
    QUICK ACTIONS
@@ -348,7 +408,7 @@ const {
 
 .home-intro {
   width: min(900px, 94%);
-  margin: 7rem auto;
+  margin: 3rem auto 7rem;
   padding: 0 1rem;
 }
 
@@ -507,6 +567,14 @@ const {
     padding: 1.25rem;
   }
 
+  .home-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .home-news-rail {
+    position: static;
+  }
+
   .home-actions {
     flex-direction: column;
     align-items: stretch;
@@ -535,6 +603,19 @@ const {
 
   .mission-section {
     padding-top: 2.25rem;
+  }
+
+  .today-strip-details {
+    gap: 0.3rem 0.5rem;
+  }
+
+  .today-strip .today-message {
+    flex-basis: 100%;
+    text-align: center;
+  }
+
+  .today-strip .today-divider:last-of-type {
+    display: none;
   }
 }
 </style>
