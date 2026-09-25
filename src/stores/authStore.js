@@ -1,6 +1,8 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 
+import { appConfig } from '@/config/appConfig'
+
 export const useAuthStore = defineStore('auth', () => {
 
     const username = ref(null)
@@ -9,29 +11,33 @@ export const useAuthStore = defineStore('auth', () => {
     const sessionChecked = ref(false)
     const authenticated = ref(false)
 
-    // function getCookie(name) {
-    //     const match = document.cookie
-    //         .split('; ')
-    //         .find(cookie => cookie.startsWith(`${name}=`))
+    function authUrl(endpoint) {
+        if (!appConfig.apiUrl) {
+            throw new Error('The API URL has not been configured.')
+        }
 
-    //     return match
-    //         ? decodeURIComponent(match.split('=').slice(1).join('='))
-    //         : null
-    // }
+        return `${appConfig.apiUrl}${endpoint}`
+    }
+
+    function clearSession() {
+        authenticated.value = false
+        username.value = null
+        displayName.value = null
+        role.value = null
+    }
 
     async function checkSession() {
         try {
-            const response = await fetch('/api/auth/session', {
-                method: 'GET',
-                credentials: 'include'
-            })
+            const response = await fetch(
+                authUrl('/api/auth/session'),
+                {
+                    method: 'GET',
+                    credentials: 'include'
+                }
+            )
 
             if (!response.ok) {
-
-                authenticated.value = false
-                username.value = null
-                displayName.value = null
-                role.value = null
+                clearSession()
                 return false
             }
 
@@ -43,42 +49,39 @@ export const useAuthStore = defineStore('auth', () => {
             role.value = session.role
 
             return session.authenticated
+
         } catch (error) {
-            console.error('Unable to check authentication session:', error)
+            console.error(
+                'Unable to check authentication session:',
+                error
+            )
 
-            authenticated.value = false
-            username.value = null
-            displayName.value = null
-            role.value = null
-
+            clearSession()
             return false
+
         } finally {
             sessionChecked.value = true
         }
     }
 
     async function login(usernameInput, passwordInput) {
-        const response = await fetch('/api/auth/login', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            credentials: 'include',
-            body: JSON.stringify({
-                username: usernameInput,
-                password: passwordInput
-            })
-        })
+        const response = await fetch(
+            authUrl('/api/auth/login'),
+            {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include',
+                body: JSON.stringify({
+                    username: usernameInput,
+                    password: passwordInput
+                })
+            }
+        )
 
         if (!response.ok) {
-            if (!response.ok) {
-                authenticated.value = false
-                username.value = null
-                displayName.value = null
-                role.value = null
-
-                return false
-            }
+            clearSession()
             return false
         }
 
@@ -90,35 +93,44 @@ export const useAuthStore = defineStore('auth', () => {
         role.value = session.role
         sessionChecked.value = true
 
-        await fetch('/api/auth/csrf', {
-            method: 'GET',
-            credentials: 'include'
-        })
+        await fetch(
+            authUrl('/api/auth/csrf'),
+            {
+                method: 'GET',
+                credentials: 'include'
+            }
+        )
 
         return session.authenticated
     }
 
     async function logout() {
         try {
-            const response = await fetch('/api/auth/logout', {
-                method: 'POST',
-                credentials: 'include'
-            })
+            const response = await fetch(
+                authUrl('/api/auth/logout'),
+                {
+                    method: 'POST',
+                    credentials: 'include'
+                }
+            )
 
             if (!response.ok) {
                 throw new Error('Logout failed.')
             }
+
         } finally {
-            authenticated.value = false
-            username.value = null
-            displayName.value = null
-            role.value = null
+            clearSession()
             sessionChecked.value = true
         }
     }
 
-    const isAdmin = computed(() => role.value === 'ADMIN')
-    const isStaff = computed(() => role.value === 'STAFF')
+    const isAdmin = computed(
+        () => role.value === 'ADMIN'
+    )
+
+    const isStaff = computed(
+        () => role.value === 'STAFF'
+    )
 
     return {
         authenticated,

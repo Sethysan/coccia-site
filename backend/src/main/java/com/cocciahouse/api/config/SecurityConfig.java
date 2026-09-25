@@ -87,7 +87,11 @@ public class SecurityConfig {
                 new CorsConfiguration();
 
         configuration.setAllowedOrigins(
-                List.of("http://localhost:5173")
+                List.of(
+                        "http://localhost:5173",
+                        "https://cocciahouse.com",
+                        "https://www.cocciahouse.com"
+                )
         );
 
         configuration.setAllowedMethods(

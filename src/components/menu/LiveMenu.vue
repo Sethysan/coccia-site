@@ -31,6 +31,21 @@
                 {{ selectedSection.subtitle }}
             </p>
 
+            <nav v-if="selectedSection.subsections?.length" class="menu-subsection-navigation branded-scrollbar"
+                :aria-label="`${selectedSection.name} categories`">
+                <button type="button" class="menu-subsection-navigation-button"
+                    :class="{ active: selectedSubsectionName === null }" @click="selectedSubsectionName = null">
+                    All
+                </button>
+
+                <button v-for="subsection in selectedSection.subsections" :key="subsection.name" type="button"
+                    class="menu-subsection-navigation-button"
+                    :class="{ active: selectedSubsectionName === subsection.name }"
+                    @click="selectedSubsectionName = subsection.name">
+                    {{ subsection.name }}
+                </button>
+            </nav>
+
             <!-- Ungrouped menu items -->
 
             <div class="menu-item-grid">
@@ -67,7 +82,7 @@
 
             <!-- Subsections -->
 
-            <div v-for="subsection in selectedSection.subsections" :key="subsection.name" class="menu-subsection">
+            <div v-for="subsection in visibleSubsections" :key="subsection.name" class="menu-subsection">
                 <div class="menu-subsection-heading">
                     <h3>{{ subsection.name }}</h3>
 
@@ -94,11 +109,19 @@
                 <div v-else class="menu-subsection-detailed-items">
                     <article v-for="item in subsection.items" :key="item.name" class="menu-subsection-detailed-item">
                         <div class="menu-subsection-detailed-content">
-                            <h4>{{ item.name }}</h4>
+                            <button v-if="item.imageUrl" type="button" class="menu-subsection-thumbnail-button"
+                                :aria-label="`View larger photo of ${item.name}`" @click="openFullscreenImage(item)">
+                                <img :src="item.imageUrl" :alt="item.imageAlt || item.name"
+                                    class="menu-subsection-thumbnail">
+                            </button>
 
-                            <p v-if="item.description">
-                                {{ item.description }}
-                            </p>
+                            <div class="menu-subsection-detailed-text">
+                                <h4>{{ item.name }}</h4>
+
+                                <p v-if="item.description">
+                                    {{ item.description }}
+                                </p>
+                            </div>
                         </div>
 
                         <div v-if="item.prices?.length" class="menu-item-prices">
@@ -192,9 +215,11 @@ const props = defineProps({
 })
 
 const selectedSectionName = ref(null)
+const selectedSubsectionName = ref(null)
 
 function selectSection(sectionName, event) {
     selectedSectionName.value = sectionName
+    selectedSubsectionName.value = null
 
     event.currentTarget.scrollIntoView({
         behavior: 'smooth',
@@ -211,6 +236,21 @@ const selectedSection = computed(() => {
     return props.menu.sections.find(
         (section) => section.name === selectedSectionName.value
     ) ?? null
+})
+
+const visibleSubsections = computed(() => {
+    if (!selectedSection.value) {
+        return []
+    }
+
+    if (selectedSubsectionName.value === null) {
+        return selectedSection.value.subsections ?? []
+    }
+
+    return (selectedSection.value.subsections ?? []).filter(
+        subsection =>
+            subsection.name === selectedSubsectionName.value
+    )
 })
 
 </script>
@@ -448,6 +488,7 @@ const selectedSection = computed(() => {
 
 .menu-subsection {
     margin-top: 2rem;
+    scroll-margin-top: 1rem;
 }
 
 .menu-subsection+.menu-subsection {
@@ -549,6 +590,98 @@ const selectedSection = computed(() => {
 
 .menu-subsection-detailed-item .menu-item-prices {
     margin: 0;
+}
+
+.menu-subsection-navigation {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.45rem;
+
+    width: fit-content;
+    max-width: 100%;
+    margin: 0 auto 2rem;
+    padding: 0.4rem;
+
+    background: rgba(20, 15, 12, 0.5);
+
+    border: 1px solid rgba(138, 106, 50, 0.55);
+    border-radius: 0.4rem;
+}
+
+.menu-subsection-navigation-button {
+    padding: 0.5rem 0.8rem;
+
+    color: var(--text-secondary);
+    background: transparent;
+
+    border: 1px solid rgba(138, 106, 50, 0.5);
+    border-radius: 0.3rem;
+
+    font: inherit;
+    font-size: 0.85rem;
+    font-weight: 700;
+
+    cursor: pointer;
+
+    transition:
+        color 180ms ease,
+        background-color 180ms ease,
+        border-color 180ms ease;
+}
+
+.menu-subsection-navigation-button.active {
+    color: #1a120c;
+    background: var(--bronze-hover);
+    border-color: var(--bronze-hover);
+}
+
+.menu-subsection-navigation-button:hover {
+    color: var(--text-primary);
+    background: rgba(138, 106, 50, 0.25);
+    border-color: var(--bronze-hover);
+}
+
+.menu-subsection {
+    scroll-margin-top: 6rem;
+}
+
+.menu-subsection-detailed-content {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.85rem;
+
+    min-width: 0;
+}
+
+.menu-subsection-detailed-text {
+    min-width: 0;
+}
+
+.menu-subsection-thumbnail-button {
+    flex: 0 0 64px;
+
+    width: 64px;
+    height: 64px;
+    padding: 0;
+
+    overflow: hidden;
+
+    background: rgba(255, 255, 255, 0.03);
+
+    border: 1px solid rgba(138, 106, 50, 0.5);
+    border-radius: 0.35rem;
+
+    cursor: zoom-in;
+}
+
+.menu-subsection-thumbnail {
+    display: block;
+
+    width: 100%;
+    height: 100%;
+
+    object-fit: contain;
 }
 
 /* ==========================================================
@@ -703,6 +836,39 @@ const selectedSection = computed(() => {
         margin-top: 1.5rem;
 
         font-size: 0.85rem;
+    }
+
+    .menu-subsection-navigation {
+        flex-wrap: nowrap;
+        justify-content: flex-start;
+        gap: 0.4rem;
+
+        width: calc(100% + 2rem);
+        max-width: none;
+        margin: 0 -1rem 1.5rem;
+        padding: 0.55rem 1rem;
+
+        overflow-x: auto;
+        overscroll-behavior-inline: contain;
+
+        border-right: 0;
+        border-left: 0;
+        border-radius: 0;
+    }
+
+    .menu-subsection-navigation-button {
+        flex: 0 0 auto;
+
+        padding: 0.45rem 0.7rem;
+
+        font-size: 0.8rem;
+    }
+
+    .menu-subsection-thumbnail-button {
+        flex-basis: 56px;
+
+        width: 56px;
+        height: 56px;
     }
 }
 </style>

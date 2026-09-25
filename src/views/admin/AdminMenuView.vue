@@ -1491,7 +1491,6 @@ async function openSectionWorkspace(section) {
     editingMenuItem.value = null
 
     managingSubsections.value = false
-    openSectionWorkspace
     showSubsectionForm.value = false
     editingSubsectionId.value = null
 
