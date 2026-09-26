@@ -12,10 +12,6 @@ export const useAuthStore = defineStore('auth', () => {
     const authenticated = ref(false)
 
     function authUrl(endpoint) {
-        if (!appConfig.apiUrl) {
-            throw new Error('The API URL has not been configured.')
-        }
-
         return `${appConfig.apiUrl}${endpoint}`
     }
 

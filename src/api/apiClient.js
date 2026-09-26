@@ -25,9 +25,6 @@ const createTimeoutSignal = (timeoutMs) => {
 }
 
 export const apiRequest = async (endpoint, options = {}) => {
-  if (!appConfig.apiUrl) {
-    throw new ApiError("The API URL has not been configured.")
-  }
 
   const timeout = createTimeoutSignal(appConfig.requestTimeoutMs)
 

@@ -1,22 +1,25 @@
-const apiUrl = import.meta.env.VITE_API_URL?.trim()
-
 export const appConfig = {
   /*
-   * WHITE NOTE:
-   * Keep API content disabled until the Spring Boot backend is deployed,
-   * secured, tested, and returning the same data shape as the local files.
-   *
-   * Switching this to true should not require changes inside components.
+   * Public database-driven content remains behind this flag
+   * until production content has been verified.
    */
   useRemoteContent:
-    import.meta.env.VITE_USE_REMOTE_CONTENT === "true" && Boolean(apiUrl),
-
-  apiUrl: apiUrl || "",
+    import.meta.env.VITE_USE_REMOTE_CONTENT === "true",
 
   /*
-   * WHITE NOTE:
-   * During migration, local data remains the fallback source.
-   * A temporary API outage should not take down public-facing content.
+   * API requests are same-origin.
+   *
+   * Development:
+   *   Vite proxies /api -> local Spring Boot
+   *
+   * Production:
+   *   Netlify proxies /api -> Railway
+   */
+  apiUrl: "",
+
+  /*
+   * Public-facing content may fall back to local data
+   * if the API is unavailable.
    */
   allowContentFallback: true,
 
