@@ -86,11 +86,12 @@ public class SecurityConfig {
         CorsConfiguration configuration =
                 new CorsConfiguration();
 
-        configuration.setAllowedOrigins(
+        configuration.setAllowedOriginPatterns(
                 List.of(
                         "http://localhost:5173",
                         "https://cocciahouse.com",
-                        "https://www.cocciahouse.com"
+                        "https://www.cocciahouse.com",
+                        "https://deploy-preview-*--cocciahouse.netlify.app"
                 )
         );
 
