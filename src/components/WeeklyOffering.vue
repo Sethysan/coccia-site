@@ -91,6 +91,8 @@ const props = defineProps({
     }
 })
 
+const emit = defineEmits(['loaded'])
+
 const fetchedOffering = ref(null)
 
 const displayOffering = computed(() =>
@@ -116,6 +118,7 @@ const secondaryItems = computed(() =>
 
 onMounted(async () => {
     if (props.offering) {
+        emit('loaded')
         return
     }
 
@@ -127,6 +130,8 @@ onMounted(async () => {
             'Unable to load weekly offering:',
             error
         )
+    } finally {
+        emit('loaded')
     }
 })
 

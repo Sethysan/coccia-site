@@ -98,8 +98,8 @@ router.beforeEach(async (to) => {
   const auth = useAuthStore()
 
   if (!to.path.startsWith('/admin')) {
-    await loading.play()
-  }
+  loading.start()
+}
 
   if (to.meta.requiresAuth) {
     if (!auth.sessionChecked) {

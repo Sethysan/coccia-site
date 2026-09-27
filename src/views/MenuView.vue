@@ -113,10 +113,13 @@ import desserts from '@/assets/menu/desserts-drinks.png'
 import { trackMenuSectionClick, trackMenuFullscreenOpen } from "@/utils/analytics"
 import { getPublicMenu } from "@/api/menuApi"
 import LiveMenu from "@/components/menu/LiveMenu.vue"
+import { useLoadingStore } from "@/stores/loadingStore"
 
 const liveMenu = ref(null)
 const liveMenuLoading = ref(true)
 const liveMenuAvailable = ref(false)
+
+const loading = useLoadingStore()
 
 async function loadPublicMenu() {
   liveMenuLoading.value = true
@@ -252,12 +255,17 @@ watch(selectedMenu, () => {
   resetZoom()
 })
 
-onMounted(() => {
+onMounted(async () => {
   window.addEventListener('keydown', handleFullscreenKeydown)
 
   document.body.classList.add('menu-view-active')
 
-  loadPublicMenu()
+  try {
+    await loadPublicMenu()
+    await nextTick()
+  } finally {
+    await loading.finish()
+  }
 })
 
 onBeforeUnmount(() => {

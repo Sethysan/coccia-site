@@ -1,7 +1,7 @@
 <template>
   <SiteHeader />
 
-    <SiteAnnouncementBanner />
+  <SiteAnnouncementBanner />
 
   <main class="content">
     <LoadingOverlay :visible="loading.visible" :frame="loading.frame" />
@@ -15,6 +15,7 @@ import { onMounted } from 'vue'
 import { RouterView } from 'vue-router'
 import SiteHeader from './components/SiteHeader.vue'
 import SiteFooter from './components/SiteFooter.vue'
+import { useSiteStore } from "@/stores/siteStore"
 
 import { useHoursStore } from '@/stores/hoursStore'
 import { useTimeStore } from '@/stores/timeStore'
@@ -26,23 +27,29 @@ const loading = useLoadingStore()
 import SiteAnnouncementBanner from './components/SiteAnnouncementBanner.vue'
 import { useAnnouncementStore } from '@/stores/announcementStore'
 
-const announcementStore = useAnnouncementStore() 
+const announcementStore = useAnnouncementStore()
 const hoursStore = useHoursStore()
+const siteStore = useSiteStore()
 // -----------------------------------------------------------------------------
 // Start the site clock
 // -----------------------------------------------------------------------------
 
 const timeStore = useTimeStore()
 
-onMounted(() => {
+onMounted(async () => {
   timeStore.startClock()
-  announcementStore.loadAnnouncements()
-  hoursStore.loadHours()
+
+  await Promise.allSettled([
+    announcementStore.loadAnnouncements(),
+    hoursStore.loadHours()
+  ])
+
+  siteStore.markInitialDataLoaded()
 })
+
 </script>
 
 <style scoped>
-
 .content {
   min-height: 100vh;
   margin: 0;

@@ -3,11 +3,14 @@
 
     <div class="home-layout">
 
-      <aside class="home-news-rail">
+      <aside v-if="announcementStore.newsAnnouncements.length" class="home-news-rail">
         <NewsAnnouncements />
       </aside>
 
-      <div class="home-main">
+      <div class="home-main" :class="{
+        'home-main-full':
+          !announcementStore.newsAnnouncements.length
+      }">
 
         <!-- ========================================================
          TODAY AT COCCIA HOUSE
@@ -37,7 +40,7 @@
           </div>
         </section>
 
-        <WeeklyOffering />
+        <WeeklyOffering @loaded="weeklyOfferingLoaded = true" />
 
         <!-- ========================================================
          QUICK ACTIONS
@@ -150,6 +153,7 @@
 <script setup>
 
 import { RouterLink } from 'vue-router'
+import { ref, watch } from 'vue'
 import { useRestaurantHours } from '@/composables/useRestaurantHours'
 import { homeContent } from '@/content/homeContent.js'
 import WeeklyOffering from '@/components/WeeklyOffering.vue'
@@ -158,11 +162,32 @@ import { trackPhoneClick } from "@/utils/analytics"
 import { trackDirectionsClick } from "@/utils/analytics"
 import NewsAnnouncements from '@/components/NewsAnnouncements.vue'
 import DecorativeDivider from '@/components/DecorativeDivider.vue'
+import { useAnnouncementStore } from '@/stores/announcementStore'
+import { useSiteStore } from '@/stores/siteStore'
+import { useLoadingStore } from '@/stores/loadingStore'
+
+const announcementStore = useAnnouncementStore()
+const weeklyOfferingLoaded = ref(false)
+const siteStore = useSiteStore()
+const loading = useLoadingStore()
 
 const {
   todayHours,
   restaurantStatus
 } = useRestaurantHours()
+
+watch(
+  [
+    () => siteStore.initialDataLoaded,
+    weeklyOfferingLoaded
+  ],
+  async ([siteDataLoaded, weeklyLoaded]) => {
+    if (siteDataLoaded && weeklyLoaded) {
+      await loading.finish()
+    }
+  },
+  { immediate: true }
+)
 
 </script>
 
@@ -295,6 +320,7 @@ const {
   padding: 0.85rem 1.25rem;
   margin: 0 auto 1rem;
 }
+
 .today-strip h2 {
   margin: 0 0 0.5rem;
 
@@ -346,6 +372,10 @@ const {
 
 .home-main {
   min-width: 0;
+}
+
+.home-main-full {
+  grid-column: 1 / -1;
 }
 
 /* ==========================================================
