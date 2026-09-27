@@ -1,8 +1,8 @@
 <template>
     <section class="live-menu">
         <nav class="live-menu-navigation branded-scrollbar" aria-label="Menu sections">
-            <button type="button" class="live-menu-navigation-button" :class="{ active: selectedSectionName === null }"
-                @click="selectedSectionName = null">
+            <button v-if="weeklyOffering" type="button" class="live-menu-navigation-button"
+                :class="{ active: selectedSectionName === null }" @click="selectedSectionName = null">
                 Menu Home
             </button>
             <button v-for="section in menu.sections" :key="section.name" type="button"
@@ -190,6 +190,14 @@ async function loadWeeklyOffering() {
         weeklyOffering.value = null
     } finally {
         weeklyOfferingLoading.value = false
+
+        /*
+         * Menu Home only exists when there is a weekly offering.
+         * Otherwise, open the first regular menu section.
+         */
+        if (!weeklyOffering.value && props.menu.sections?.length) {
+            selectedSectionName.value = props.menu.sections[0].name
+        }
     }
 }
 
