@@ -23,5 +23,5 @@ export const appConfig = {
    */
   allowContentFallback: true,
 
-  requestTimeoutMs: 8000
+  requestTimeoutMs: 30000
 }
