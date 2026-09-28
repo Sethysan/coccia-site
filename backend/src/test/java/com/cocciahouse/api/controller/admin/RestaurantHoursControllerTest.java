@@ -8,7 +8,9 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
-import org.springframework.mock.web.MockHttpSession;
+
+import jakarta.servlet.http.Cookie;
+
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
@@ -84,7 +86,7 @@ class RestaurantHoursControllerIntegrationTest {
     void authenticatedAdminCannotUpdateHoursWithoutCsrf()
             throws Exception {
 
-        MockHttpSession session =
+        Cookie sessionCookie =
                 loginAsTestAdmin();
 
         String requestJson = """
@@ -99,7 +101,7 @@ class RestaurantHoursControllerIntegrationTest {
 
         mockMvc.perform(
                         put("/api/admin/hours/3")
-                                .session(session)
+                                .cookie(sessionCookie)
                                 .contentType("application/json")
                                 .content(requestJson)
                 )
@@ -110,7 +112,7 @@ class RestaurantHoursControllerIntegrationTest {
     void authenticatedAdminCanUpdateOpenDayHours()
             throws Exception {
 
-        MockHttpSession session =
+        Cookie sessionCookie =
                 loginAsTestAdmin();
 
         String requestJson = """
@@ -125,7 +127,7 @@ class RestaurantHoursControllerIntegrationTest {
 
         mockMvc.perform(
                         put("/api/admin/hours/3")
-                                .session(session)
+                                .cookie(sessionCookie)
                                 .with(csrf())
                                 .contentType("application/json")
                                 .content(requestJson)
@@ -149,7 +151,7 @@ class RestaurantHoursControllerIntegrationTest {
     void authenticatedAdminCanCloseDay()
             throws Exception {
 
-        MockHttpSession session =
+        Cookie sessionCookie =
                 loginAsTestAdmin();
 
         String requestJson = """
@@ -164,7 +166,7 @@ class RestaurantHoursControllerIntegrationTest {
 
         mockMvc.perform(
                         put("/api/admin/hours/3")
-                                .session(session)
+                                .cookie(sessionCookie)
                                 .with(csrf())
                                 .contentType("application/json")
                                 .content(requestJson)
@@ -184,7 +186,7 @@ class RestaurantHoursControllerIntegrationTest {
     void mismatchedUrlAndBodyDayReturnsBadRequest()
             throws Exception {
 
-        MockHttpSession session =
+        Cookie sessionCookie =
                 loginAsTestAdmin();
 
         String requestJson = """
@@ -199,7 +201,7 @@ class RestaurantHoursControllerIntegrationTest {
 
         mockMvc.perform(
                         put("/api/admin/hours/3")
-                                .session(session)
+                                .cookie(sessionCookie)
                                 .with(csrf())
                                 .contentType("application/json")
                                 .content(requestJson)
@@ -211,7 +213,7 @@ class RestaurantHoursControllerIntegrationTest {
     void closingTimeBeforeOpeningTimeReturnsBadRequest()
             throws Exception {
 
-        MockHttpSession session =
+        Cookie sessionCookie =
                 loginAsTestAdmin();
 
         String requestJson = """
@@ -226,7 +228,7 @@ class RestaurantHoursControllerIntegrationTest {
 
         mockMvc.perform(
                         put("/api/admin/hours/3")
-                                .session(session)
+                                .cookie(sessionCookie)
                                 .with(csrf())
                                 .contentType("application/json")
                                 .content(requestJson)
@@ -234,27 +236,27 @@ class RestaurantHoursControllerIntegrationTest {
                 .andExpect(status().isBadRequest());
     }
 
-    private MockHttpSession loginAsTestAdmin()
+    private Cookie loginAsTestAdmin()
             throws Exception {
 
         String loginJson = """
-                {
-                    "username": "%s",
-                    "password": "%s"
-                }
-                """.formatted(
+            {
+                "username": "%s",
+                "password": "%s"
+            }
+            """.formatted(
                 TEST_USERNAME,
                 TEST_PASSWORD
         );
 
-        return (MockHttpSession) mockMvc.perform(
+        return mockMvc.perform(
                         post("/api/auth/login")
                                 .contentType("application/json")
                                 .content(loginJson)
                 )
                 .andExpect(status().isOk())
                 .andReturn()
-                .getRequest()
-                .getSession(false);
+                .getResponse()
+                .getCookie("SESSION");
     }
 }

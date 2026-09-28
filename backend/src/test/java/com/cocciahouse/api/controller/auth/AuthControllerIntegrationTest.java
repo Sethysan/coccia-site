@@ -12,7 +12,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import org.springframework.mock.web.MockHttpSession;
+import jakarta.servlet.http.Cookie;
+import org.springframework.test.web.servlet.MvcResult;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 
@@ -96,38 +97,26 @@ class AuthControllerIntegrationTest {
                 TEST_PASSWORD
         );
 
-        MockHttpSession session =
-                (MockHttpSession) mockMvc.perform(
-                                post("/api/auth/login")
-                                        .contentType("application/json")
-                                        .content(loginJson)
-                        )
-                        .andExpect(status().isOk())
-                        .andExpect(
-                                jsonPath("$.authenticated")
-                                        .value(true)
-                        )
-                        .andExpect(
-                                jsonPath("$.username")
-                                        .value(TEST_USERNAME)
-                        )
-                        .andReturn()
-                        .getRequest()
-                        .getSession(false);
+        MvcResult loginResult = mockMvc.perform(
+                        post("/api/auth/login")
+                                .contentType("application/json")
+                                .content(loginJson)
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.authenticated").value(true))
+                .andExpect(jsonPath("$.username").value(TEST_USERNAME))
+                .andReturn();
+
+        Cookie sessionCookie =
+                loginResult.getResponse().getCookie("SESSION");
 
         mockMvc.perform(
                         get("/api/auth/session")
-                                .session(session)
+                                .cookie(sessionCookie)
                 )
                 .andExpect(status().isOk())
-                .andExpect(
-                        jsonPath("$.authenticated")
-                                .value(true)
-                )
-                .andExpect(
-                        jsonPath("$.username")
-                                .value(TEST_USERNAME)
-                );
+                .andExpect(jsonPath("$.authenticated").value(true))
+                .andExpect(jsonPath("$.username").value(TEST_USERNAME));
     }
 
     @Test
@@ -143,33 +132,31 @@ class AuthControllerIntegrationTest {
                 TEST_PASSWORD
         );
 
-        MockHttpSession session =
-                (MockHttpSession) mockMvc.perform(
-                                post("/api/auth/login")
-                                        .contentType("application/json")
-                                        .content(loginJson)
-                        )
-                        .andExpect(status().isOk())
-                        .andReturn()
-                        .getRequest()
-                        .getSession(false);
+        MvcResult loginResult = mockMvc.perform(
+                        post("/api/auth/login")
+                                .contentType("application/json")
+                                .content(loginJson)
+                )
+                .andExpect(status().isOk())
+                .andReturn();
+
+        Cookie sessionCookie =
+                loginResult.getResponse().getCookie("SESSION");
 
         mockMvc.perform(
                         post("/api/auth/logout")
-                                .session(session)
+                                .cookie(sessionCookie)
                 )
                 .andExpect(status().isOk())
-                .andExpect(
-                        jsonPath("$.authenticated")
-                                .value(false)
-                );
+                .andExpect(jsonPath("$.authenticated").value(false));
 
         mockMvc.perform(
                         get("/api/admin/recipes")
-                                .session(session)
+                                .cookie(sessionCookie)
                 )
                 .andExpect(status().isUnauthorized());
     }
+
 
     @Test
     void loginWithInvalidPasswordReturnsUnauthorized() throws Exception {
@@ -202,20 +189,20 @@ class AuthControllerIntegrationTest {
                 TEST_PASSWORD
         );
 
-        MockHttpSession session =
-                (MockHttpSession) mockMvc.perform(
-                                post("/api/auth/login")
-                                        .contentType("application/json")
-                                        .content(loginJson)
-                        )
-                        .andExpect(status().isOk())
-                        .andReturn()
-                        .getRequest()
-                        .getSession(false);
+        MvcResult loginResult = mockMvc.perform(
+                        post("/api/auth/login")
+                                .contentType("application/json")
+                                .content(loginJson)
+                )
+                .andExpect(status().isOk())
+                .andReturn();
+
+        Cookie sessionCookie =
+                loginResult.getResponse().getCookie("SESSION");
 
         mockMvc.perform(
                         get("/api/admin/recipes")
-                                .session(session)
+                                .cookie(sessionCookie)
                 )
                 .andExpect(status().isOk());
     }

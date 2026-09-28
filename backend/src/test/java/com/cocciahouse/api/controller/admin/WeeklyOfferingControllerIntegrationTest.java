@@ -9,7 +9,9 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
-import org.springframework.mock.web.MockHttpSession;
+
+import jakarta.servlet.http.Cookie;
+
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.context.ActiveProfiles;
@@ -99,26 +101,7 @@ class WeeklyOfferingControllerIntegrationTest {
     void authenticatedAdminCanCreateDraftOffering()
             throws Exception {
 
-        String loginJson = """
-                {
-                    "username": "%s",
-                    "password": "%s"
-                }
-                """.formatted(
-                TEST_USERNAME,
-                TEST_PASSWORD
-        );
-
-        MockHttpSession session =
-                (MockHttpSession) mockMvc.perform(
-                                post("/api/auth/login")
-                                        .contentType("application/json")
-                                        .content(loginJson)
-                        )
-                        .andExpect(status().isOk())
-                        .andReturn()
-                        .getRequest()
-                        .getSession(false);
+        Cookie sessionCookie = loginAsTestAdmin();
 
         String requestJson = """
                 {
@@ -127,10 +110,9 @@ class WeeklyOfferingControllerIntegrationTest {
                 }
                 """;
 
-        assert session != null;
         mockMvc.perform(
                         post("/api/admin/weekly-offerings")
-                                .session(session)
+                                .cookie(sessionCookie)
                                 .with(csrf())
                                 .contentType("application/json")
                                 .content(requestJson)
@@ -155,26 +137,7 @@ class WeeklyOfferingControllerIntegrationTest {
     void createOfferingWithEndDateBeforeStartDateReturnsBadRequest()
             throws Exception {
 
-        String loginJson = """
-                {
-                    "username": "%s",
-                    "password": "%s"
-                }
-                """.formatted(
-                TEST_USERNAME,
-                TEST_PASSWORD
-        );
-
-        MockHttpSession session =
-                (MockHttpSession) mockMvc.perform(
-                                post("/api/auth/login")
-                                        .contentType("application/json")
-                                        .content(loginJson)
-                        )
-                        .andExpect(status().isOk())
-                        .andReturn()
-                        .getRequest()
-                        .getSession(false);
+        Cookie sessionCookie = loginAsTestAdmin();
 
         String requestJson = """
                 {
@@ -183,10 +146,9 @@ class WeeklyOfferingControllerIntegrationTest {
                 }
                 """;
 
-        assert session != null;
         mockMvc.perform(
                         post("/api/admin/weekly-offerings")
-                                .session(session)
+                                .cookie(sessionCookie)
                                 .with(csrf())
                                 .contentType("application/json")
                                 .content(requestJson)
@@ -231,26 +193,7 @@ class WeeklyOfferingControllerIntegrationTest {
         offering = weeklyOfferingRepository.save(offering);
 
         // Log in
-        String loginJson = """
-                {
-                    "username": "%s",
-                    "password": "%s"
-                }
-                """.formatted(
-                TEST_USERNAME,
-                TEST_PASSWORD
-        );
-
-        MockHttpSession session =
-                (MockHttpSession) mockMvc.perform(
-                                post("/api/auth/login")
-                                        .contentType("application/json")
-                                        .content(loginJson)
-                        )
-                        .andExpect(status().isOk())
-                        .andReturn()
-                        .getRequest()
-                        .getSession(false);
+        Cookie sessionCookie = loginAsTestAdmin();
 
         // Add a dinner item
         String requestJson = """
@@ -270,13 +213,12 @@ class WeeklyOfferingControllerIntegrationTest {
                 }
                 """.formatted(recipe.getId());
 
-        assert session != null;
         mockMvc.perform(
                         post(
                                 "/api/admin/weekly-offerings/{offeringId}/items",
                                 offering.getId()
                         )
-                                .session(session)
+                                .cookie(sessionCookie)
                                 .with(csrf())
                                 .contentType("application/json")
                                 .content(requestJson)
@@ -308,7 +250,7 @@ class WeeklyOfferingControllerIntegrationTest {
     void addItemToNonexistentOfferingReturnsBadRequest()
             throws Exception {
 
-        MockHttpSession session = loginAsTestAdmin();
+        Cookie sessionCookie = loginAsTestAdmin();
 
         String requestJson = """
                 {
@@ -328,7 +270,7 @@ class WeeklyOfferingControllerIntegrationTest {
 
         mockMvc.perform(
                         post("/api/admin/weekly-offerings/{offeringId}/items", 999999)
-                                .session(session)
+                                .cookie(sessionCookie)
                                 .with(csrf())
                                 .contentType("application/json")
                                 .content(requestJson)
@@ -351,7 +293,7 @@ class WeeklyOfferingControllerIntegrationTest {
 
         offering = weeklyOfferingRepository.save(offering);
 
-        MockHttpSession session = loginAsTestAdmin();
+        Cookie sessionCookie = loginAsTestAdmin();
 
         String requestJson = """
                 {
@@ -374,7 +316,7 @@ class WeeklyOfferingControllerIntegrationTest {
                                 "/api/admin/weekly-offerings/{offeringId}/items",
                                 offering.getId()
                         )
-                                .session(session)
+                                .cookie(sessionCookie)
                                 .with(csrf())
                                 .contentType("application/json")
                                 .content(requestJson)
@@ -402,7 +344,7 @@ class WeeklyOfferingControllerIntegrationTest {
 
         offering = weeklyOfferingRepository.save(offering);
 
-        MockHttpSession session = loginAsTestAdmin();
+        Cookie sessionCookie = loginAsTestAdmin();
 
         String requestJson = """
                 {
@@ -425,7 +367,7 @@ class WeeklyOfferingControllerIntegrationTest {
                                 "/api/admin/weekly-offerings/{offeringId}/items",
                                 offering.getId()
                         )
-                                .session(session)
+                                .cookie(sessionCookie)
                                 .with(csrf())
                                 .contentType("application/json")
                                 .content(requestJson)
@@ -439,7 +381,7 @@ class WeeklyOfferingControllerIntegrationTest {
                 );
     }
 
-    private MockHttpSession loginAsTestAdmin()
+    private Cookie loginAsTestAdmin()
             throws Exception {
 
         String loginJson = """
@@ -452,15 +394,15 @@ class WeeklyOfferingControllerIntegrationTest {
                 TEST_PASSWORD
         );
 
-        return (MockHttpSession) mockMvc.perform(
+        return mockMvc.perform(
                         post("/api/auth/login")
                                 .contentType("application/json")
                                 .content(loginJson)
                 )
                 .andExpect(status().isOk())
                 .andReturn()
-                .getRequest()
-                .getSession(false);
+                .getResponse()
+                .getCookie("SESSION");
     }
 
     @Test
@@ -479,7 +421,7 @@ class WeeklyOfferingControllerIntegrationTest {
 
         offering = weeklyOfferingRepository.save(offering);
 
-        MockHttpSession session = loginAsTestAdmin();
+        Cookie sessionCookie = loginAsTestAdmin();
 
         String requestJson = """
                 {
@@ -497,7 +439,7 @@ class WeeklyOfferingControllerIntegrationTest {
                                 "/api/admin/weekly-offerings/{offeringId}/items",
                                 offering.getId()
                         )
-                                .session(session)
+                                .cookie(sessionCookie)
                                 .with(csrf())
                                 .contentType("application/json")
                                 .content(requestJson)
@@ -552,7 +494,7 @@ class WeeklyOfferingControllerIntegrationTest {
 
         Long itemId = offering.getItems().getFirst().getId();
 
-        MockHttpSession session = loginAsTestAdmin();
+        Cookie sessionCookie = loginAsTestAdmin();
 
         String requestJson = """
                 {
@@ -582,7 +524,7 @@ class WeeklyOfferingControllerIntegrationTest {
                                 offering.getId(),
                                 itemId
                         )
-                                .session(session)
+                                .cookie(sessionCookie)
                                 .with(csrf())
                                 .contentType("application/json")
                                 .content(requestJson)
@@ -653,7 +595,7 @@ class WeeklyOfferingControllerIntegrationTest {
 
         Long itemId = offering.getItems().getFirst().getId();
 
-        MockHttpSession session = loginAsTestAdmin();
+        Cookie sessionCookie = loginAsTestAdmin();
 
         String requestJson = """
                 {
@@ -677,7 +619,7 @@ class WeeklyOfferingControllerIntegrationTest {
                                 offering.getId(),
                                 itemId
                         )
-                                .session(session)
+                                .cookie(sessionCookie)
                                 .with(csrf())
                                 .contentType("application/json")
                                 .content(requestJson)
@@ -724,7 +666,7 @@ class WeeklyOfferingControllerIntegrationTest {
 
         Long itemId = offering.getItems().getFirst().getId();
 
-        MockHttpSession session = loginAsTestAdmin();
+        Cookie sessionCookie = loginAsTestAdmin();
 
         mockMvc.perform(
                         delete(
@@ -732,7 +674,7 @@ class WeeklyOfferingControllerIntegrationTest {
                                 offering.getId(),
                                 itemId
                         )
-                                .session(session)
+                                .cookie(sessionCookie)
                                 .with(csrf())
                 )
                 .andExpect(status().isNoContent());
@@ -775,7 +717,7 @@ class WeeklyOfferingControllerIntegrationTest {
 
         Long itemId = offering.getItems().getFirst().getId();
 
-        MockHttpSession session = loginAsTestAdmin();
+        Cookie sessionCookie = loginAsTestAdmin();
 
         mockMvc.perform(
                         delete(
@@ -783,7 +725,7 @@ class WeeklyOfferingControllerIntegrationTest {
                                 offering.getId(),
                                 itemId
                         )
-                                .session(session)
+                                .cookie(sessionCookie)
                                 .with(csrf())
                 )
                 .andExpect(status().isNoContent());
@@ -837,7 +779,7 @@ class WeeklyOfferingControllerIntegrationTest {
         Long itemId =
                 secondOffering.getItems().getFirst().getId();
 
-        MockHttpSession session = loginAsTestAdmin();
+        Cookie sessionCookie = loginAsTestAdmin();
 
         mockMvc.perform(
                         delete(
@@ -845,7 +787,7 @@ class WeeklyOfferingControllerIntegrationTest {
                                 firstOffering.getId(),
                                 itemId
                         )
-                                .session(session)
+                                .cookie(sessionCookie)
                                 .with(csrf())
                 )
                 .andExpect(status().isBadRequest())
@@ -872,12 +814,12 @@ class WeeklyOfferingControllerIntegrationTest {
 
         offering = weeklyOfferingRepository.save(offering);
 
-        MockHttpSession session = loginAsTestAdmin();
+        Cookie sessionCookie = loginAsTestAdmin();
 
         mockMvc.perform(
                         put("/api/admin/weekly-offerings/{offeringId}/archive",
                                 offering.getId())
-                                .session(session)
+                                .cookie(sessionCookie)
                                 .with(csrf())
                 )
                 .andExpect(status().isOk())
@@ -905,12 +847,12 @@ class WeeklyOfferingControllerIntegrationTest {
 
         offering = weeklyOfferingRepository.save(offering);
 
-        MockHttpSession session = loginAsTestAdmin();
+        Cookie sessionCookie = loginAsTestAdmin();
 
         mockMvc.perform(
                         put("/api/admin/weekly-offerings/{offeringId}/archive",
                                 offering.getId())
-                                .session(session)
+                                .cookie(sessionCookie)
                                 .with(csrf())
                 )
                 .andExpect(status().isOk())
@@ -928,12 +870,12 @@ class WeeklyOfferingControllerIntegrationTest {
 
         offering = weeklyOfferingRepository.save(offering);
 
-        MockHttpSession session = loginAsTestAdmin();
+        Cookie sessionCookie = loginAsTestAdmin();
 
         mockMvc.perform(
                         put("/api/admin/weekly-offerings/{offeringId}/archive",
                                 offering.getId())
-                                .session(session)
+                                .cookie(sessionCookie)
                                 .with(csrf())
                 )
                 .andExpect(status().isBadRequest())
@@ -959,7 +901,7 @@ class WeeklyOfferingControllerIntegrationTest {
 
         offering = weeklyOfferingRepository.save(offering);
 
-        MockHttpSession session = loginAsTestAdmin();
+        Cookie sessionCookie = loginAsTestAdmin();
 
         String requestJson = """
                 {
@@ -982,7 +924,7 @@ class WeeklyOfferingControllerIntegrationTest {
                                 "/api/admin/weekly-offerings/{offeringId}/items",
                                 offering.getId()
                         )
-                                .session(session)
+                                .cookie(sessionCookie)
                                 .with(csrf())
                                 .contentType("application/json")
                                 .content(requestJson)
@@ -1029,7 +971,7 @@ class WeeklyOfferingControllerIntegrationTest {
 
         Long itemId = offering.getItems().getFirst().getId();
 
-        MockHttpSession session = loginAsTestAdmin();
+        Cookie sessionCookie = loginAsTestAdmin();
 
         mockMvc.perform(
                         delete(
@@ -1037,7 +979,7 @@ class WeeklyOfferingControllerIntegrationTest {
                                 offering.getId(),
                                 itemId
                         )
-                                .session(session)
+                                .cookie(sessionCookie)
                                 .with(csrf())
                 )
                 .andExpect(status().isBadRequest())
@@ -1066,14 +1008,14 @@ class WeeklyOfferingControllerIntegrationTest {
 
         Long offeringId = offering.getId();
 
-        MockHttpSession session = loginAsTestAdmin();
+        Cookie sessionCookie = loginAsTestAdmin();
 
         mockMvc.perform(
                         delete(
                                 "/api/admin/weekly-offerings/{offeringId}",
                                 offeringId
                         )
-                                .session(session)
+                                .cookie(sessionCookie)
                                 .with(csrf())
                 )
                 .andExpect(status().isNoContent());
@@ -1094,14 +1036,14 @@ class WeeklyOfferingControllerIntegrationTest {
 
         offering = weeklyOfferingRepository.save(offering);
 
-        MockHttpSession session = loginAsTestAdmin();
+        Cookie sessionCookie = loginAsTestAdmin();
 
         mockMvc.perform(
                         delete(
                                 "/api/admin/weekly-offerings/{offeringId}",
                                 offering.getId()
                         )
-                                .session(session)
+                                .cookie(sessionCookie)
                                 .with(csrf())
                 )
                 .andExpect(status().isBadRequest())
@@ -1130,14 +1072,14 @@ class WeeklyOfferingControllerIntegrationTest {
 
         offering = weeklyOfferingRepository.save(offering);
 
-        MockHttpSession session = loginAsTestAdmin();
+        Cookie sessionCookie = loginAsTestAdmin();
 
         mockMvc.perform(
                         delete(
                                 "/api/admin/weekly-offerings/{offeringId}",
                                 offering.getId()
                         )
-                                .session(session)
+                                .cookie(sessionCookie)
                                 .with(csrf())
                 )
                 .andExpect(status().isBadRequest());
@@ -1160,14 +1102,14 @@ class WeeklyOfferingControllerIntegrationTest {
 
         offering = weeklyOfferingRepository.save(offering);
 
-        MockHttpSession session = loginAsTestAdmin();
+        Cookie sessionCookie = loginAsTestAdmin();
 
         mockMvc.perform(
                         delete(
                                 "/api/admin/weekly-offerings/{offeringId}",
                                 offering.getId()
                         )
-                                .session(session)
+                                .cookie(sessionCookie)
                                 .with(csrf())
                 )
                 .andExpect(status().isBadRequest());
@@ -1214,14 +1156,14 @@ class WeeklyOfferingControllerIntegrationTest {
 
         Long offeringId = offering.getId();
 
-        MockHttpSession session = loginAsTestAdmin();
+        Cookie sessionCookie = loginAsTestAdmin();
 
         mockMvc.perform(
                         put(
                                 "/api/admin/weekly-offerings/{offeringId}/schedule",
                                 offeringId
                         )
-                                .session(session)
+                                .cookie(sessionCookie)
                                 .with(csrf())
                 )
 
@@ -1268,14 +1210,14 @@ class WeeklyOfferingControllerIntegrationTest {
 
         offering = weeklyOfferingRepository.save(offering);
 
-        MockHttpSession session = loginAsTestAdmin();
+        Cookie sessionCookie = loginAsTestAdmin();
 
         mockMvc.perform(
                         put(
                                 "/api/admin/weekly-offerings/{offeringId}/schedule",
                                 offering.getId()
                         )
-                                .session(session)
+                                .cookie(sessionCookie)
                                 .with(csrf())
                 )
                 .andExpect(status().isBadRequest())
@@ -1315,14 +1257,14 @@ class WeeklyOfferingControllerIntegrationTest {
 
         offering = weeklyOfferingRepository.save(offering);
 
-        MockHttpSession session = loginAsTestAdmin();
+        Cookie sessionCookie = loginAsTestAdmin();
 
         mockMvc.perform(
                         put(
                                 "/api/admin/weekly-offerings/{offeringId}/schedule",
                                 offering.getId()
                         )
-                                .session(session)
+                                .cookie(sessionCookie)
                                 .with(csrf())
                 )
                 .andExpect(status().isBadRequest())
@@ -1350,14 +1292,14 @@ class WeeklyOfferingControllerIntegrationTest {
 
         offering = weeklyOfferingRepository.save(offering);
 
-        MockHttpSession session = loginAsTestAdmin();
+        Cookie sessionCookie = loginAsTestAdmin();
 
         mockMvc.perform(
                         put(
                                 "/api/admin/weekly-offerings/{offeringId}/schedule",
                                 offering.getId()
                         )
-                                .session(session)
+                                .cookie(sessionCookie)
                                 .with(csrf())
                 )
                 .andExpect(status().isBadRequest())
@@ -1392,11 +1334,11 @@ class WeeklyOfferingControllerIntegrationTest {
 
         weeklyOfferingRepository.save(newerOffering);
 
-        MockHttpSession session = loginAsTestAdmin();
+        Cookie sessionCookie = loginAsTestAdmin();
 
         mockMvc.perform(
                         get("/api/admin/weekly-offerings")
-                                .session(session)
+                                .cookie(sessionCookie)
                 )
                 .andExpect(status().isOk())
                 .andExpect(
@@ -1439,12 +1381,12 @@ class WeeklyOfferingControllerIntegrationTest {
 
         weeklyOfferingRepository.save(scheduledOffering);
 
-        MockHttpSession session = loginAsTestAdmin();
+        Cookie sessionCookie = loginAsTestAdmin();
 
         mockMvc.perform(
                         get("/api/admin/weekly-offerings")
                                 .param("status", "DRAFT")
-                                .session(session)
+                                .cookie(sessionCookie)
                 )
                 .andExpect(status().isOk())
                 .andExpect(
@@ -1507,14 +1449,14 @@ class WeeklyOfferingControllerIntegrationTest {
 
         Long offeringId = offering.getId();
 
-        MockHttpSession session = loginAsTestAdmin();
+        Cookie sessionCookie = loginAsTestAdmin();
 
         mockMvc.perform(
                         get(
                                 "/api/admin/weekly-offerings/{offeringId}",
                                 offeringId
                         )
-                                .session(session)
+                                .cookie(sessionCookie)
                 )
                 .andExpect(status().isOk())
                 .andExpect(
@@ -1555,14 +1497,14 @@ class WeeklyOfferingControllerIntegrationTest {
     void getNonexistentOfferingByIdReturnsBadRequest()
             throws Exception {
 
-        MockHttpSession session = loginAsTestAdmin();
+        Cookie sessionCookie = loginAsTestAdmin();
 
         mockMvc.perform(
                         get(
                                 "/api/admin/weekly-offerings/{offeringId}",
                                 999999L
                         )
-                                .session(session)
+                                .cookie(sessionCookie)
                 )
                 .andExpect(status().isBadRequest())
                 .andExpect(
@@ -1590,7 +1532,7 @@ class WeeklyOfferingControllerIntegrationTest {
 
         offering = weeklyOfferingRepository.save(offering);
 
-        MockHttpSession session = loginAsTestAdmin();
+        Cookie sessionCookie = loginAsTestAdmin();
 
         String requestJson = """
                 {
@@ -1604,7 +1546,7 @@ class WeeklyOfferingControllerIntegrationTest {
                                 "/api/admin/weekly-offerings/{offeringId}",
                                 offering.getId()
                         )
-                                .session(session)
+                                .cookie(sessionCookie)
                                 .with(csrf())
                                 .contentType("application/json")
                                 .content(requestJson)
@@ -1650,7 +1592,7 @@ class WeeklyOfferingControllerIntegrationTest {
 
         offering = weeklyOfferingRepository.save(offering);
 
-        MockHttpSession session = loginAsTestAdmin();
+        Cookie sessionCookie = loginAsTestAdmin();
 
         String requestJson = """
                 {
@@ -1664,7 +1606,7 @@ class WeeklyOfferingControllerIntegrationTest {
                                 "/api/admin/weekly-offerings/{offeringId}",
                                 offering.getId()
                         )
-                                .session(session)
+                                .cookie(sessionCookie)
                                 .with(csrf())
                                 .contentType("application/json")
                                 .content(requestJson)
@@ -1700,7 +1642,7 @@ class WeeklyOfferingControllerIntegrationTest {
 
         offering = weeklyOfferingRepository.save(offering);
 
-        MockHttpSession session = loginAsTestAdmin();
+        Cookie sessionCookie = loginAsTestAdmin();
 
         String requestJson = """
                 {
@@ -1714,7 +1656,7 @@ class WeeklyOfferingControllerIntegrationTest {
                                 "/api/admin/weekly-offerings/{offeringId}",
                                 offering.getId()
                         )
-                                .session(session)
+                                .cookie(sessionCookie)
                                 .with(csrf())
                                 .contentType("application/json")
                                 .content(requestJson)

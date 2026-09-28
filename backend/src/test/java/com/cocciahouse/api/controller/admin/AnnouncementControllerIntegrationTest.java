@@ -8,7 +8,9 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
-import org.springframework.mock.web.MockHttpSession;
+
+import jakarta.servlet.http.Cookie;
+
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
@@ -93,7 +95,7 @@ class AnnouncementControllerIntegrationTest {
     void authenticatedAdminCanCreateDraftAnnouncement()
             throws Exception {
 
-        MockHttpSession session = login();
+        Cookie sessionCookie = login();
 
         String requestJson = """
                 {
@@ -108,7 +110,7 @@ class AnnouncementControllerIntegrationTest {
 
         mockMvc.perform(
                         post("/api/admin/announcements")
-                                .session(session)
+                                .cookie(sessionCookie)
                                 .with(csrf())
                                 .contentType("application/json")
                                 .content(requestJson)
@@ -128,7 +130,7 @@ class AnnouncementControllerIntegrationTest {
     void invalidCreateRequestReturnsBadRequest()
             throws Exception {
 
-        MockHttpSession session = login();
+        Cookie sessionCookie = login();
 
         String requestJson = """
                 {
@@ -141,7 +143,7 @@ class AnnouncementControllerIntegrationTest {
 
         mockMvc.perform(
                         post("/api/admin/announcements")
-                                .session(session)
+                                .cookie(sessionCookie)
                                 .with(csrf())
                                 .contentType("application/json")
                                 .content(requestJson)
@@ -159,11 +161,11 @@ class AnnouncementControllerIntegrationTest {
 
         announcementRepository.save(announcement);
 
-        MockHttpSession session = login();
+        Cookie sessionCookie = login();
 
         mockMvc.perform(
                         get("/api/admin/announcements")
-                                .session(session)
+                                .cookie(sessionCookie)
                 )
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].title")
@@ -181,14 +183,14 @@ class AnnouncementControllerIntegrationTest {
                         )
                 );
 
-        MockHttpSession session = login();
+        Cookie sessionCookie = login();
 
         mockMvc.perform(
                         get(
                                 "/api/admin/announcements/"
                                         + announcement.getId()
                         )
-                                .session(session)
+                                .cookie(sessionCookie)
                 )
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.title")
@@ -206,7 +208,7 @@ class AnnouncementControllerIntegrationTest {
                         )
                 );
 
-        MockHttpSession session = login();
+        Cookie sessionCookie = login();
 
         String requestJson = """
                 {
@@ -225,7 +227,7 @@ class AnnouncementControllerIntegrationTest {
                                 "/api/admin/announcements/"
                                         + announcement.getId()
                         )
-                                .session(session)
+                                .cookie(sessionCookie)
                                 .with(csrf())
                                 .contentType("application/json")
                                 .content(requestJson)
@@ -258,7 +260,7 @@ class AnnouncementControllerIntegrationTest {
 
         announcementRepository.save(announcement);
 
-        MockHttpSession session = login();
+        Cookie sessionCookie = login();
 
         mockMvc.perform(
                         post(
@@ -266,7 +268,7 @@ class AnnouncementControllerIntegrationTest {
                                         + announcement.getId()
                                         + "/schedule"
                         )
-                                .session(session)
+                                .cookie(sessionCookie)
                                 .with(csrf())
                 )
                 .andExpect(status().isOk())
@@ -285,7 +287,7 @@ class AnnouncementControllerIntegrationTest {
                         )
                 );
 
-        MockHttpSession session = login();
+        Cookie sessionCookie = login();
 
         mockMvc.perform(
                         post(
@@ -293,7 +295,7 @@ class AnnouncementControllerIntegrationTest {
                                         + announcement.getId()
                                         + "/archive"
                         )
-                                .session(session)
+                                .cookie(sessionCookie)
                                 .with(csrf())
                 )
                 .andExpect(status().isOk())
@@ -314,14 +316,14 @@ class AnnouncementControllerIntegrationTest {
 
         Long announcementId = announcement.getId();
 
-        MockHttpSession session = login();
+        Cookie sessionCookie = login();
 
         mockMvc.perform(
                         delete(
                                 "/api/admin/announcements/"
                                         + announcementId
                         )
-                                .session(session)
+                                .cookie(sessionCookie)
                                 .with(csrf())
                 )
                 .andExpect(status().isNoContent());
@@ -343,14 +345,14 @@ class AnnouncementControllerIntegrationTest {
                         )
                 );
 
-        MockHttpSession session = login();
+        Cookie sessionCookie = login();
 
         mockMvc.perform(
                         delete(
                                 "/api/admin/announcements/"
                                         + announcement.getId()
                         )
-                                .session(session)
+                                .cookie(sessionCookie)
                                 .with(csrf())
                 )
                 .andExpect(status().isBadRequest());
@@ -367,7 +369,7 @@ class AnnouncementControllerIntegrationTest {
                         )
                 );
 
-        MockHttpSession session = login();
+        Cookie sessionCookie = login();
 
         String requestJson = """
                 {
@@ -384,7 +386,7 @@ class AnnouncementControllerIntegrationTest {
                                 "/api/admin/announcements/"
                                         + announcement.getId()
                         )
-                                .session(session)
+                                .cookie(sessionCookie)
                                 .with(csrf())
                                 .contentType("application/json")
                                 .content(requestJson)
@@ -421,24 +423,24 @@ class AnnouncementControllerIntegrationTest {
         return announcement;
     }
 
-    private MockHttpSession login()
+    private Cookie login()
             throws Exception {
 
         String loginJson = """
-                {
-                    "username": "testadmin",
-                    "password": "testpassword"
-                }
-                """;
+            {
+                "username": "testadmin",
+                "password": "testpassword"
+            }
+            """;
 
-        return (MockHttpSession) mockMvc.perform(
+        return mockMvc.perform(
                         post("/api/auth/login")
                                 .contentType("application/json")
                                 .content(loginJson)
                 )
                 .andExpect(status().isOk())
                 .andReturn()
-                .getRequest()
-                .getSession(false);
+                .getResponse()
+                .getCookie("SESSION");
     }
 }
