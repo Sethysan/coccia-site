@@ -31,8 +31,10 @@
                 {{ selectedSection.subtitle }}
             </p>
 
-            <nav v-if="selectedSection.subsections?.length" class="menu-subsection-navigation branded-scrollbar"
-                :aria-label="`${selectedSection.name} categories`">
+            <PizzaMenu v-if="selectedSection.pizza" :pizza="selectedSection.pizza" />
+
+            <nav v-if="!selectedSection.pizza && selectedSection.subsections?.length"
+                class="menu-subsection-navigation branded-scrollbar" :aria-label="`${selectedSection.name} categories`">
                 <button type="button" class="menu-subsection-navigation-button"
                     :class="{ active: selectedSubsectionName === null }" @click="selectedSubsectionName = null">
                     All
@@ -48,7 +50,7 @@
 
             <!-- Ungrouped menu items -->
 
-            <div class="menu-item-grid">
+            <div v-if="!selectedSection.pizza" class="menu-item-grid">
                 <article v-for="item in selectedSection.items" :key="item.name" class="menu-item">
                     <button v-if="item.imageUrl" type="button" class="menu-item-image-button"
                         :aria-label="`View larger photo of ${item.name}`" @click="openFullscreenImage(item)">
@@ -82,7 +84,8 @@
 
             <!-- Subsections -->
 
-            <div v-for="subsection in visibleSubsections" :key="subsection.name" class="menu-subsection">
+            <div v-if="!selectedSection.pizza" v-for="subsection in visibleSubsections" :key="subsection.name"
+                class="menu-subsection">
                 <div class="menu-subsection-heading">
                     <h3>{{ subsection.name }}</h3>
 
@@ -154,6 +157,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { getCurrentWeeklyOffering } from '@/api/weeklyOfferingsApi'
 import WeeklyOffering from '@/components/WeeklyOffering.vue'
+import PizzaMenu from '@/components/menu/PizzaMenu.vue'
 import FullscreenImageViewer from '@/components/FullscreenImageViewer.vue'
 
 const weeklyOffering = ref(null)
