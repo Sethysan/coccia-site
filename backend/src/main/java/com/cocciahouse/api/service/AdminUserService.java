@@ -18,13 +18,16 @@ public class AdminUserService {
 
     private final AdminUserRepository adminUserRepository;
     private final PasswordEncoder passwordEncoder;
+    private final AdminSessionService adminSessionService;
 
     public AdminUserService(
             AdminUserRepository adminUserRepository,
-            PasswordEncoder passwordEncoder
+            PasswordEncoder passwordEncoder,
+            AdminSessionService adminSessionService
     ) {
         this.adminUserRepository = adminUserRepository;
         this.passwordEncoder = passwordEncoder;
+        this.adminSessionService = adminSessionService;
     }
 
     @Transactional(readOnly = true)
@@ -76,6 +79,9 @@ public class AdminUserService {
 
         AdminUserRole newRole =
                 parseRole(request.role());
+        boolean accessChanged =
+                adminUser.isActive() != request.active() ||
+                        adminUser.getRole() != newRole;
 
         boolean editingSelf =
                 adminUser.getUsername()
@@ -111,9 +117,16 @@ public class AdminUserService {
         adminUser.setRole(newRole);
         adminUser.setActive(request.active());
 
-        return toResponse(
-                adminUserRepository.save(adminUser)
-        );
+        AdminUser savedUser =
+                adminUserRepository.save(adminUser);
+
+        if (accessChanged) {
+            adminSessionService.revokeSessions(
+                    savedUser.getUsername()
+            );
+        }
+
+        return toResponse(savedUser);
     }
 
     @Transactional
@@ -132,6 +145,10 @@ public class AdminUserService {
         );
 
         adminUserRepository.save(adminUser);
+
+        adminSessionService.revokeSessions(
+                adminUser.getUsername()
+        );
     }
 
     private AdminUser getUserById(Long id) {
