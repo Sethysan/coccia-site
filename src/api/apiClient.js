@@ -11,6 +11,12 @@ class ApiError extends Error {
   }
 }
 
+let unauthorizedHandler = null
+
+export const setUnauthorizedHandler = (handler) => {
+  unauthorizedHandler = handler
+}
+
 const createTimeoutSignal = (timeoutMs) => {
   const controller = new AbortController()
 
@@ -54,7 +60,9 @@ export const apiRequest = async (endpoint, options = {}) => {
         ...options.headers
       }
     })
-
+    if (response.status === 401 && unauthorizedHandler) {
+      unauthorizedHandler()
+    }
     if (!response.ok) {
       let details = null
 
