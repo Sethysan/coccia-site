@@ -1,11 +1,7 @@
 <template>
   <SiteHeader />
 
-<!-- TODO: DEVELOP ANNOUNCEMENT COMPONENT INTEGRATION -->
-  <!-- <section v-for="announcement in announcements" :key="announcement.id" class="site-announcement">
-    <strong>{{ announcement.title }}:</strong>
-    {{ announcement.message }}
-  </section> -->
+  <SiteAnnouncementBanner />
 
   <main class="content">
     <LoadingOverlay :visible="loading.visible" :frame="loading.frame" />
@@ -17,45 +13,43 @@
 <script setup>
 import { onMounted } from 'vue'
 import { RouterView } from 'vue-router'
-import { announcements } from '@/data/announcements'
-
 import SiteHeader from './components/SiteHeader.vue'
 import SiteFooter from './components/SiteFooter.vue'
+import { useSiteStore } from "@/stores/siteStore"
 
+import { useHoursStore } from '@/stores/hoursStore'
 import { useTimeStore } from '@/stores/timeStore'
 
 import LoadingOverlay from "@/components/LoadingOverlay.vue"
 import { useLoadingStore } from "@/stores/loadingStore"
 
 const loading = useLoadingStore()
+import SiteAnnouncementBanner from './components/SiteAnnouncementBanner.vue'
+import { useAnnouncementStore } from '@/stores/announcementStore'
 
+const announcementStore = useAnnouncementStore()
+const hoursStore = useHoursStore()
+const siteStore = useSiteStore()
 // -----------------------------------------------------------------------------
 // Start the site clock
 // -----------------------------------------------------------------------------
 
 const timeStore = useTimeStore()
 
-onMounted(() => {
+onMounted(async () => {
   timeStore.startClock()
+
+  await Promise.allSettled([
+    announcementStore.loadAnnouncements(),
+    hoursStore.loadHours()
+  ])
+
+  siteStore.markInitialDataLoaded()
 })
+
 </script>
 
 <style scoped>
-.site-announcement {
-  padding: 0.85rem 1rem;
-  text-align: center;
-
-  background-color: var(--announcement-warning);
-  color: var(--text-primary);
-
-  font-size: 0.95rem;
-  line-height: 1.4;
-}
-
-.site-announcement strong {
-  margin-right: 0.25rem;
-}
-
 .content {
   min-height: 100vh;
   margin: 0;

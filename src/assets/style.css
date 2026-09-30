@@ -54,6 +54,63 @@ a {
   color: inherit;
 }
 
+/* ==========================================================
+   BRANDED SCROLLBARS
+   ========================================================== */
+
+.branded-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: #a9793d #24130d;
+}
+
+.branded-scrollbar::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+.branded-scrollbar::-webkit-scrollbar-track {
+    background: #24130d;
+}
+
+.branded-scrollbar::-webkit-scrollbar-thumb {
+    background: #a9793d;
+    border: 2px solid #24130d;
+    border-radius: 999px;
+}
+
+.branded-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #c29455;
+}
+
+.branded-scrollbar::-webkit-scrollbar-corner {
+    background: #24130d;
+}
+
+/* Main page scrollbar */
+
+html {
+    scrollbar-width: thin;
+    scrollbar-color: #a9793d #24130d;
+}
+
+html::-webkit-scrollbar {
+    width: 10px;
+}
+
+html::-webkit-scrollbar-track {
+    background: #24130d;
+}
+
+html::-webkit-scrollbar-thumb {
+    background: #a9793d;
+    border: 2px solid #24130d;
+    border-radius: 999px;
+}
+
+html::-webkit-scrollbar-thumb:hover {
+    background: #c29455;
+}
+
 @media (max-width: 700px) {
   body.menu-view-active .header {
     position: relative;

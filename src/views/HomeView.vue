@@ -1,233 +1,201 @@
 <template>
   <main class="home-page">
 
-    <!-- ========================================================
+    <div class="home-layout">
+
+      <aside v-if="announcementStore.newsAnnouncements.length" class="home-news-rail">
+        <NewsAnnouncements />
+      </aside>
+
+      <div class="home-main" :class="{
+        'home-main-full':
+          !announcementStore.newsAnnouncements.length
+      }">
+
+        <!-- ========================================================
          TODAY AT COCCIA HOUSE
          ======================================================== -->
 
-    <section class="today-card" aria-labelledby="today-title">
-      <h2 id="today-title">Today at Coccia House</h2>
+        <section class="today-card today-strip" aria-labelledby="today-title">
+          <h2 id="today-title">Today at Coccia House</h2>
 
-      <p class="today-status" :class="`is-${restaurantStatus.state}`">
-        <span class="status-dot" aria-hidden="true"></span>
+          <div class="today-strip-details">
+            <p class="today-status" :class="`is-${restaurantStatus.state}`">
+              <span class="status-dot" aria-hidden="true"></span>
 
-        {{ restaurantStatus.label }}
-      </p>
+              {{ restaurantStatus.label }}
+            </p>
 
-      <p v-if="restaurantStatus.subtitle" class="today-hours">
-        {{ restaurantStatus.subtitle }}
-      </p>
+            <span class="today-divider" aria-hidden="true">•</span>
 
-      <p class="today-message">
-        {{ restaurantStatus.message }}
-      </p>
-    </section>
+            <p class="today-day">
+              {{ todayHours.name }}
+            </p>
 
+            <span class="today-divider" aria-hidden="true">•</span>
 
-    <!-- ========================================================
+            <p class="today-message">
+              {{ restaurantStatus.message }}
+            </p>
+          </div>
+        </section>
+
+        <WeeklyOffering @loaded="weeklyOfferingLoaded = true" />
+
+        <!-- ========================================================
          QUICK ACTIONS
          ======================================================== -->
 
-    <nav class="home-actions" aria-label="Restaurant actions">
-      <RouterLink to="/menu" class="home-action primary-action">
-        View Menu
-      </RouterLink>
+        <nav class="home-actions" aria-label="Restaurant actions">
+          <RouterLink to="/menu" class="home-action primary-action">
+            View Menu
+          </RouterLink>
 
-      <a href="tel:13302627136" @click="trackPhoneClick('homeView')" class="home-action">
-        Call for Carryout
-      </a>
+          <a href="tel:13302627136" @click="trackPhoneClick('homeView')" class="home-action">
+            Call for Carryout
+          </a>
 
-      <a href="https://www.google.com/maps/search/?api=1&query=Coccia+House+Wooster+Ohio" target="_blank"
-        rel="noopener noreferrer" @click="trackDirectionsClick('homeView')" class="home-action">
-        Get Directions
-      </a>
-    </nav>
+          <a href="https://www.google.com/maps/search/?api=1&query=Coccia+House+Wooster+Ohio" target="_blank"
+            rel="noopener noreferrer" @click="trackDirectionsClick('homeView')" class="home-action">
+            Get Directions
+          </a>
+        </nav>
+
+        <DecorativeDivider class="home-content-divider" />
 
 
-    <!-- ========================================================
+        <!-- ========================================================
          WELCOME
          ======================================================== -->
 
-    <section class="home-intro">
-      <p class="section-eyebrow">
-        {{ homeContent.intro.kicker }}
-      </p>
+        <section class="home-intro">
+          <p class="section-eyebrow">
+            {{ homeContent.intro.kicker }}
+          </p>
 
-      <h1>
-        {{ homeContent.intro.title }}
-      </h1>
+          <h1>
+            {{ homeContent.intro.title }}
+          </h1>
 
-      <p class="home-intro-text">
-        {{ homeContent.intro.text }}
-      </p>
-    </section>
+          <p class="home-intro-text">
+            {{ homeContent.intro.text }}
+          </p>
+        </section>
 
 
-    <!-- ========================================================
+        <!-- ========================================================
          STORY PREVIEW
          ======================================================== -->
 
-    <section class="story-preview" aria-labelledby="story-title">
-      <!-- <p class="section-eyebrow">
+        <section class="story-preview" aria-labelledby="story-title">
+          <!-- <p class="section-eyebrow">
         {{ homeContent.story.eyebrow }}
       </p> -->
 
-      <h2 class="section-eyebrow">
-        {{ homeContent.story.title }}
-      </h2>
+          <h2 class="section-eyebrow">
+            {{ homeContent.story.title }}
+          </h2>
 
-      <p class="story-text">
-        {{ homeContent.story.text }}
-      </p>
+          <p class="story-text">
+            {{ homeContent.story.text }}
+          </p>
 
-      <RouterLink to="/about" class="story-link">
-        {{ homeContent.story.buttonText }}
-      </RouterLink>
-    </section>
+          <RouterLink to="/about" class="story-link">
+            {{ homeContent.story.buttonText }}
+          </RouterLink>
+        </section>
 
 
-    <!-- ========================================================
+        <!-- ========================================================
          HISTORIC PHOTOGRAPHS
          ======================================================== -->
 
-    <section class="family-album" aria-labelledby="album-title">
-      <header class="family-album-heading">
-        <h2 id="album-title">
-          {{ homeContent.gallery.title }}
-        </h2>
-      </header>
+        <section class="family-album" aria-labelledby="album-title">
+          <header class="family-album-heading">
+            <h2 id="album-title">
+              {{ homeContent.gallery.title }}
+            </h2>
+          </header>
 
-      <HomeGallery />
-    </section>
+          <HomeGallery />
+        </section>
 
-
-    <!-- ========================================================
-         LATEST NEWS
-         ======================================================== -->
-    <section class="news-card">
-      <!-- todo -->
-      <!-- <article class="news-item">
-        <h3>Live Music Tonight – Thursday, July 23</h3>
-
-        <img class="news-flyer" :src="rolandoFlyer" alt="Rolando Live at Coccia House, Thursday July 23 at 6 PM" />
-
-        <p>
-          Join us in the <strong>Florentine Room tonight at 6:00 PM</strong> as we
-          welcome back house favorite <strong>Rolando</strong> for an evening of
-          live music.
-        </p>
-
-        <p>
-          We anticipate a larger-than-usual crowd, so seating will be limited.
-          Standing room will be available around the bar.
-        </p>
-      </article> -->
-
-      <article class="news-item">
-        <h3>Dining Room Open</h3>
-
-        <p>
-          Join us in our dining room Wednesday through Saturday
-          from 3–9 PM.
-        </p>
-      </article>
-
-      <article class="news-item">
-        <h3>We're Back to Our Full Menu</h3>
-
-        <p>
-          If it's been a while since your last visit, welcome back!
-        </p>
-
-        <p>
-          Our website hasn't been updated since the pandemic, when we
-          temporarily offered only half-baked pizzas. Today,
-          <strong>
-            our full menu is available again for dine-in and carryout
-          </strong>,
-          just like before.
-        </p>
-
-        <p>
-          Prefer to bake your pizza at home?
-          <strong>
-            Half-baked pizzas are still available for pickup,
-          </strong>
-          so you can enjoy a fresh-from-the-oven Coccia House pizza
-          whenever you're ready.
-        </p>
-      </article>
-
-      <!-- <article class="news-item">
-        <h3>Annual Maintenance Closure</h3>
-
-        <p>
-          Coccia House will be closed August 3–18 for our annual
-          maintenance and deep cleaning. We look forward to serving
-          you again on August 19.
-        </p>
-      </article> -->
-    </section>
-
-
-    <!-- ========================================================
+        <!-- ========================================================
          MISSION
          ======================================================== -->
 
-    <section class="mission-section" aria-labelledby="mission-title">
-      <h2 id="mission-title">
-        {{ homeContent.mission.title }}
-      </h2>
+        <section class="mission-section" aria-labelledby="mission-title">
+          <h2 id="mission-title">
+            {{ homeContent.mission.title }}
+          </h2>
 
-      <p>
-        {{ homeContent.mission.text }}
-      </p>
-    </section>
+          <p>
+            {{ homeContent.mission.text }}
+          </p>
+        </section>
 
 
-    <!-- ========================================================
+        <!-- ========================================================
          SLOGAN
          ======================================================== -->
 
-    <footer class="home-closing">
-      <p class="home-slogan">
-        {{ homeContent.slogan }}
-      </p>
-    </footer>
+        <footer class="home-closing">
+          <p class="home-slogan">
+            {{ homeContent.slogan }}
+          </p>
+        </footer>
 
+      </div>
+    </div>
   </main>
 </template>
 
 <script setup>
+
 import { RouterLink } from 'vue-router'
+import { ref, watch } from 'vue'
 import { useRestaurantHours } from '@/composables/useRestaurantHours'
 import { homeContent } from '@/content/homeContent.js'
+import WeeklyOffering from '@/components/WeeklyOffering.vue'
 import HomeGallery from '@/components/HomeGallery.vue'
 import { trackPhoneClick } from "@/utils/analytics"
 import { trackDirectionsClick } from "@/utils/analytics"
-import rolandoFlyer from '@/assets/rolando-live-july23.png'
+import NewsAnnouncements from '@/components/NewsAnnouncements.vue'
+import DecorativeDivider from '@/components/DecorativeDivider.vue'
+import { useAnnouncementStore } from '@/stores/announcementStore'
+import { useSiteStore } from '@/stores/siteStore'
+import { useLoadingStore } from '@/stores/loadingStore'
+
+const announcementStore = useAnnouncementStore()
+const weeklyOfferingLoaded = ref(false)
+const siteStore = useSiteStore()
+const loading = useLoadingStore()
 
 const {
   todayHours,
-  restaurantStatus,
-  activeClosure,
-  isScheduledClosure
+  restaurantStatus
 } = useRestaurantHours()
+
+watch(
+  [
+    () => siteStore.initialDataLoaded,
+    weeklyOfferingLoaded
+  ],
+  async ([siteDataLoaded, weeklyLoaded]) => {
+    if (siteDataLoaded && weeklyLoaded) {
+      await loading.finish()
+    }
+  },
+  { immediate: true }
+)
+
 </script>
 
 <style scoped>
 /* ==========================================================
    HOME PAGE
    ========================================================== */
-/* TODO */
-/* .news-flyer {
-  display: block;
-  width: 100%;
-  max-width: 420px;
-  margin: 1rem auto 1.25rem;
-  border-radius: 10px;
-  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.25);
-} */
+
 
 .home-page {
   width: 100%;
@@ -255,6 +223,10 @@ const {
 .home-page h3,
 .home-page p {
   overflow-wrap: break-word;
+}
+
+.home-content-divider {
+  margin-top: 4rem;
 }
 
 
@@ -314,8 +286,7 @@ const {
   box-shadow: 0 0 8px rgba(220, 124, 56, 0.55);
 }
 
-.today-status.is-closed .status-dot,
-.today-status.is-temporarily-closed .status-dot {
+.today-status.is-closed .status-dot {
   background-color: #b84b43;
   box-shadow: 0 0 6px rgba(184, 75, 67, 0.4);
 }
@@ -344,6 +315,68 @@ const {
   line-height: 1.5;
 }
 
+.today-card.today-strip {
+  width: min(92%, 900px);
+  padding: 0.85rem 1.25rem;
+  margin: 0 auto 1rem;
+}
+
+.today-strip h2 {
+  margin: 0 0 0.5rem;
+
+  font-size: 1.15rem;
+}
+
+.today-strip-details {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.4rem 0.65rem;
+}
+
+.today-strip .today-status,
+.today-strip .today-day,
+.today-strip .today-message {
+  margin: 0;
+}
+
+.today-strip .today-status {
+  font-size: 1rem;
+}
+
+.today-divider {
+  color: var(--bronze-bold);
+}
+
+/* ==========================================================
+   HOME LAYOUT
+   ========================================================== */
+
+.home-layout {
+  display: grid;
+  grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
+  align-items: start;
+  gap: 2rem;
+
+  width: min(100%, 1400px);
+  margin: 0 auto;
+}
+
+.home-news-rail {
+  position: sticky;
+  top: 1.5rem;
+
+  min-width: 0;
+}
+
+.home-main {
+  min-width: 0;
+}
+
+.home-main-full {
+  grid-column: 1 / -1;
+}
 
 /* ==========================================================
    QUICK ACTIONS
@@ -405,7 +438,7 @@ const {
 
 .home-intro {
   width: min(900px, 94%);
-  margin: 7rem auto;
+  margin: 3rem auto 7rem;
   padding: 0 1rem;
 }
 
@@ -500,53 +533,6 @@ const {
   font-size: clamp(1.7rem, 4vw, 2.7rem);
 }
 
-
-/* ==========================================================
-   LATEST NEWS
-   ========================================================== */
-
-.news-card {
-  width: min(100%, 560px);
-  margin: 0 auto 6rem;
-  padding: 1.75rem;
-
-  background-color: var(--background-dark-trans);
-
-  border: 1px solid var(--bronze-color);
-  border-radius: 0.5rem;
-
-  text-align: left;
-}
-
-.news-card>h2 {
-  margin: 0 0 1.5rem;
-  text-align: center;
-}
-
-.news-item+.news-item {
-  margin-top: 1.75rem;
-  padding-top: 1.75rem;
-
-  border-top: 1px solid rgba(255, 255, 255, 0.15);
-}
-
-.news-item h3 {
-  margin: 0 0 0.6rem;
-
-  color: var(--bronze-bold);
-}
-
-.news-item p {
-  margin: 0;
-
-  line-height: 1.65;
-}
-
-.news-item p+p {
-  margin-top: 0.9rem;
-}
-
-
 /* ==========================================================
    MISSION
    ========================================================== */
@@ -607,9 +593,16 @@ const {
   }
 
   .today-card,
-  .story-preview,
-  .news-card {
+  .story-preview {
     padding: 1.25rem;
+  }
+
+  .home-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .home-news-rail {
+    position: static;
   }
 
   .home-actions {
@@ -630,8 +623,7 @@ const {
   }
 
   .story-preview,
-  .family-album,
-  .news-card {
+  .family-album {
     margin-bottom: 4rem;
   }
 
@@ -639,12 +631,21 @@ const {
     width: 100%;
   }
 
-  .news-card {
-    text-align: left;
-  }
-
   .mission-section {
     padding-top: 2.25rem;
+  }
+
+  .today-strip-details {
+    gap: 0.3rem 0.5rem;
+  }
+
+  .today-strip .today-message {
+    flex-basis: 100%;
+    text-align: center;
+  }
+
+  .today-strip .today-divider:last-of-type {
+    display: none;
   }
 }
 </style>

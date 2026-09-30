@@ -161,8 +161,17 @@
 </template>
 
 <script setup>
+import { onMounted, nextTick } from "vue"
 import { RouterLink } from "vue-router"
 import { cocciaStory } from "@/content/cocciaStory.js"
+import { useLoadingStore } from "@/stores/loadingStore"
+
+const loading = useLoadingStore()
+
+onMounted(async () => {
+  await nextTick()
+  await loading.finish()
+})
 </script>
 
 <style scoped>

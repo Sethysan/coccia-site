@@ -1,0 +1,2 @@
+ALTER TABLE weekly_offering_items
+DROP COLUMN public_title;

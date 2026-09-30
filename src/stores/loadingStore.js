@@ -5,9 +5,7 @@ export const useLoadingStore = defineStore("loading", {
         visible: false,
         frame: 0,
         hasMounted: false,
-
-        // Reserved for future full-stack request tracking
-        activeRequests: 0
+        animationToken: 0,
     }),
 
     actions: {
@@ -17,15 +15,7 @@ export const useLoadingStore = defineStore("loading", {
             })
         },
 
-        /*
-         * CURRENT VERSION
-         *
-         * Plays the complete animation:
-         * full pizza → empty tray → full pizza
-         *
-         * This is currently used for page transitions.
-         */
-        async play() {
+        async start() {
             if (!this.hasMounted) {
                 this.hasMounted = true
                 return
@@ -36,129 +26,80 @@ export const useLoadingStore = defineStore("loading", {
             this.visible = true
             this.frame = 0
 
-            for (let i = 0; i < 18; i++) {
+            const token = ++this.animationToken
+
+            // Run independently while the page/API is loading.
+            this.animateWhileLoading(token)
+        },
+
+        async finish() {
+            if (!this.visible) return
+
+            // Cancel the repeating loading animation.
+            ++this.animationToken
+
+            // Always finish by building a complete pizza.
+            await this.animatePizzaIn()
+
+            this.visible = false
+            this.frame = 0
+        },
+
+        async animateWhileLoading(token) {
+            while (
+                this.visible &&
+                token === this.animationToken
+            ) {
+                await this.animatePizzaOut(token)
+
+                if (
+                    !this.visible ||
+                    token !== this.animationToken
+                ) {
+                    return
+                }
+
+                await this.animatePizzaIn(token)
+
+                if (
+                    !this.visible ||
+                    token !== this.animationToken
+                ) {
+                    return
+                }
+
+                // Let the completed pizza sit for a moment
+                // before beginning another cycle.
+                await this.wait(350)
+            }
+        },
+
+        async animatePizzaOut(token = null) {
+            for (let i = 0; i <= 8; i++) {
+                if (
+                    token !== null &&
+                    token !== this.animationToken
+                ) {
+                    return
+                }
+
                 this.frame = i
                 await this.wait(80)
             }
+        },
 
-            this.visible = false
+        async animatePizzaIn(token = null) {
+            for (let i = 9; i <= 17; i++) {
+                if (
+                    token !== null &&
+                    token !== this.animationToken
+                ) {
+                    return
+                }
+
+                this.frame = i
+                await this.wait(80)
+            }
         }
-
-        /*
-         * ============================================================
-         * FUTURE FULL-STACK LOADER
-         * ============================================================
-         *
-         * Use these methods when the site begins making backend
-         * requests.
-         *
-         * The pizza empties when a request starts, remains on the empty
-         * tray while the request is pending, and fills back up after
-         * the request finishes.
-         *
-         * Uncomment these methods and add a comma after play() when
-         * you are ready to use them.
-         */
-
-        // async animatePizzaOut() {
-        //     // Frames 0–8:
-        //     // full pizza → empty tray
-        //     for (let i = 0; i <= 8; i++) {
-        //         this.frame = i
-        //         await this.wait(80)
-        //     }
-        // },
-
-        // async animatePizzaIn() {
-        //     // Frames 9–17:
-        //     // empty tray → full pizza
-        //     for (let i = 9; i <= 17; i++) {
-        //         this.frame = i
-        //         await this.wait(80)
-        //     }
-        // },
-
-        // async runWithLoader(requestFunction) {
-        //     this.activeRequests++
-
-        //     const isFirstRequest = this.activeRequests === 1
-
-        //     if (isFirstRequest) {
-        //         this.visible = true
-        //         this.frame = 0
-
-        //         await this.animatePizzaOut()
-        //     }
-
-        //     try {
-        //         return await requestFunction()
-        //     } finally {
-        //         this.activeRequests--
-
-        //         if (this.activeRequests === 0) {
-        //             await this.animatePizzaIn()
-
-        //             this.visible = false
-        //             this.frame = 0
-        //         }
-        //     }
-        // }
     }
 })
-
-/*
- * ============================================================
- * FUTURE USAGE EXAMPLE
- * ============================================================
- *
- * The request code belongs in the corresponding feature store,
- * such as menuStore.js, eventStore.js, or orderStore.js.
- *
- * The loading store controls only the animation. It should not
- * contain API URLs or know what data is being requested.
- *
- *
- * Example feature store:
- *
- * import { defineStore } from "pinia"
- * import axios from "axios"
- * import { useLoadingStore } from "@/stores/loadingStore"
- *
- * export const useMenuStore = defineStore("menu", {
- *     state: () => ({
- *         menu: []
- *     }),
- *
- *     actions: {
- *         async loadMenu() {
- *             const loadingStore = useLoadingStore()
- *
- *             const response = await loadingStore.runWithLoader(() => {
- *                 return axios.get("/api/menu")
- *             })
- *
- *             this.menu = response.data
- *         }
- *     }
- * })
- *
- *
- * Example POST request:
- *
- * const response = await loadingStore.runWithLoader(() => {
- *     return axios.post("/api/events", eventData)
- * })
- *
- *
- * Example using fetch instead of Axios:
- *
- * const menu = await loadingStore.runWithLoader(async () => {
- *     const response = await fetch("/api/menu")
- *
- *     if (!response.ok) {
- *         throw new Error("Unable to load the menu")
- *     }
- *
- *     return response.json()
- * })
- */

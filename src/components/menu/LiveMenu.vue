@@ -1,0 +1,886 @@
+<template>
+    <section class="live-menu">
+        <nav class="live-menu-navigation branded-scrollbar" aria-label="Menu sections">
+            <button v-if="weeklyOffering" type="button" class="live-menu-navigation-button"
+                :class="{ active: selectedSectionName === null }" @click="selectedSectionName = null">
+                Menu Home
+            </button>
+            <button v-for="section in menu.sections" :key="section.name" type="button"
+                class="live-menu-navigation-button" :class="{ active: selectedSectionName === section.name }"
+                @click="selectSection(section.name, $event)">
+                {{ section.name }}
+            </button>
+        </nav>
+
+        <section v-if="selectedSectionName === null" class="live-menu-home">
+            <div v-if="weeklyOfferingLoading" class="weekly-offering-loading">
+                Loading this week's features...
+            </div>
+
+            <WeeklyOffering v-else-if="weeklyOffering" :offering="weeklyOffering" />
+
+            <p v-else class="weekly-offering-empty">
+                Check back soon for this week's features.
+            </p>
+        </section>
+
+        <div v-if="selectedSection" class="live-menu-section">
+            <h2>{{ selectedSection.name }}</h2>
+
+            <p v-if="selectedSection.subtitle" class="section-subtitle">
+                {{ selectedSection.subtitle }}
+            </p>
+
+            <PizzaMenu v-if="selectedSection.pizza" :pizza="selectedSection.pizza" />
+
+            <nav v-if="!selectedSection.pizza && selectedSection.subsections?.length"
+                class="menu-subsection-navigation branded-scrollbar" :aria-label="`${selectedSection.name} categories`">
+                <button type="button" class="menu-subsection-navigation-button"
+                    :class="{ active: selectedSubsectionName === null }" @click="selectedSubsectionName = null">
+                    All
+                </button>
+
+                <button v-for="subsection in selectedSection.subsections" :key="subsection.name" type="button"
+                    class="menu-subsection-navigation-button"
+                    :class="{ active: selectedSubsectionName === subsection.name }"
+                    @click="selectedSubsectionName = subsection.name">
+                    {{ subsection.name }}
+                </button>
+            </nav>
+
+            <!-- Ungrouped menu items -->
+
+            <div v-if="!selectedSection.pizza" class="menu-item-grid">
+                <article v-for="item in selectedSection.items" :key="item.name" class="menu-item">
+                    <button v-if="item.imageUrl" type="button" class="menu-item-image-button"
+                        :aria-label="`View larger photo of ${item.name}`" @click="openFullscreenImage(item)">
+                        <img :src="item.imageUrl" :alt="item.imageAlt || item.name" class="menu-item-image">
+                    </button>
+
+                    <p v-if="item.imageUrl && item.imageCaption" class="menu-item-image-caption">
+                        {{ item.imageCaption }}
+                    </p>
+
+                    <div class="menu-item-content">
+                        <h3>{{ item.name }}</h3>
+
+                        <p v-if="item.description">
+                            {{ item.description }}
+                        </p>
+                    </div>
+
+                    <div class="menu-item-prices">
+                        <span v-for="price in item.prices" :key="`${item.name}-${price.label ?? 'price'}`"
+                            class="menu-item-price">
+                            <span v-if="price.label">
+                                {{ price.label }}
+                            </span>
+
+                            ${{ Number(price.amount).toFixed(2) }}
+                        </span>
+                    </div>
+                </article>
+            </div>
+
+            <!-- Subsections -->
+
+            <div v-if="!selectedSection.pizza" v-for="subsection in visibleSubsections" :key="subsection.name"
+                class="menu-subsection">
+                <div class="menu-subsection-heading">
+                    <h3>{{ subsection.name }}</h3>
+
+                    <span v-if="subsection.price != null">
+                        ${{ Number(subsection.price).toFixed(2) }}
+                    </span>
+                </div>
+
+                <!-- Simple items: shared subsection price, no descriptions or individual prices -->
+                <div v-if="isSimpleSubsection(subsection)" class="menu-subsection-items">
+                    <template v-for="(item, index) in subsection.items" :key="item.name">
+                        <span class="menu-subsection-item">
+                            {{ item.name }}
+                        </span>
+
+                        <span v-if="index < subsection.items.length - 1" class="menu-subsection-separator"
+                            aria-hidden="true">
+                            •
+                        </span>
+                    </template>
+                </div>
+
+                <!-- Detailed items: descriptions and/or individual prices -->
+                <div v-else class="menu-subsection-detailed-items">
+                    <article v-for="item in subsection.items" :key="item.name" class="menu-subsection-detailed-item">
+                        <div class="menu-subsection-detailed-content">
+                            <button v-if="item.imageUrl" type="button" class="menu-subsection-thumbnail-button"
+                                :aria-label="`View larger photo of ${item.name}`" @click="openFullscreenImage(item)">
+                                <img :src="item.imageUrl" :alt="item.imageAlt || item.name"
+                                    class="menu-subsection-thumbnail">
+                            </button>
+
+                            <div class="menu-subsection-detailed-text">
+                                <h4>{{ item.name }}</h4>
+
+                                <p v-if="item.description">
+                                    {{ item.description }}
+                                </p>
+                            </div>
+                        </div>
+
+                        <div v-if="item.prices?.length" class="menu-item-prices">
+                            <span v-for="price in item.prices" :key="`${item.name}-${price.label ?? 'price'}`"
+                                class="menu-item-price">
+                                <span v-if="price.label">
+                                    {{ price.label }}
+                                </span>
+
+                                ${{ Number(price.amount).toFixed(2) }}
+                            </span>
+                        </div>
+                    </article>
+                </div>
+            </div>
+
+            <p v-if="selectedSection.footerText" class="section-footer">
+                {{ selectedSection.footerText }}
+            </p>
+
+            <FullscreenImageViewer :open="fullscreenImage !== null" :src="fullscreenImage?.src || ''"
+                :alt="fullscreenImage?.alt || ''" :caption="fullscreenImage?.caption || ''"
+                @close="closeFullscreenImage" />
+        </div>
+    </section>
+</template>
+
+<script setup>
+
+import { computed, onMounted, ref } from 'vue'
+import { getCurrentWeeklyOffering } from '@/api/weeklyOfferingsApi'
+import WeeklyOffering from '@/components/WeeklyOffering.vue'
+import PizzaMenu from '@/components/menu/PizzaMenu.vue'
+import FullscreenImageViewer from '@/components/FullscreenImageViewer.vue'
+
+const weeklyOffering = ref(null)
+const weeklyOfferingLoading = ref(true)
+
+const fullscreenImage = ref(null)
+
+function openFullscreenImage(item) {
+    if (!item.imageUrl) {
+        return
+    }
+
+    fullscreenImage.value = {
+        src: item.imageUrl,
+        alt: item.imageAlt || item.name,
+        caption: item.imageCaption || ''
+    }
+}
+
+function closeFullscreenImage() {
+    fullscreenImage.value = null
+}
+
+async function loadWeeklyOffering() {
+    weeklyOfferingLoading.value = true
+
+    try {
+        weeklyOffering.value = await getCurrentWeeklyOffering()
+    } catch (error) {
+        /*
+         * Weekly Features are optional menu-home content.
+         * A failure here should not affect the regular menu.
+         */
+        weeklyOffering.value = null
+    } finally {
+        weeklyOfferingLoading.value = false
+
+        /*
+         * Menu Home only exists when there is a weekly offering.
+         * Otherwise, open the first regular menu section.
+         */
+        if (!weeklyOffering.value && props.menu.sections?.length) {
+            selectedSectionName.value = props.menu.sections[0].name
+        }
+    }
+}
+
+function isSimpleSubsection(subsection) {
+    return (
+        subsection.price != null &&
+        subsection.items.every(item =>
+            !item.description &&
+            (!item.prices || item.prices.length === 0)
+        )
+    )
+}
+
+onMounted(() => {
+    loadWeeklyOffering()
+})
+
+const props = defineProps({
+    menu: {
+        type: Object,
+        required: true
+    }
+})
+
+const selectedSectionName = ref(null)
+const selectedSubsectionName = ref(null)
+
+function selectSection(sectionName, event) {
+    selectedSectionName.value = sectionName
+    selectedSubsectionName.value = null
+
+    event.currentTarget.scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest',
+        inline: 'center'
+    })
+}
+
+const selectedSection = computed(() => {
+    if (selectedSectionName.value === null) {
+        return null
+    }
+
+    return props.menu.sections.find(
+        (section) => section.name === selectedSectionName.value
+    ) ?? null
+})
+
+const visibleSubsections = computed(() => {
+    if (!selectedSection.value) {
+        return []
+    }
+
+    if (selectedSubsectionName.value === null) {
+        return selectedSection.value.subsections ?? []
+    }
+
+    return (selectedSection.value.subsections ?? []).filter(
+        subsection =>
+            subsection.name === selectedSubsectionName.value
+    )
+})
+
+</script>
+
+<style scoped>
+/* ==========================================================
+   MENU NAVIGATION
+   ========================================================== */
+
+.live-menu-navigation {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.65rem;
+
+    width: fit-content;
+    max-width: 94%;
+    margin: 1.5rem auto;
+    padding: 0.5rem;
+
+    background: var(--background-dark-trans);
+
+    border: 1px solid var(--bronze-color);
+    border-radius: 0.5rem;
+}
+
+.live-menu-navigation-button {
+    padding: 0.7rem 1.1rem;
+
+    color: var(--text-primary);
+    background: rgba(20, 15, 12, 0.72);
+
+    border: 1px solid var(--bronze-color);
+    border-radius: 0.35rem;
+
+    font: inherit;
+    font-weight: 700;
+
+    cursor: pointer;
+
+    transition:
+        color 180ms ease,
+        background-color 180ms ease,
+        border-color 180ms ease,
+        transform 180ms ease;
+}
+
+.live-menu-navigation-button:hover {
+    color: var(--text-primary);
+    background: rgba(138, 106, 50, 0.35);
+    border-color: var(--bronze-hover);
+
+    transform: translateY(-1px);
+}
+
+.live-menu-navigation-button.active {
+    color: #1a120c;
+    background: var(--bronze-hover);
+    border-color: var(--bronze-hover);
+}
+
+/* ==========================================================
+   SELECTED MENU SECTION
+   ========================================================== */
+
+.live-menu-section {
+    width: min(900px, 92%);
+    margin: 2rem auto;
+    padding: 2rem;
+
+    color: var(--text-primary);
+    background: var(--background-dark-trans);
+
+    border: 1px solid var(--bronze-color);
+    border-radius: 0.5rem;
+
+    box-shadow: var(--shadow-soft);
+}
+
+.live-menu-section>h2 {
+    margin: 0;
+
+    color: var(--text-primary);
+
+    font-size: clamp(2rem, 5vw, 3rem);
+    line-height: 1.1;
+    text-align: center;
+}
+
+.live-menu-section>h2::after {
+    display: block;
+
+    width: 4rem;
+    height: 1px;
+    margin: 0.8rem auto 1.5rem;
+
+    background: var(--bronze-bold);
+
+    content: "";
+}
+
+.section-subtitle {
+    max-width: 700px;
+    margin: 0 auto 2rem;
+
+    color: var(--text-secondary);
+
+    line-height: 1.5;
+    text-align: center;
+}
+
+.section-footer {
+    margin: 2rem 0 0;
+    padding-top: 1rem;
+
+    color: var(--text-secondary);
+
+    border-top: 1px solid var(--bronze-color);
+
+    font-size: 0.9rem;
+    font-style: italic;
+    line-height: 1.5;
+    text-align: center;
+}
+
+/* ==========================================================
+   MENU ITEMS
+   ========================================================== */
+
+.menu-item-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+}
+
+.menu-item {
+    display: flex;
+    flex-direction: column;
+
+    min-width: 0;
+    padding: 1.25rem;
+
+    background: rgba(20, 15, 12, 0.55);
+
+    border: 1px solid rgba(138, 106, 50, 0.65);
+    border-radius: 0.4rem;
+}
+
+.menu-item-image-button {
+    display: block;
+
+    width: calc(100% + 2.5rem);
+    margin: -1.25rem -1.25rem 1rem;
+    padding: 0;
+
+    overflow: hidden;
+
+    background: transparent;
+    border: 0;
+    border-radius: 0.4rem 0.4rem 0 0;
+
+    cursor: zoom-in;
+}
+
+.menu-item-image {
+    display: block;
+
+    width: 100%;
+    height: 240px;
+
+    object-fit: cover;
+}
+
+.menu-item-image-caption {
+    margin: -0.35rem 0 0.9rem;
+
+    color: var(--text-secondary);
+
+    font-size: 0.8rem;
+    font-style: italic;
+    line-height: 1.35;
+}
+
+.menu-item-grid .menu-item-prices {
+    margin-top: auto;
+    padding-top: 1rem;
+}
+
+.menu-item-content {
+    min-width: 0;
+}
+
+.menu-item-content h3,
+.menu-item-content h4 {
+    margin: 0 0 0.35rem;
+
+    color: var(--text-primary);
+
+    font-size: 1.15rem;
+}
+
+.menu-item-content p {
+    margin: 0;
+
+    color: var(--text-secondary);
+
+    line-height: 1.5;
+}
+
+.menu-item-prices {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+
+    min-width: max-content;
+}
+
+.menu-item-price {
+    display: flex;
+    justify-content: space-between;
+    gap: 1.25rem;
+
+    font-weight: 700;
+}
+
+.menu-item-price>span {
+    color: var(--text-secondary);
+    font-weight: 600;
+    text-transform: capitalize;
+}
+
+/* ==========================================================
+   MENU SUBSECTIONS
+   ========================================================== */
+
+.menu-subsection {
+    margin-top: 2rem;
+    scroll-margin-top: 1rem;
+}
+
+.menu-subsection+.menu-subsection {
+    margin-top: 2.5rem;
+}
+
+.menu-subsection-heading {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+
+    padding-bottom: 0.65rem;
+
+    border-bottom: 2px solid var(--bronze-color);
+}
+
+.menu-subsection-heading h3 {
+    margin: 0;
+
+    color: var(--text-primary);
+
+    font-size: 1.35rem;
+}
+
+.menu-subsection-heading>span {
+    color: var(--text-primary);
+
+    font-weight: 700;
+}
+
+.menu-subsection-items {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.35rem 0.65rem;
+
+    margin-top: 0.7rem;
+}
+
+.menu-subsection-item {
+    color: var(--text-secondary);
+
+    font-size: 1rem;
+    font-weight: 600;
+    line-height: 1.4;
+}
+
+.menu-subsection-separator {
+    color: var(--bronze-hover);
+    line-height: 1;
+}
+
+.menu-subsection-detailed-items {
+    display: grid;
+    gap: 0.85rem;
+
+    margin-top: 0.85rem;
+}
+
+.menu-subsection-detailed-item {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+    gap: 0.75rem 1.5rem;
+
+    padding-bottom: 0.85rem;
+
+    border-bottom: 1px solid rgba(138, 106, 50, 0.35);
+}
+
+.menu-subsection-detailed-item:last-child {
+    padding-bottom: 0;
+
+    border-bottom: 0;
+}
+
+.menu-subsection-detailed-content {
+    min-width: 0;
+}
+
+.menu-subsection-detailed-content h4 {
+    margin: 0;
+
+    color: var(--text-primary);
+
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+.menu-subsection-detailed-content p {
+    margin: 0.3rem 0 0;
+
+    color: var(--text-secondary);
+
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+.menu-subsection-detailed-item .menu-item-prices {
+    margin: 0;
+}
+
+.menu-subsection-navigation {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.45rem;
+
+    width: fit-content;
+    max-width: 100%;
+    margin: 0 auto 2rem;
+    padding: 0.4rem;
+
+    background: rgba(20, 15, 12, 0.5);
+
+    border: 1px solid rgba(138, 106, 50, 0.55);
+    border-radius: 0.4rem;
+}
+
+.menu-subsection-navigation-button {
+    padding: 0.5rem 0.8rem;
+
+    color: var(--text-secondary);
+    background: transparent;
+
+    border: 1px solid rgba(138, 106, 50, 0.5);
+    border-radius: 0.3rem;
+
+    font: inherit;
+    font-size: 0.85rem;
+    font-weight: 700;
+
+    cursor: pointer;
+
+    transition:
+        color 180ms ease,
+        background-color 180ms ease,
+        border-color 180ms ease;
+}
+
+.menu-subsection-navigation-button.active {
+    color: #1a120c;
+    background: var(--bronze-hover);
+    border-color: var(--bronze-hover);
+}
+
+.menu-subsection-navigation-button:hover {
+    color: var(--text-primary);
+    background: rgba(138, 106, 50, 0.25);
+    border-color: var(--bronze-hover);
+}
+
+.menu-subsection {
+    scroll-margin-top: 6rem;
+}
+
+.menu-subsection-detailed-content {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.85rem;
+
+    min-width: 0;
+}
+
+.menu-subsection-detailed-text {
+    min-width: 0;
+}
+
+.menu-subsection-thumbnail-button {
+    flex: 0 0 64px;
+
+    width: 64px;
+    height: 64px;
+    padding: 0;
+
+    overflow: hidden;
+
+    background: rgba(255, 255, 255, 0.03);
+
+    border: 1px solid rgba(138, 106, 50, 0.5);
+    border-radius: 0.35rem;
+
+    cursor: zoom-in;
+}
+
+.menu-subsection-thumbnail {
+    display: block;
+
+    width: 100%;
+    height: 100%;
+
+    object-fit: contain;
+}
+
+/* ==========================================================
+   MOBILE
+   ========================================================== */
+
+@media (max-width: 600px) {
+
+    /* Keep section navigation accessible without wrapping
+       into a large multi-row block. */
+
+    .live-menu {
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+        overflow-x: hidden;
+    }
+
+    .live-menu-navigation {
+        flex-wrap: nowrap;
+        justify-content: flex-start;
+        gap: 0.5rem;
+
+        width: 100%;
+        max-width: 100%;
+        margin: 0;
+        padding: 0.65rem 0.75rem;
+
+        overflow-x: auto;
+        overscroll-behavior-inline: contain;
+
+        border-right: 0;
+        border-left: 0;
+        border-radius: 0;
+    }
+
+    .live-menu-navigation-button {
+        flex: 0 0 auto;
+
+        padding: 0.6rem 0.85rem;
+
+        font-size: 0.9rem;
+    }
+
+    /* Give the actual menu as much phone width as possible. */
+    .live-menu-section {
+        width: calc(100% - 1rem);
+        margin: 0.75rem auto;
+        padding: 1.25rem 1rem;
+    }
+
+    .live-menu-section>h2 {
+        font-size: 2rem;
+    }
+
+    .section-subtitle {
+        margin-bottom: 1.5rem;
+
+        font-size: 0.9rem;
+    }
+
+    .menu-item-grid {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+    }
+
+    /* On phones, don't force descriptions and prices
+       to compete for the same horizontal space. */
+    .menu-item {
+        display: block;
+
+        padding: 1rem;
+    }
+
+    .menu-item-image-button {
+        width: calc(100% + 2rem);
+        margin: -1rem -1rem 0.85rem;
+    }
+
+    .menu-item-image {
+        width: 100%;
+        height: 200px;
+    }
+
+    .menu-item-content h3,
+    .menu-item-content h4 {
+        margin-bottom: 0.25rem;
+
+        font-size: 1.05rem;
+    }
+
+    .menu-item-content p {
+        font-size: 0.9rem;
+        line-height: 1.4;
+    }
+
+    .menu-item-prices {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 0.4rem 1.25rem;
+
+        margin-top: 0.5rem;
+    }
+
+    .menu-item-price {
+        justify-content: flex-start;
+        gap: 0.4rem;
+
+        font-size: 0.95rem;
+    }
+
+    /* Preserve the category → choices hierarchy used
+       by shared-price subsections such as Beverages. */
+    .menu-subsection {
+        margin-top: 1.5rem;
+    }
+
+    .menu-subsection+.menu-subsection {
+        margin-top: 2rem;
+    }
+
+    .menu-subsection-heading {
+        gap: 0.75rem;
+
+        padding-bottom: 0.5rem;
+    }
+
+    .menu-subsection-heading h3 {
+        font-size: 1.15rem;
+    }
+
+    .menu-subsection {
+        max-width: 100%;
+        overflow-wrap: anywhere;
+    }
+
+    .menu-subsection .menu-item-content h4 {
+        font-size: 0.95rem;
+    }
+
+    .menu-subsection-detailed-item {
+        grid-template-columns: 1fr;
+        gap: 0.45rem;
+    }
+
+    .menu-subsection-detailed-item .menu-item-prices {
+        margin-top: 0;
+    }
+
+    .section-footer {
+        margin-top: 1.5rem;
+
+        font-size: 0.85rem;
+    }
+
+    .menu-subsection-navigation {
+        flex-wrap: nowrap;
+        justify-content: flex-start;
+        gap: 0.4rem;
+
+        width: calc(100% + 2rem);
+        max-width: none;
+        margin: 0 -1rem 1.5rem;
+        padding: 0.55rem 1rem;
+
+        overflow-x: auto;
+        overscroll-behavior-inline: contain;
+
+        border-right: 0;
+        border-left: 0;
+        border-radius: 0;
+    }
+
+    .menu-subsection-navigation-button {
+        flex: 0 0 auto;
+
+        padding: 0.45rem 0.7rem;
+
+        font-size: 0.8rem;
+    }
+
+    .menu-subsection-thumbnail-button {
+        flex-basis: 56px;
+
+        width: 56px;
+        height: 56px;
+    }
+}
+</style>
