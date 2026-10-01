@@ -154,7 +154,8 @@
 
 <script setup>
 
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import { getCurrentWeeklyOffering } from '@/api/weeklyOfferingsApi'
 import WeeklyOffering from '@/components/WeeklyOffering.vue'
 import PizzaMenu from '@/components/menu/PizzaMenu.vue'
@@ -164,6 +165,33 @@ const weeklyOffering = ref(null)
 const weeklyOfferingLoading = ref(true)
 
 const fullscreenImage = ref(null)
+
+const props = defineProps({
+    menu: {
+        type: Object,
+        required: true
+    }
+})
+const selectedSectionName = ref(null)
+const route = useRoute()
+
+watch(
+    () => props.menu.sections,
+    sections => {
+        if (route.query.section !== 'beverages') {
+            return
+        }
+
+        const beverageSection = sections?.find(
+            section => section.name === 'Beverages'
+        )
+
+        if (beverageSection) {
+            selectedSectionName.value = beverageSection.name
+        }
+    },
+    { immediate: true }
+)
 
 function openFullscreenImage(item) {
     if (!item.imageUrl) {
@@ -199,7 +227,11 @@ async function loadWeeklyOffering() {
          * Menu Home only exists when there is a weekly offering.
          * Otherwise, open the first regular menu section.
          */
-        if (!weeklyOffering.value && props.menu.sections?.length) {
+        if (
+            selectedSectionName.value === null &&
+            !weeklyOffering.value &&
+            props.menu.sections?.length
+        ) {
             selectedSectionName.value = props.menu.sections[0].name
         }
     }
@@ -219,14 +251,6 @@ onMounted(() => {
     loadWeeklyOffering()
 })
 
-const props = defineProps({
-    menu: {
-        type: Object,
-        required: true
-    }
-})
-
-const selectedSectionName = ref(null)
 const selectedSubsectionName = ref(null)
 
 function selectSection(sectionName, event) {
