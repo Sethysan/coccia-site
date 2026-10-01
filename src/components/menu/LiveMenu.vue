@@ -155,6 +155,7 @@
 <script setup>
 
 import { computed, onMounted, ref } from 'vue'
+import { useRoute } from 'vue-router'
 import { getCurrentWeeklyOffering } from '@/api/weeklyOfferingsApi'
 import WeeklyOffering from '@/components/WeeklyOffering.vue'
 import PizzaMenu from '@/components/menu/PizzaMenu.vue'
@@ -164,6 +165,8 @@ const weeklyOffering = ref(null)
 const weeklyOfferingLoading = ref(true)
 
 const fullscreenImage = ref(null)
+
+const route = useRoute()
 
 function openFullscreenImage(item) {
     if (!item.imageUrl) {
@@ -199,7 +202,11 @@ async function loadWeeklyOffering() {
          * Menu Home only exists when there is a weekly offering.
          * Otherwise, open the first regular menu section.
          */
-        if (!weeklyOffering.value && props.menu.sections?.length) {
+        if (
+            selectedSectionName.value === null &&
+            !weeklyOffering.value &&
+            props.menu.sections?.length
+        ) {
             selectedSectionName.value = props.menu.sections[0].name
         }
     }
@@ -216,6 +223,18 @@ function isSimpleSubsection(subsection) {
 }
 
 onMounted(() => {
+    const requestedSection = route.query.section
+
+    if (requestedSection === 'beverages') {
+        const beverageSection = props.menu.sections.find(
+            section => section.name === 'Beverages'
+        )
+
+        if (beverageSection) {
+            selectedSectionName.value = beverageSection.name
+        }
+    }
+
     loadWeeklyOffering()
 })
 
