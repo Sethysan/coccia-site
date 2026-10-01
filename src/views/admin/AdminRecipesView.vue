@@ -70,7 +70,7 @@
             <label class="search-field">
                 Search recipes
 
-                <input v-model="search" type="search" placeholder="Search by name" @input="handleSearch">
+                <input v-model="search" type="search" placeholder="Search by name">
             </label>
 
             <div class="filter-buttons">
@@ -234,23 +234,27 @@
     const savingId = ref(null)
     const uploadingId = ref(null)
 
-    let searchTimer = null
     let successTimer = null
 
     const filteredRecipes = computed(() => {
-        if (filter.value === 'active') {
-            return recipeStore.recipes.filter(
-                recipe => recipe.active
-            )
-        }
+        const searchTerm = search.value
+            .trim()
+            .toLowerCase()
 
-        if (filter.value === 'inactive') {
-            return recipeStore.recipes.filter(
-                recipe => !recipe.active
-            )
-        }
+        return recipeStore.recipes.filter(recipe => {
+            const matchesSearch =
+                !searchTerm ||
+                recipe.name
+                    .toLowerCase()
+                    .includes(searchTerm)
 
-        return recipeStore.recipes
+            const matchesFilter =
+                filter.value === 'all' ||
+                (filter.value === 'active' && recipe.active) ||
+                (filter.value === 'inactive' && !recipe.active)
+
+            return matchesSearch && matchesFilter
+        })
     })
 
     onMounted(async () => {
@@ -258,17 +262,8 @@
     })
 
     onBeforeUnmount(() => {
-        clearTimeout(searchTimer)
         clearTimeout(successTimer)
     })
-
-    function handleSearch() {
-        clearTimeout(searchTimer)
-
-        searchTimer = setTimeout(() => {
-            recipeStore.fetchRecipes(search.value)
-        }, 300)
-    }
 
     function showSuccessMessage(message, recipeId = null) {
         clearTimeout(successTimer)
@@ -399,7 +394,7 @@
                         ? 'reactivated'
                         : 'deactivated'
                     } successfully.`,
-                    updatedRecipe.id
+                    updatedRecipe.ida
                 )
             }
 
