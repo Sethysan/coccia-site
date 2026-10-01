@@ -105,12 +105,18 @@
         &copy; {{ currentYear }} Coccia House. All rights reserved.
       </p>
 
-      <p class="website-credit">
-        Website designed and developed by
-        <a href="https://www.sethrakich.com/" target="_blank" rel="noopener noreferrer">
-          Seth Rakich
-        </a>
-      </p>
+      <div class="footer-bottom-links">
+        <RouterLink class="staff-login" to="/admin/login">
+          Staff Login
+        </RouterLink>
+
+        <p class="website-credit">
+          Website designed and developed by
+          <a href="https://www.sethrakich.com/" target="_blank" rel="noopener noreferrer">
+            Seth Rakich
+          </a>
+        </p>
+      </div>
     </div>
   </footer>
 </template>
@@ -254,6 +260,30 @@ const currentYear = new Date().getFullYear()
   text-align: right;
 }
 
+.footer-bottom-links {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.staff-login {
+  color: var(--default-dark);
+  text-decoration: none;
+  opacity: 0.7;
+
+  transition:
+    color 180ms ease,
+    opacity 180ms ease;
+}
+
+.staff-login:hover,
+.staff-login:focus-visible {
+  color: var(--bronze-bold);
+  opacity: 1;
+  text-decoration: underline;
+  text-underline-offset: 0.25rem;
+}
+
 @media (max-width: 900px) {
   .footer-content {
     grid-template-columns: repeat(2, 1fr);
@@ -295,5 +325,11 @@ const currentYear = new Date().getFullYear()
   .website-credit {
     text-align: center;
   }
+
+  .footer-bottom-links {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
 }
 </style>
