@@ -4,7 +4,76 @@
             {{ editing ? 'Edit Weekly Offering Item' : 'Add Weekly Offering Item' }}
         </h3>
 
-        <RecipePicker v-model="form.recipeId" @selected="handleRecipeSelected" @cleared="handleRecipeCleared" />
+        <div class="recipe-selection">
+            <RecipePicker v-model="form.recipeId" @selected="handleRecipeSelected" @cleared="handleRecipeCleared"
+                @create-requested="beginCreateRecipe" />
+
+            <div v-if="showCreateRecipe" class="inline-recipe-form">
+                <h4>Create New Recipe</h4>
+
+                <label>
+                    Recipe name
+
+                    <input v-model="newRecipeName" type="text" maxlength="150" placeholder="Example: Chicken Cacciatore"
+                        required>
+                </label>
+
+                <label>
+                    Description
+
+                    <textarea v-model="newRecipeDescription" rows="3"
+                        placeholder="Describe the dish for customers."></textarea>
+                </label>
+
+                <div class="recipe-photo-field">
+                    <span class="recipe-photo-label">Photo</span>
+
+                    <label class="recipe-photo-picker">
+                        <input type="file" accept="image/*" @change="handleNewRecipePhotoSelected">
+
+                        <span class="recipe-photo-button">
+                            + Add Photo
+                        </span>
+
+                        <span class="recipe-photo-filename">
+                            {{
+                                newRecipePhoto
+                                    ? newRecipePhoto.name
+                                    : 'No photo selected'
+                            }}
+                        </span>
+                    </label>
+                </div>
+
+                <label>
+                    Image description
+
+                    <input v-model="newRecipeImageAlt" type="text" maxlength="255"
+                        placeholder="Optional description of the photo">
+                </label>
+
+                <label>
+                    Photo caption
+
+                    <input v-model="newRecipeImageCaption" type="text" maxlength="255"
+                        placeholder="Example: Pictured with homemade bread.">
+                </label>
+
+                <div class="admin-form-actions">
+                    <button type="button" class="primary-button" :disabled="creatingRecipe" @click="createRecipe">
+                        {{
+                            creatingRecipe
+                                ? 'Creating Recipe...'
+                                : 'Create & Select Recipe'
+                        }}
+                    </button>
+
+                    <button type="button" :disabled="creatingRecipe" @click="cancelCreateRecipe">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
 
         <div>
             <label for="offering-type">
@@ -85,6 +154,7 @@
 import {
     computed,
     reactive,
+    ref,
     watch
 } from 'vue'
 
@@ -109,6 +179,15 @@ const emit = defineEmits([
 ])
 
 const recipeStore = useRecipeStore()
+
+const showCreateRecipe = ref(false)
+const creatingRecipe = ref(false)
+
+const newRecipeName = ref('')
+const newRecipeDescription = ref('')
+const newRecipeImageAlt = ref('')
+const newRecipeImageCaption = ref('')
+const newRecipePhoto = ref(null)
 
 const editing = computed(() => Boolean(props.item))
 
@@ -173,6 +252,75 @@ function resetForm() {
             displayOrder: 0
         }
     ]
+}
+
+function beginCreateRecipe(name) {
+    newRecipeName.value = name
+    newRecipeDescription.value = ''
+    newRecipeImageAlt.value = ''
+    newRecipeImageCaption.value = ''
+    newRecipePhoto.value = null
+    showCreateRecipe.value = true
+
+    recipeStore.clearError()
+}
+
+function handleNewRecipePhotoSelected(event) {
+    newRecipePhoto.value = event.target.files?.[0] ?? null
+}
+
+function cancelCreateRecipe() {
+    showCreateRecipe.value = false
+    newRecipeName.value = ''
+    newRecipeDescription.value = ''
+    newRecipeImageAlt.value = ''
+    newRecipeImageCaption.value = ''
+    newRecipePhoto.value = null
+
+    recipeStore.clearError()
+}
+
+async function createRecipe() {
+    const name = newRecipeName.value.trim()
+
+    if (!name) {
+        return
+    }
+
+    creatingRecipe.value = true
+    recipeStore.clearError()
+
+    try {
+        const createdRecipe =
+            await recipeStore.addRecipe(
+                name,
+                newRecipeDescription.value,
+                newRecipeImageAlt.value,
+                newRecipeImageCaption.value
+            )
+
+        if (createdRecipe) {
+            if (newRecipePhoto.value) {
+                const updatedRecipe =
+                    await recipeStore.uploadImage(
+                        createdRecipe.id,
+                        newRecipePhoto.value
+                    )
+
+                if (!updatedRecipe) {
+                    return
+                }
+            }
+
+            form.recipeId = createdRecipe.id
+
+            resetWeeklyDetails()
+            cancelCreateRecipe()
+        }
+
+    } finally {
+        creatingRecipe.value = false
+    }
 }
 
 function handleRecipeCleared() {
@@ -245,10 +393,6 @@ function removePrice(index) {
 
 function submitForm() {
     if (!form.recipeId) {
-        recipeSearchError.value =
-            'Please select a recipe from the list.'
-
-        showRecipeResults.value = true
         return
     }
 
@@ -465,10 +609,13 @@ form h4 {
 .price-field {
     display: grid;
     gap: 0.4rem;
+    min-width: 0;
 }
 
 .price-field input {
     width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
 }
 
 /* ==========================================================
@@ -553,14 +700,108 @@ form p {
     color: var(--default-dark);
 }
 
+.inline-recipe-form {
+    display: grid;
+    gap: 0.75rem;
+
+    padding: 1rem;
+
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 0.4rem;
+}
+
+.inline-recipe-form h4 {
+    margin: 0;
+}
+
+.inline-recipe-form label {
+    display: grid;
+    gap: 0.4rem;
+}
+
+.recipe-photo-field {
+    display: grid;
+    gap: 0.4rem;
+}
+
+.recipe-photo-label {
+    font-weight: 600;
+}
+
+.recipe-photo-picker {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+
+    width: fit-content;
+    max-width: 100%;
+
+    cursor: pointer;
+}
+
+.recipe-photo-picker input {
+    position: absolute;
+
+    width: 1px;
+    height: 1px;
+
+    overflow: hidden;
+
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+}
+
+.recipe-photo-button {
+    flex: 0 0 auto;
+
+    padding: 0.65rem 1rem;
+
+    color: var(--text-primary);
+    background: transparent;
+
+    border: 1px solid var(--bronze-color);
+    border-radius: 0.35rem;
+
+    font-weight: 700;
+}
+
+.recipe-photo-picker:hover .recipe-photo-button {
+    background: var(--bronze-bold);
+}
+
+.recipe-photo-filename {
+    min-width: 0;
+
+    color: var(--text-secondary);
+
+    font-size: 0.9rem;
+
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
 
 /* ==========================================================
    MOBILE
    ========================================================== */
 
 @media (max-width: 600px) {
-    form>div>div {
+    .price-row {
         grid-template-columns: 1fr;
+    }
+
+    .price-row button {
+        width: 100%;
+    }
+
+    .recipe-photo-picker {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .recipe-photo-filename {
+        max-width: 100%;
     }
 
     button {

@@ -5,10 +5,11 @@
         </label>
 
         <div class="recipe-picker">
-            <input id="recipe" v-model="recipeSearch" type="search" placeholder="Search recipes..." autocomplete="off"
-                @input="handleRecipeSearch" @focus="showRecipeResults = true">
+            <input v-if="!selectedRecipe || changingRecipe" id="recipe" v-model="recipeSearch" type="search"
+                placeholder="Search recipes..." autocomplete="off" @input="handleRecipeSearch"
+                @focus="showRecipeResults = true">
 
-            <div v-if="showRecipeResults" class="recipe-results">
+            <div v-if="showRecipeResults && (!selectedRecipe || changingRecipe)" class="recipe-results">
                 <p v-if="searchingRecipes" class="recipe-results-message">
                     Searching...
                 </p>
@@ -33,8 +34,14 @@
                 </div>
             </div>
 
-            <button v-if="selectedRecipe" type="button" class="change-recipe-button" @click="clearSelectedRecipe">
+            <button v-if="selectedRecipe && !changingRecipe" type="button" class="change-recipe-button"
+                @click="beginRecipeChange">
                 Change Recipe
+            </button>
+
+            <button v-if="selectedRecipe && changingRecipe" type="button" class="change-recipe-button"
+                @click="cancelRecipeChange">
+                Cancel Change
             </button>
 
             <p v-if="recipeSearchError">
@@ -99,6 +106,7 @@ const activeRecipes = ref([])
 const searchingRecipes = ref(false)
 const recipeSearchError = ref('')
 const showRecipeResults = ref(false)
+const changingRecipe = ref(false)
 
 let recipeSearchTimer = null
 
@@ -198,6 +206,7 @@ function requestRecipeCreation() {
     }
 
     showRecipeResults.value = false
+    changingRecipe.value = false
 
     emit('create-requested', name)
 }
@@ -206,20 +215,28 @@ function selectRecipe(recipe) {
     recipeSearch.value = recipe.name
     recipeSearchError.value = ''
     showRecipeResults.value = false
+    changingRecipe.value = false
 
     emit('update:modelValue', recipe.id)
     emit('selected', recipe)
 }
 
-async function clearSelectedRecipe() {
-    emit('update:modelValue', null)
-    emit('cleared')
-
+async function beginRecipeChange() {
+    changingRecipe.value = true
     recipeSearch.value = ''
     showRecipeResults.value = true
 
     await loadActiveRecipes()
 }
+
+function cancelRecipeChange() {
+    changingRecipe.value = false
+    showRecipeResults.value = false
+    recipeSearchError.value = ''
+
+    syncRecipeSearch()
+}
+
 </script>
 
 <style scoped>
