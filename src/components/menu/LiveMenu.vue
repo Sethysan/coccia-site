@@ -154,7 +154,7 @@
 
 <script setup>
 
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { getCurrentWeeklyOffering } from '@/api/weeklyOfferingsApi'
 import WeeklyOffering from '@/components/WeeklyOffering.vue'
@@ -166,7 +166,32 @@ const weeklyOfferingLoading = ref(true)
 
 const fullscreenImage = ref(null)
 
+const props = defineProps({
+    menu: {
+        type: Object,
+        required: true
+    }
+})
+const selectedSectionName = ref(null)
 const route = useRoute()
+
+watch(
+    () => props.menu.sections,
+    sections => {
+        if (route.query.section !== 'beverages') {
+            return
+        }
+
+        const beverageSection = sections?.find(
+            section => section.name === 'Beverages'
+        )
+
+        if (beverageSection) {
+            selectedSectionName.value = beverageSection.name
+        }
+    },
+    { immediate: true }
+)
 
 function openFullscreenImage(item) {
     if (!item.imageUrl) {
@@ -223,29 +248,9 @@ function isSimpleSubsection(subsection) {
 }
 
 onMounted(() => {
-    const requestedSection = route.query.section
-
-    if (requestedSection === 'beverages') {
-        const beverageSection = props.menu.sections.find(
-            section => section.name === 'Beverages'
-        )
-
-        if (beverageSection) {
-            selectedSectionName.value = beverageSection.name
-        }
-    }
-
     loadWeeklyOffering()
 })
 
-const props = defineProps({
-    menu: {
-        type: Object,
-        required: true
-    }
-})
-
-const selectedSectionName = ref(null)
 const selectedSubsectionName = ref(null)
 
 function selectSection(sectionName, event) {
