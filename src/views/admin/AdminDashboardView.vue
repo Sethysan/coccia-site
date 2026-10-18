@@ -39,6 +39,19 @@
                 </p>
             </RouterLink>
 
+
+
+            <RouterLink to="/admin/purchasing/orders" class="admin-card dashboard-card">
+                <h2>Purchasing & Inventory</h2>
+
+                <p>
+                    Create and review supplier orders,
+                    manage products and vendors.
+                </p>
+            </RouterLink>
+
+
+
             <RouterLink to="/admin/hours" class="admin-card dashboard-card">
                 <h2>Store Hours</h2>
 

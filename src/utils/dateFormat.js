@@ -40,3 +40,44 @@ function parseLocalDate(dateString) {
 
     return new Date(year, month - 1, day)
 }
+
+
+export function formatDeliveryDate(dateString) {
+    if (!dateString) return 'Not scheduled'
+
+    const date = parseLocalDate(dateString)
+
+    return date.toLocaleDateString('en-US', {
+        weekday: 'long',
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric'
+    })
+}
+
+export function getNextDeliveryDate(dateString, frequency) {
+    if (!dateString) return null
+
+    const originalDate = parseLocalDate(dateString)
+
+    if (!['WEEKLY', 'BIWEEKLY'].includes(frequency)) {
+        return dateString
+    }
+
+    const intervalDays = frequency === 'WEEKLY' ? 7 : 14
+
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+
+    const nextDate = new Date(originalDate)
+
+    while (nextDate < today) {
+        nextDate.setDate(nextDate.getDate() + intervalDays)
+    }
+
+    const year = nextDate.getFullYear()
+    const month = String(nextDate.getMonth() + 1).padStart(2, '0')
+    const day = String(nextDate.getDate()).padStart(2, '0')
+
+    return `${year}-${month}-${day}`
+}

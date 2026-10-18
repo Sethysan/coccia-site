@@ -14,26 +14,17 @@
                 </div>
 
                 <div class="admin-shell-actions">
-                    <span
-                        v-if="auth.displayName"
-                        class="admin-user"
-                    >
+                    <span v-if="auth.displayName" class="admin-user">
                         {{ auth.displayName }}
                     </span>
 
-                    <button
-                        type="button"
-                        @click="handleLogout"
-                    >
+                    <button type="button" @click="handleLogout">
                         Log Out
                     </button>
                 </div>
             </header>
 
-            <nav
-                class="admin-nav"
-                aria-label="Admin navigation"
-            >
+            <nav class="admin-nav" aria-label="Admin navigation">
                 <RouterLink to="/admin">
                     Home
                 </RouterLink>
@@ -50,6 +41,30 @@
                     Recipes
                 </RouterLink>
 
+                <RouterLink to="/admin/purchasing/orders">
+                    Build Order
+                </RouterLink>
+
+                <RouterLink to="/admin/purchasing/orders/drafts">
+                    Draft Orders
+                </RouterLink>
+
+                <RouterLink to="/admin/purchasing/orders/receiving">
+                    Receive Deliveries
+                </RouterLink>
+
+                <RouterLink to="/admin/purchasing/orders/completed">
+                    Completed Orders
+                </RouterLink>
+
+                <RouterLink to="/admin/purchasing/products">
+                    Products
+                </RouterLink>
+
+                <RouterLink to="/admin/purchasing/vendors">
+                    Vendors
+                </RouterLink>
+
                 <RouterLink to="/admin/hours">
                     Hours
                 </RouterLink>
@@ -58,10 +73,7 @@
                     Announcements
                 </RouterLink>
 
-                <RouterLink
-                    v-if="auth.isAdmin"
-                    to="/admin/users"
-                >
+                <RouterLink v-if="auth.isAdmin" to="/admin/users">
                     Users
                 </RouterLink>
             </nav>
