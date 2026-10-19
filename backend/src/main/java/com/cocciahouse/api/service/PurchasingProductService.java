@@ -18,6 +18,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.cocciahouse.api.model.PurchasingInventoryBalance;
+import com.cocciahouse.api.repository.PurchasingInventoryBalanceRepository;
+
 import java.util.List;
 
 @Service
@@ -26,18 +29,27 @@ public class PurchasingProductService {
     private final PurchasingProductRepository productRepository;
     private final PurchasingDepartmentRepository departmentRepository;
     private final PurchasingCategoryRepository categoryRepository;
+    private final PurchasingInventoryBalanceRepository inventoryBalanceRepository;
+    private final InventoryUnitConversionService unitConversionService;
 
     @PersistenceContext
     private EntityManager entityManager;
 
+
     public PurchasingProductService(
             PurchasingProductRepository productRepository,
             PurchasingDepartmentRepository departmentRepository,
-            PurchasingCategoryRepository categoryRepository
+            PurchasingCategoryRepository categoryRepository,
+            PurchasingInventoryBalanceRepository inventoryBalanceRepository,
+            InventoryUnitConversionService unitConversionService
+
     ) {
         this.productRepository = productRepository;
         this.departmentRepository = departmentRepository;
         this.categoryRepository = categoryRepository;
+        this.inventoryBalanceRepository = inventoryBalanceRepository;
+        this.unitConversionService = unitConversionService;
+
     }
 
     @Transactional(readOnly = true)
@@ -75,8 +87,11 @@ public class PurchasingProductService {
         PurchasingProduct savedProduct =
                 productRepository.saveAndFlush(product);
 
-        entityManager.refresh(savedProduct);
+        inventoryBalanceRepository.save(
+                new PurchasingInventoryBalance(savedProduct.getId())
+        );
 
+        entityManager.refresh(savedProduct);
         return toResponse(savedProduct);
     }
 
@@ -184,6 +199,49 @@ public class PurchasingProductService {
         product.setName(request.name().trim());
         product.setDescription(request.description());
         product.setActive(request.active());
+
+        String baseUnit = request.baseUnit();
+
+        if (baseUnit == null || baseUnit.isBlank()) {
+            // Existing products may remain unconfigured temporarily.
+            // Do not allow clearing an already configured unit.
+            if (product.getBaseUnit() != null) {
+                throw new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        "Base inventory unit cannot be cleared"
+                );
+            }
+
+            product.setBaseUnit(null);
+        } else {
+            baseUnit = baseUnit.trim().toLowerCase(java.util.Locale.ROOT);
+
+            try {
+                // Validates that the unit is supported.
+                unitConversionService.convert(
+                        java.math.BigDecimal.ONE,
+                        baseUnit,
+                        baseUnit
+                );
+            } catch (IllegalArgumentException ex) {
+                throw new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        ex.getMessage()
+                );
+            }
+
+            if (product.getBaseUnit() != null
+                    && !product.getBaseUnit().equals(baseUnit)) {
+                throw new ResponseStatusException(
+                        HttpStatus.CONFLICT,
+                        "Changing an existing inventory base unit "
+                                + "requires an inventory conversion process"
+                );
+            }
+
+            product.setBaseUnit(baseUnit);
+        }
+
     }
 
     private PurchasingProductResponse toResponse(
@@ -196,6 +254,7 @@ public class PurchasingProductService {
                 product.getName(),
                 product.getDescription(),
                 product.isActive(),
+                product.getBaseUnit(),
                 product.getCreatedAt(),
                 product.getUpdatedAt()
         );

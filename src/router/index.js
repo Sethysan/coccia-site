@@ -32,6 +32,8 @@ import AdminPurchasingReceivingView
   from '../views/admin/AdminPurchasingReceivingView.vue'
 import AdminPurchasingCompletedOrdersView
   from '../views/admin/AdminPurchasingCompletedOrdersView.vue'
+import AdminPurchasingInventoryView
+  from '../views/admin/AdminPurchasingInventoryView.vue'
 import AdminLayout
   from '../layouts/AdminLayout.vue'
 
@@ -85,6 +87,11 @@ const router = createRouter({
           component: AdminPurchasingProductsView
         },
         {
+          path: 'purchasing/inventory',
+          name: 'purchasing-inventory',
+          component: AdminPurchasingInventoryView
+        },
+        {
           path: 'purchasing/orders',
           name: 'purchasing-build-order',
           component: AdminPurchasingOrdersView
@@ -104,6 +111,7 @@ const router = createRouter({
           name: 'purchasing-completed-orders',
           component: AdminPurchasingCompletedOrdersView
         },
+
         {
           path: 'users',
           name: 'admin-users',

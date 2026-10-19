@@ -19,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import java.util.Locale;
 
 @Service
 public class PurchasingVendorProductService {
@@ -26,19 +27,24 @@ public class PurchasingVendorProductService {
     private final PurchasingVendorProductRepository offeringRepository;
     private final PurchasingProductRepository productRepository;
     private final PurchasingVendorRepository vendorRepository;
+    private final InventoryUnitConversionService unitConversionService;
 
     @PersistenceContext
     private EntityManager entityManager;
 
+
     public PurchasingVendorProductService(
             PurchasingVendorProductRepository offeringRepository,
             PurchasingProductRepository productRepository,
-            PurchasingVendorRepository vendorRepository
+            PurchasingVendorRepository vendorRepository,
+            InventoryUnitConversionService unitConversionService
     ) {
         this.offeringRepository = offeringRepository;
         this.productRepository = productRepository;
         this.vendorRepository = vendorRepository;
+        this.unitConversionService = unitConversionService;
     }
+
 
     @Transactional(readOnly = true)
     public List<PurchasingVendorProductResponse> getAllOfferings() {
@@ -139,9 +145,69 @@ public class PurchasingVendorProductService {
         offering.setVendorSku(request.vendorSku());
         offering.setOrderUnit(request.orderUnit().trim());
         offering.setPackageQuantity(request.packageQuantity());
-        offering.setPackageUnit(request.packageUnit().trim());
+
+        String packageUnit = normalizePackageUnit(request.packageUnit());
+
+        if (product.getBaseUnit() != null) {
+            try {
+                unitConversionService.convert(
+                        java.math.BigDecimal.ONE,
+                        packageUnit,
+                        product.getBaseUnit()
+                );
+            } catch (IllegalArgumentException ex) {
+                throw new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        "Supplier package unit " + packageUnit
+                                + " is incompatible with product inventory unit "
+                                + product.getBaseUnit()
+                );
+            }
+        }
+
+        offering.setPackageUnit(packageUnit);
+
         offering.setUnitPrice(request.unitPrice());
         offering.setActive(request.active());
+    }
+
+    private String normalizePackageUnit(String unit) {
+        if (unit == null || unit.isBlank()) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Package unit is required"
+            );
+        }
+
+        String normalized = unit.trim().toLowerCase(Locale.ROOT);
+
+        return switch (normalized) {
+            case "milligram", "milligrams", "mg" -> "mg";
+            case "gram", "grams", "g" -> "g";
+            case "kilogram", "kilograms", "kg" -> "kg";
+            case "ounce", "ounces", "oz" -> "oz";
+            case "pound", "pounds", "lbs", "lb" -> "lb";
+
+            case "milliliter", "milliliters", "ml" -> "ml";
+            case "liter", "liters", "l" -> "l";
+            case "fluid ounce", "fluid ounces", "fl oz",
+                 "fl_oz_us" -> "fl_oz_us";
+            case "cup", "cups", "cup_us" -> "cup_us";
+            case "pint", "pints", "pint_us" -> "pint_us";
+            case "quart", "quarts", "quart_us" -> "quart_us";
+            case "gallon", "gallons", "gallon_us" -> "gallon_us";
+
+            case "each", "item", "items", "piece", "pieces" -> "each";
+            case "can", "cans" -> "can";
+            case "bottle", "bottles" -> "bottle";
+            case "bag", "bags" -> "bag";
+            case "box", "boxes" -> "box";
+
+            default -> throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Unsupported package unit: " + unit
+            );
+        };
     }
 
     private PurchasingProduct findProduct(Long id) {

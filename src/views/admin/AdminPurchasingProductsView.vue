@@ -12,11 +12,9 @@
         <section class="admin-card">
             <h2>Purchasing Products</h2>
 
-
             <button type="button" :disabled="saving" @click="startCreating">
                 + Add Product
             </button>
-
 
             <div class="product-filters">
                 <label>
@@ -33,7 +31,6 @@
                     </select>
                 </label>
             </div>
-
 
             <section v-if="editingProduct" ref="productEditorElement" class="admin-card product-editor">
 
@@ -83,6 +80,46 @@
                     </label>
 
                     <label>
+                        Base Inventory Unit
+
+                        <select v-model="editingProduct.baseUnit"
+                            :disabled="editingProduct.id != null && !!editingProduct.originalBaseUnit">
+                            <option value="">Not configured</option>
+
+                            <optgroup label="Weight">
+                                <option value="mg">Milligrams (mg)</option>
+                                <option value="g">Grams (g)</option>
+                                <option value="kg">Kilograms (kg)</option>
+                                <option value="oz">Ounces (oz)</option>
+                                <option value="lb">Pounds (lb)</option>
+                            </optgroup>
+
+                            <optgroup label="Volume">
+                                <option value="ml">Milliliters (mL)</option>
+                                <option value="l">Liters (L)</option>
+                                <option value="fl_oz_us">US Fluid Ounces</option>
+                                <option value="cup_us">US Cups</option>
+                                <option value="pint_us">US Pints</option>
+                                <option value="quart_us">US Quarts</option>
+                                <option value="gallon_us">US Gallons</option>
+                            </optgroup>
+
+                            <optgroup label="Count">
+                                <option value="each">Individual Items</option>
+                                <option value="can">Cans</option>
+                                <option value="bottle">Bottles</option>
+                                <option value="bag">Bags</option>
+                                <option value="box">Boxes</option>
+                            </optgroup>
+                        </select>
+
+                        <small class="admin-subtext">
+                            Inventory quantities will be tracked in this unit.
+                            Once configured, the unit cannot be changed directly.
+                        </small>
+                    </label>
+
+                    <label>
                         Description
                         <textarea v-model="editingProduct.description" rows="3"
                             placeholder="Optional product description"></textarea>
@@ -94,7 +131,6 @@
                     Active Product
                 </label>
 
-
                 <button type="button" :disabled="saving" @click="saveProduct">
                     {{ saving ? 'Saving...' : 'Save Product' }}
                 </button>
@@ -103,17 +139,14 @@
                     {{ saveError }}
                 </p>
 
-
                 <button type="button" @click="editingProduct = null">
                     Cancel Editing
                 </button>
             </section>
 
-
             <p v-if="saveSuccess" class="save-success" role="status">
                 {{ saveSuccess }}
             </p>
-
 
             <p v-if="loading">Loading products...</p>
 
@@ -143,19 +176,28 @@
                         {{ product.description }}
                     </p>
 
-
                     <p>
-                        <strong>Department:</strong>
+                        <strong>Department: </strong>
                         {{ departmentName(product.departmentId) }}
                     </p>
 
                     <p>
-                        <strong>Category:</strong>
+                        <strong>Category: </strong>
                         {{ categoryName(product.categoryId) }}
                     </p>
 
                     <p>
-                        <strong>Supplier Options:</strong>
+                        <strong>Base Inventory Unit: </strong>
+                        <span v-if="product.baseUnit">
+                            {{ inventoryUnitLabel(product.baseUnit) }}
+                        </span>
+                        <span v-else class="inventory-unit-missing">
+                            Not configured
+                        </span>
+                    </p>
+
+                    <p>
+                        <strong>Supplier Options: </strong>
                         {{ offeringCount(product.id) }}
                     </p>
 
@@ -225,7 +267,6 @@
                             + Add Supplier
                         </button>
 
-
                         <div v-if="editingOffering?.productId === product.id" ref="supplierEditorElement"
                             class="supplier-offering-editor">
                             <h4>
@@ -264,11 +305,46 @@
                                     step="0.001" required @wheel.prevent>
                             </label>
 
+
                             <label>
                                 Package Unit
-                                <input v-model="editingOffering.packageUnit" type="text" maxlength="50"
-                                    placeholder="e.g. Pound, Ounce, Each" required>
+
+                                <select v-model="editingOffering.packageUnit" required>
+                                    <option value="" disabled>Select a package unit</option>
+
+                                    <optgroup label="Weight">
+                                        <option value="mg">Milligrams (mg)</option>
+                                        <option value="g">Grams (g)</option>
+                                        <option value="kg">Kilograms (kg)</option>
+                                        <option value="oz">Ounces (oz)</option>
+                                        <option value="lb">Pounds (lb)</option>
+                                    </optgroup>
+
+                                    <optgroup label="Volume">
+                                        <option value="ml">Milliliters (mL)</option>
+                                        <option value="l">Liters (L)</option>
+                                        <option value="fl_oz_us">US Fluid Ounces</option>
+                                        <option value="cup_us">US Cups</option>
+                                        <option value="pint_us">US Pints</option>
+                                        <option value="quart_us">US Quarts</option>
+                                        <option value="gallon_us">US Gallons</option>
+                                    </optgroup>
+
+                                    <optgroup label="Count">
+                                        <option value="each">Individual Items</option>
+                                        <option value="can">Cans</option>
+                                        <option value="bottle">Bottles</option>
+                                        <option value="bag">Bags</option>
+                                        <option value="box">Boxes</option>
+                                    </optgroup>
+                                </select>
+
+                                <small class="admin-subtext">
+                                    Select the measurement used for the quantity inside
+                                    one supplier order unit.
+                                </small>
                             </label>
+
 
                             <label>
                                 Price per Order Unit ($)
@@ -291,7 +367,6 @@
                                 <button type="button" :disabled="offeringSaving" @click="saveOffering">
                                     {{ offeringSaving ? 'Saving...' : 'Save Supplier Offering' }}
                                 </button>
-
 
                                 <button type="button" @click="cancelOfferingEdit">
                                     Cancel
@@ -401,7 +476,11 @@ function startManagingSuppliers(product) {
 }
 
 async function startEditing(product) {
-    editingProduct.value = { ...product }
+    editingProduct.value = {
+        ...product,
+        baseUnit: product.baseUnit || '',
+        originalBaseUnit: product.baseUnit || null
+    }
 
     await nextTick()
 
@@ -421,6 +500,7 @@ function startCreating() {
         categoryId: null,
         name: '',
         description: '',
+        baseUnit: '',
         active: true
     }
 }
@@ -438,6 +518,7 @@ async function saveProduct() {
         categoryId: product.categoryId,
         name: product.name.trim(),
         description: product.description?.trim() || null,
+        baseUnit: product.baseUnit || null,
         active: product.active
     }
 
@@ -445,7 +526,6 @@ async function saveProduct() {
         saveError.value = 'Product name is required.'
         return
     }
-
 
     if (payload.departmentId == null) {
         saveError.value = 'Please select a department.'
@@ -463,7 +543,6 @@ async function saveProduct() {
             ? await productStore.addProduct(payload)
             : await productStore.saveProduct(product.id, payload)
 
-
         editingProduct.value = null
         saveSuccess.value =
             `${savedProduct.name} saved successfully.`
@@ -472,6 +551,29 @@ async function saveProduct() {
     }
 }
 
+function inventoryUnitLabel(unit) {
+    const labels = {
+        mg: 'Milligrams (mg)',
+        g: 'Grams (g)',
+        kg: 'Kilograms (kg)',
+        oz: 'Ounces (oz)',
+        lb: 'Pounds (lb)',
+        ml: 'Milliliters (mL)',
+        l: 'Liters (L)',
+        fl_oz_us: 'US Fluid Ounces',
+        cup_us: 'US Cups',
+        pint_us: 'US Pints',
+        quart_us: 'US Quarts',
+        gallon_us: 'US Gallons',
+        each: 'Individual Items',
+        can: 'Cans',
+        bottle: 'Bottles',
+        bag: 'Bags',
+        box: 'Boxes'
+    }
+
+    return labels[unit] || unit
+}
 
 const filteredProducts = computed(() => {
     const query = productSearch.value.trim().toLowerCase()
@@ -888,6 +990,11 @@ async function removeOffering(offering) {
     flex-wrap: wrap;
     gap: 0.75rem;
     margin-top: 0.5rem;
+}
+
+.inventory-unit-missing {
+    color: #ef9a9a;
+    font-weight: 600;
 }
 
 @media (max-width: 650px) {

@@ -61,6 +61,10 @@
                     Products
                 </RouterLink>
 
+                <RouterLink to="/admin/purchasing/inventory">
+                    Inventory
+                </RouterLink>
+
                 <RouterLink to="/admin/purchasing/vendors">
                     Vendors
                 </RouterLink>

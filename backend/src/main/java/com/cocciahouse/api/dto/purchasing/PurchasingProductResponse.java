@@ -10,6 +10,7 @@ public record PurchasingProductResponse(
         String name,
         String description,
         boolean active,
+        String baseUnit,
         Instant createdAt,
         Instant updatedAt
 ) {

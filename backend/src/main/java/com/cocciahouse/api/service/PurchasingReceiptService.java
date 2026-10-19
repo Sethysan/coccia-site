@@ -29,18 +29,23 @@ public class PurchasingReceiptService {
     private final PurchasingOrderItemRepository orderItemRepository;
     private final PurchasingReceiptRepository receiptRepository;
     private final PurchasingReceiptItemRepository receiptItemRepository;
+    private final PurchasingInventoryService inventoryService;
+
 
     public PurchasingReceiptService(
             PurchasingOrderRepository orderRepository,
             PurchasingOrderItemRepository orderItemRepository,
             PurchasingReceiptRepository receiptRepository,
-            PurchasingReceiptItemRepository receiptItemRepository
+            PurchasingReceiptItemRepository receiptItemRepository,
+            PurchasingInventoryService inventoryService
     ) {
         this.orderRepository = orderRepository;
         this.orderItemRepository = orderItemRepository;
         this.receiptRepository = receiptRepository;
         this.receiptItemRepository = receiptItemRepository;
+        this.inventoryService = inventoryService;
     }
+
 
     @Transactional
     public PurchasingReceiptResponse receiveOrder(
@@ -164,7 +169,10 @@ public class PurchasingReceiptService {
                     requested.receivedQuantity()
             );
 
-            receiptItemRepository.save(receiptItem);
+            receiptItemRepository.saveAndFlush(receiptItem);
+
+            // Record the inventory movement and update stock.
+            inventoryService.postReceiptItem(receiptItem);
         }
 
         return getReceipt(receipt.getId());

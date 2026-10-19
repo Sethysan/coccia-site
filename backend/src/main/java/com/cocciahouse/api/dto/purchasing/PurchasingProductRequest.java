@@ -19,7 +19,10 @@ public record PurchasingProductRequest(
 
         String description,
 
-        boolean active
+        boolean active,
+
+        @Size(max = 30)
+        String baseUnit
 
 ) {
 }

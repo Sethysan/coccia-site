@@ -35,6 +35,9 @@ public class PurchasingProduct {
     @Column(columnDefinition = "TEXT")
     private String description;
 
+    @Column(name = "base_unit", length = 30)
+    private String baseUnit;
+
     @Column(nullable = false)
     private boolean active = true;
 
@@ -90,6 +93,14 @@ public class PurchasingProduct {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public String getBaseUnit() {
+        return baseUnit;
+    }
+
+    public void setBaseUnit(String baseUnit) {
+        this.baseUnit = baseUnit;
     }
 
     public boolean isActive() {
