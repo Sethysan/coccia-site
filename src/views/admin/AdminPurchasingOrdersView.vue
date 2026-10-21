@@ -248,7 +248,7 @@
                 </div>
 
                 <div v-if="reviewingOrders && group.vendorId != null" class="draft-actions">
-                    <button type="button" :disabled="savingVendorId === group.vendorId || hasIncompletePricing(group)"
+                    <button type="button" :disabled="savingVendorId === group.vendorId"
                         @click="saveSupplierDraft(group)">
                         {{ savingVendorId === group.vendorId ? 'Saving...' : 'Save Supplier Draft' }}
                     </button>
@@ -472,7 +472,7 @@ async function loadSavedOrders() {
 }
 
 async function saveSupplierDraft(group) {
-    if (group.vendorId == null || hasIncompletePricing(group)) {
+    if (group.vendorId == null) {
         return
     }
 
