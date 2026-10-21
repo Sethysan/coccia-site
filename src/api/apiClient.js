@@ -73,7 +73,9 @@ export const apiRequest = async (endpoint, options = {}) => {
       }
 
       throw new ApiError(
-        details?.message || `Request failed with status ${response.status}.`,
+        details?.message ||
+        details?.detail ||
+        `Request failed with status ${response.status}.`,
         response.status,
         details
       )

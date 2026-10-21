@@ -20,6 +20,20 @@ import AdminRecipesView
   from '../views/admin/AdminRecipesView.vue'
 import AdminMenuView
   from '../views/admin/AdminMenuView.vue'
+import AdminPurchasingVendorsView
+  from '../views/admin/AdminPurchasingVendorsView.vue'
+import AdminPurchasingOrdersView
+  from '../views/admin/AdminPurchasingOrdersView.vue'
+import AdminPurchasingProductsView
+  from '../views/admin/AdminPurchasingProductsView.vue'
+import AdminPurchasingDraftOrdersView
+  from '../views/admin/AdminPurchasingDraftOrdersView.vue'
+import AdminPurchasingReceivingView
+  from '../views/admin/AdminPurchasingReceivingView.vue'
+import AdminPurchasingCompletedOrdersView
+  from '../views/admin/AdminPurchasingCompletedOrdersView.vue'
+import AdminPurchasingInventoryView
+  from '../views/admin/AdminPurchasingInventoryView.vue'
 import AdminLayout
   from '../layouts/AdminLayout.vue'
 
@@ -64,6 +78,40 @@ const router = createRouter({
           path: 'menu',
           component: AdminMenuView
         },
+        {
+          path: 'purchasing/vendors',
+          component: AdminPurchasingVendorsView
+        },
+        {
+          path: 'purchasing/products',
+          component: AdminPurchasingProductsView
+        },
+        {
+          path: 'purchasing/inventory',
+          name: 'purchasing-inventory',
+          component: AdminPurchasingInventoryView
+        },
+        {
+          path: 'purchasing/orders',
+          name: 'purchasing-build-order',
+          component: AdminPurchasingOrdersView
+        },
+        {
+          path: 'purchasing/orders/drafts',
+          name: 'purchasing-draft-orders',
+          component: AdminPurchasingDraftOrdersView
+        },
+        {
+          path: 'purchasing/orders/receiving',
+          name: 'purchasing-receiving',
+          component: AdminPurchasingReceivingView
+        },
+        {
+          path: 'purchasing/orders/completed',
+          name: 'purchasing-completed-orders',
+          component: AdminPurchasingCompletedOrdersView
+        },
+
         {
           path: 'users',
           name: 'admin-users',

@@ -33,6 +33,22 @@ setUnauthorizedHandler(() => {
     }
 })
 
+document.addEventListener(
+    'wheel',
+    (event) => {
+        const element = event.target
+
+        if (
+            element instanceof HTMLInputElement &&
+            element.type === 'number' &&
+            document.activeElement === element
+        ) {
+            element.blur()
+        }
+    },
+    { capture: true }
+)
+
 app.directive('drag-scroll', dragScroll)
 
 app.mount('#app')

@@ -6,6 +6,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.http.HttpStatusCode;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
 
@@ -147,6 +149,30 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity
                 .status(HttpStatus.CONFLICT)
+                .body(response);
+    }
+
+    @ExceptionHandler(ResponseStatusException.class)
+    public ResponseEntity<ApiErrorResponse> handleResponseStatusException(
+            ResponseStatusException exception
+    ) {
+        HttpStatusCode status = exception.getStatusCode();
+
+        String message = exception.getReason();
+
+        if (message == null || message.isBlank()) {
+            message = "The request could not be completed.";
+        }
+
+        ApiErrorResponse response = new ApiErrorResponse(
+                status.value(),
+                HttpStatus.valueOf(status.value()).getReasonPhrase(),
+                message,
+                Instant.now()
+        );
+
+        return ResponseEntity
+                .status(status)
                 .body(response);
     }
 
