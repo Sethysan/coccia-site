@@ -316,11 +316,13 @@
         <div v-if="selectedProducts.length > 0" class="order-grand-total">
 
             <h3>
-
                 Estimated Order Total:
-
-                ${{ estimatedOrderTotal.toFixed(2) }}
-
+                <template v-if="groupedOrders.some(group => hasIncompletePricing(group))">
+                    Incomplete
+                </template>
+                <template v-else>
+                    ${{ estimatedOrderTotal.toFixed(2) }}
+                </template>
             </h3>
 
             <div v-if="estimatedAdditionalFees > 0" class="potential-fees-summary">
