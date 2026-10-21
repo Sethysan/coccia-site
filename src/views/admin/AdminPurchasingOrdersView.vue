@@ -18,8 +18,7 @@
         <div class="order-filters">
             <label>
                 Department
-                <select v-model.number="selectedDepartmentId"
-                    @change="changeOrderDepartment">
+                <select v-model.number="selectedDepartmentId" @change="changeOrderDepartment">
                     <option :value="null" disabled>Select Kitchen or Bar</option>
                     <option v-for="department in departments.filter(d => d.active)" :key="department.id"
                         :value="department.id">
@@ -32,6 +31,11 @@
                 Category
                 <select v-model.number="selectedCategoryId" :disabled="selectedDepartmentId == null">
                     <option :value="null">All Categories</option>
+                    <option value="all-beer" v-if="availableCategories.some(category =>
+                        ['Domestic Beer', 'Imported Beer', 'Craft Beer'].includes(category.name)
+                    )">
+                        All Beer
+                    </option>
                     <option v-for="category in availableCategories" :key="category.id" :value="category.id">
                         {{ category.name }}
                     </option>
@@ -579,29 +583,43 @@ const { products, loading, error } = storeToRefs(productStore)
 
 
 const activeProducts = computed(() =>
-  products.value.filter(product =>
-    product.active &&
-    selectedDepartmentId.value != null &&
-    product.departmentId === selectedDepartmentId.value
-  )
+    products.value.filter(product =>
+        product.active &&
+        selectedDepartmentId.value != null &&
+        product.departmentId === selectedDepartmentId.value
+    )
 )
 
 const visibleProducts = computed(() =>
-  activeProducts.value.filter(product =>
-    selectedCategoryId.value == null ||
-    product.categoryId === selectedCategoryId.value
-  )
+    activeProducts.value.filter(product => {
+        if (selectedCategoryId.value == null) {
+            return true
+        }
+
+        if (selectedCategoryId.value === 'all-beer') {
+            const beerCategoryIds = availableCategories.value
+                .filter(category =>
+                    ['Domestic Beer', 'Imported Beer', 'Craft Beer']
+                        .includes(category.name)
+                )
+                .map(category => category.id)
+
+            return beerCategoryIds.includes(product.categoryId)
+        }
+
+        return product.categoryId === selectedCategoryId.value
+    })
 )
 
 const selectedProducts = computed(() =>
-  activeProducts.value
-    .filter(product =>
-      Number(orderQuantities.value[product.id]) > 0
-    )
-    .map(product => ({
-      ...product,
-      quantity: Number(orderQuantities.value[product.id])
-    }))
+    activeProducts.value
+        .filter(product =>
+            Number(orderQuantities.value[product.id]) > 0
+        )
+        .map(product => ({
+            ...product,
+            quantity: Number(orderQuantities.value[product.id])
+        }))
 )
 
 const availableCategories = computed(() =>
@@ -820,38 +838,38 @@ function matchingOrderQuantity(group, requiredUnit) {
 const departmentOrderSelections = ref({})
 
 function changeOrderDepartment() {
-  const departmentId = selectedDepartmentId.value
+    const departmentId = selectedDepartmentId.value
 
-  // Each department keeps its own quantities and supplier choices.
-  if (!departmentOrderSelections.value[departmentId]) {
-    departmentOrderSelections.value[departmentId] = {
-      quantities: {},
-      offerings: {}
+    // Each department keeps its own quantities and supplier choices.
+    if (!departmentOrderSelections.value[departmentId]) {
+        departmentOrderSelections.value[departmentId] = {
+            quantities: {},
+            offerings: {}
+        }
     }
-  }
 
-  const selection = departmentOrderSelections.value[departmentId]
+    const selection = departmentOrderSelections.value[departmentId]
 
-  // Restore the selected department's unfinished order.
-  orderQuantities.value = selection.quantities
-  selectedOfferings.value = selection.offerings
+    // Restore the selected department's unfinished order.
+    orderQuantities.value = selection.quantities
+    selectedOfferings.value = selection.offerings
 
-  // Assign preferred suppliers only to products without a selection.
-  for (const product of products.value) {
-    if (
-      product.active &&
-      product.departmentId === departmentId &&
-      !(product.id in selectedOfferings.value)
-    ) {
-      const preferred = preferredOfferingForProduct(product.id)
-      selectedOfferings.value[product.id] = preferred?.id ?? null
+    // Assign preferred suppliers only to products without a selection.
+    for (const product of products.value) {
+        if (
+            product.active &&
+            product.departmentId === departmentId &&
+            !(product.id in selectedOfferings.value)
+        ) {
+            const preferred = preferredOfferingForProduct(product.id)
+            selectedOfferings.value[product.id] = preferred?.id ?? null
+        }
     }
-  }
 
-  selectedCategoryId.value = null
-  reviewingOrders.value = false
-  draftErrors.value = {}
-  draftSuccess.value = {}
+    selectedCategoryId.value = null
+    reviewingOrders.value = false
+    draftErrors.value = {}
+    draftSuccess.value = {}
 }
 
 
@@ -1018,20 +1036,17 @@ onMounted(async () => {
 }
 
 .order-product-list {
-
     display: grid;
-
-    gap: 0.5rem;
-
-    max-width: 700px;
-
+    gap: 0.75rem;
+    width: 100%;
+    min-width: 0;
 }
 
 .order-product {
 
     display: grid;
 
-    grid-template-columns: minmax(0, 1fr) 100px;
+    grid-template-columns: minmax(180px, 1fr) 90px minmax(240px, 1.5fr);
 
     align-items: center;
 
@@ -1151,15 +1166,29 @@ onMounted(async () => {
 .draft-actions {
     margin-top: 1rem;
 }
+
 .order-filters {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
 }
 
 .order-filters label {
-  display: grid;
-  gap: 0.4rem;
-  min-width: 180px;
+    display: grid;
+    gap: 0.4rem;
+    min-width: 180px;
+}
+
+@media (max-width: 700px) {
+    .order-product {
+        grid-template-columns: minmax(0, 1fr) 90px;
+        gap: 0.65rem;
+    }
+
+    .order-product select {
+        grid-column: 1 / -1;
+        width: 100%;
+        min-width: 0;
+    }
 }
 </style>
