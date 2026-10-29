@@ -20,3 +20,7 @@ export const confirmOrder = (id, payload) => apiRequest(`${ORDERS_ENDPOINT}/${id
   method: 'POST',
   body: JSON.stringify(payload)
 })
+
+export const deleteOrderDraft = (id) => apiRequest(`${ORDERS_ENDPOINT}/${id}`, {
+  method: 'DELETE'
+})
