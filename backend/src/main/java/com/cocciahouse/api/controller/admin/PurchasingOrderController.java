@@ -47,4 +47,9 @@ public class PurchasingOrderController {
     ) {
         return orderService.confirmOrder(orderId, request);
     }
+    @DeleteMapping("/{orderId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteDraft(@PathVariable Long orderId) {
+        orderService.deleteDraft(orderId);
+    }
 }

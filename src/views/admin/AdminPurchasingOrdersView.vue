@@ -87,6 +87,9 @@
 
         <div v-if="!reviewingOrders" class="order-summary">
             <h3>Order Summary</h3>
+            <p class="supplier-subtotal">
+                <strong>Current estimated total: {{ formatMoney(currentOrderTotal) }}</strong>
+            </p>
             <p v-if="selectedProducts.length === 0">
                 No products selected yet.
             </p>
@@ -396,6 +399,7 @@ import {
     getPurchasingDepartments,
     getPurchasingCategories
 } from '@/api/purchasingCategoriesApi'
+import { money as formatMoney } from '@/utils/purchasingTotals'
 
 const orderStore = useOrderStore()
 
@@ -696,6 +700,18 @@ const groupedOrders = computed(() => {
         })
     }
     return Object.values(groups)
+})
+
+const currentOrderTotal = computed(() => {
+    let total = 0
+    for (const group of groupedOrders.value) {
+        for (const product of group.products) {
+            const price = product.offering?.unitPrice
+            if (price == null || !Number.isFinite(Number(price))) return null
+            total += Number(product.quantity) * Number(price)
+        }
+    }
+    return total
 })
 
 function supplierSubtotal(group) {
