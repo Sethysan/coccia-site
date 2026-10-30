@@ -5,7 +5,8 @@ import { ref } from 'vue'
 import {
   getOrders,
   createOrderDraft,
-  confirmOrder
+  confirmOrder,
+  deleteOrderDraft
 } from '@/api/ordersApi'
 
 export const useOrderStore = defineStore('purchasingOrders', () => {
@@ -71,6 +72,17 @@ export const useOrderStore = defineStore('purchasingOrders', () => {
     }
   }
 
+  async function deleteDraft(id) {
+  error.value = null
+  try {
+    await deleteOrderDraft(id)
+    orders.value = orders.value.filter(order => order.id !== id)
+  } catch (err) {
+    error.value = err.message
+    throw err
+  }
+}
+
   function clearError() {
     error.value = null
   }
@@ -84,6 +96,7 @@ export const useOrderStore = defineStore('purchasingOrders', () => {
     loadOrders,
     saveDraft,
     confirmSavedOrder,
-    clearError
+    clearError,
+    deleteDraft
   }
 })
