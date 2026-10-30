@@ -41,7 +41,7 @@
             Planned: {{ item.plannedQuantity }} {{ item.orderUnit }}
           </span>
           <span>
-            Estimated unit price: {{ money(item.estimatedUnitPrice) }}
+            Estimated unit price: {{ formatMoney(item.estimatedUnitPrice) }}
           </span>
 
           <label>
