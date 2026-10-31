@@ -448,7 +448,7 @@
                                                 <article class="menu-item-row">
                                                     <div class="menu-item-summary">
                                                         <div class="menu-item-thumbnail">
-                                                            <img v-if="item.imageUrl" :src="item.imageUrl"
+                                                            <img v-if="item.imageUrl" :src="resolveImageUrl(item.imageUrl)"
                                                                 :alt="item.imageAlt || item.recipeName">
 
                                                             <span v-else>
@@ -637,7 +637,7 @@
                                             <article class="menu-item-row">
                                                 <div class="menu-item-summary">
                                                     <div class="menu-item-thumbnail">
-                                                        <img v-if="item.imageUrl" :src="item.imageUrl"
+                                                        <img v-if="item.imageUrl" :src="resolveImageUrl(item.imageUrl)"
                                                             :alt="item.imageAlt || item.recipeName">
 
                                                         <span v-else>
@@ -828,6 +828,7 @@ import {
 } from '@/api/recipesApi'
 import MenuItemForm from '@/components/admin/MenuItemForm.vue'
 import PizzaManager from '@/components/admin/PizzaManager.vue'
+import { resolveImageUrl } from '@/utils/resolveImageUrl'
 
 const menuStore = useMenuStore()
 

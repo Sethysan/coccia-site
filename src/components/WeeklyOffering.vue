@@ -18,7 +18,7 @@
                 {{ dinner.recipeName }}
             </h3>
 
-            <img v-if="dinner.imageUrl" :src="dinner.imageUrl" :alt="dinner.imageAlt || dinner.recipeName"
+            <img v-if="dinner.imageUrl" :src="resolveImageUrl(dinner.imageUrl)" :alt="dinner.imageAlt || dinner.recipeName"
                 class="weekly-offering-image" />
 
             <p v-if="dinner.publicDescription">
@@ -50,7 +50,7 @@
                     {{ item.recipeName }}
                 </h3>
 
-                <img v-if="item.imageUrl" :src="item.imageUrl" :alt="item.imageAlt || item.recipeName"
+                <img v-if="item.imageUrl" :src="resolveImageUrl(item.imageUrl)" :alt="item.imageAlt || item.recipeName"
                     class="weekly-offering-image" />
 
                 <p v-if="item.includedSidesText">
@@ -78,6 +78,7 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
 import { getCurrentWeeklyOffering } from '@/api/weeklyOfferingsApi'
+import { resolveImageUrl } from '@/utils/resolveImageUrl'
 
 const props = defineProps({
     offering: {

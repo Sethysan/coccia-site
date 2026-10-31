@@ -54,7 +54,8 @@
                 <article v-for="item in selectedSection.items" :key="item.name" class="menu-item">
                     <button v-if="item.imageUrl" type="button" class="menu-item-image-button"
                         :aria-label="`View larger photo of ${item.name}`" @click="openFullscreenImage(item)">
-                        <img :src="item.imageUrl" :alt="item.imageAlt || item.name" class="menu-item-image">
+                        <img :src="resolveImageUrl(item.imageUrl)" :alt="item.imageAlt || item.name"
+                            class="menu-item-image">
                     </button>
 
                     <p v-if="item.imageUrl && item.imageCaption" class="menu-item-image-caption">
@@ -114,7 +115,7 @@
                         <div class="menu-subsection-detailed-content">
                             <button v-if="item.imageUrl" type="button" class="menu-subsection-thumbnail-button"
                                 :aria-label="`View larger photo of ${item.name}`" @click="openFullscreenImage(item)">
-                                <img :src="item.imageUrl" :alt="item.imageAlt || item.name"
+                                <img :src="resolveImageUrl(item.imageUrl)" :alt="item.imageAlt || item.name"
                                     class="menu-subsection-thumbnail">
                             </button>
 
@@ -160,6 +161,7 @@ import { getCurrentWeeklyOffering } from '@/api/weeklyOfferingsApi'
 import WeeklyOffering from '@/components/WeeklyOffering.vue'
 import PizzaMenu from '@/components/menu/PizzaMenu.vue'
 import FullscreenImageViewer from '@/components/FullscreenImageViewer.vue'
+import { resolveImageUrl } from '@/utils/resolveImageUrl'
 
 const weeklyOffering = ref(null)
 const weeklyOfferingLoading = ref(true)
@@ -199,7 +201,7 @@ function openFullscreenImage(item) {
     }
 
     fullscreenImage.value = {
-        src: item.imageUrl,
+        src: resolveImageUrl(item.imageUrl),
         alt: item.imageAlt || item.name,
         caption: item.imageCaption || ''
     }
