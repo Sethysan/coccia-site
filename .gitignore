@@ -33,3 +33,8 @@ db-backups/
 
 # Archived code and features
 _archive/
+# Original Cloudinary images (local backup)
+/public/media/
+
+# Local image backups
+/local-backups/

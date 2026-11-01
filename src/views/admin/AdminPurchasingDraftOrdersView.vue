@@ -1,4 +1,3 @@
-
 <template>
   <section class="draft-orders">
     <header>
@@ -18,11 +17,7 @@
       No draft orders available.
     </p>
 
-    <article
-      v-for="order in draftOrders"
-      :key="order.id"
-      class="draft-card"
-    >
+    <article v-for="order in draftOrders" :key="order.id" class="draft-card">
       <div class="draft-header">
         <div>
           <h2>{{ order.vendorName }}</h2>
@@ -32,10 +27,7 @@
             {{ formatDeliveryDate(order.expectedDeliveryDate) }}
           </p>
         </div>
-        <button
-          type="button"
-          @click="toggleOrder(order.id)"
-        >
+        <button type="button" @click="toggleOrder(order.id)">
           {{ expandedOrderId === order.id ? 'Hide Details' : 'View Details' }}
         </button>
       </div>
@@ -43,56 +35,57 @@
       <div v-if="expandedOrderId === order.id" class="draft-details">
         <p v-if="order.notes">{{ order.notes }}</p>
 
-        <div
-          v-for="item in order.items"
-          :key="item.id"
-          class="draft-item"
-        >
+        <div v-for="item in order.items" :key="item.id" class="draft-item">
           <strong>{{ productName(item.vendorProductId) }}</strong>
           <span>
             Planned: {{ item.plannedQuantity }} {{ item.orderUnit }}
           </span>
           <span>
-            Estimated unit price: {{ money(item.estimatedUnitPrice) }}
+            Estimated unit price: {{ formatMoney(item.estimatedUnitPrice) }}
           </span>
 
           <label>
             Confirmed quantity
-            <input
-              v-model="confirmationValues[item.id].quantity"
-              type="number"
-              min="0"
-              step="0.001"
-            >
+            <input v-model="confirmationValues[item.id].quantity" type="number" min="0" step="0.001">
           </label>
 
           <label>
             Confirmed unit price ($)
-            <input
-              v-model="confirmationValues[item.id].price"
-              type="number"
-              min="0"
-              step="0.01"
-            >
+            <input v-model="confirmationValues[item.id].price" type="number" min="0" step="0.01">
           </label>
+          <span>
+            Estimated line total:
+            {{ formatMoney(sumLineTotals([item], 'plannedQuantity', 'estimatedUnitPrice')) }}
+          </span>
+          <span>
+            Confirmed line total:
+            {{ formatMoney(sumLineTotals([{
+              quantity: confirmationValues[item.id]?.quantity,
+              price: confirmationValues[item.id]?.price
+            }], 'quantity', 'price')) }}
+          </span>
         </div>
 
-        <p v-if="actionErrors[order.id]" class="error-message" role="alert">
-          {{ actionErrors[order.id] }}
-        </p>
-
-        <button
-          type="button"
-          :disabled="confirmingOrderId === order.id"
-          @click="confirmOrder(order)"
-        >
+        <button type="button" :disabled="confirmingOrderId !== null ||
+          deletingOrderId !== null
+          " @click="confirmOrder(order)">
           {{
             confirmingOrderId === order.id
               ? 'Confirming...'
               : 'Confirm Phone Order'
           }}
         </button>
+        <p><strong>Live confirmed total: {{ formatMoney(liveConfirmedTotal(order)) }}</strong></p>
       </div>
+      <p><strong>Estimated total: {{ formatMoney(estimatedOrderTotal(order)) }}</strong></p>
+      <button type="button" :disabled="confirmingOrderId !== null ||
+        deletingOrderId !== null
+        " @click="deleteDraft(order)">
+        {{ deletingOrderId === order.id ? 'Deleting...' : 'Delete Draft' }}
+      </button>
+      <p v-if="actionErrors[order.id]" class="error-message" role="alert">
+        {{ actionErrors[order.id] }}
+      </p>
     </article>
   </section>
 </template>
@@ -105,6 +98,7 @@ import { useProductStore } from '@/stores/productStore'
 import { useVendorProductStore } from '@/stores/vendorProductStore'
 import { getPurchasingDepartments } from '@/api/purchasingCategoriesApi'
 import { formatDeliveryDate } from '@/utils/dateFormat'
+import { money as formatMoney, estimatedOrderTotal, sumLineTotals } from '@/utils/purchasingTotals'
 
 const orderStore = useOrderStore()
 const productStore = useProductStore()
@@ -134,10 +128,6 @@ function productName(offeringId) {
   const offering = offerings.value.find(item => item.id === offeringId)
   return products.value.find(product => product.id === offering?.productId)?.name
     || `Offering #${offeringId}`
-}
-
-function money(value) {
-  return value == null ? 'Unavailable' : `$${Number(value).toFixed(2)}`
 }
 
 function toggleOrder(id) {
@@ -208,6 +198,42 @@ async function confirmOrder(order) {
     actionErrors.value[order.id] = err.message
   } finally {
     confirmingOrderId.value = null
+  }
+}
+
+const deletingOrderId = ref(null)
+
+function liveConfirmedTotal(order) {
+  const items = order.items.map(item => {
+    const values = confirmationValues.value[item.id]
+
+    return {
+      quantity: values?.quantity === ''
+        ? null
+        : values?.quantity ?? null,
+      price: values?.price === ''
+        ? null
+        : values?.price ?? null
+    }
+  })
+
+  return sumLineTotals(items, 'quantity', 'price')
+}
+
+async function deleteDraft(order) {
+  if (!window.confirm(
+    `Permanently delete draft order #${order.id} for ${order.vendorName}? This cannot be undone.`
+  )) return
+
+  deletingOrderId.value = order.id
+  actionErrors.value[order.id] = ''
+  try {
+    await orderStore.deleteDraft(order.id)
+    if (expandedOrderId.value === order.id) expandedOrderId.value = null
+  } catch (err) {
+    actionErrors.value[order.id] = err.message || 'Unable to delete draft.'
+  } finally {
+    deletingOrderId.value = null
   }
 }
 
