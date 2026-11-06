@@ -4,7 +4,7 @@ import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-
+import org.springframework.beans.factory.ObjectProvider;
 import java.io.IOException;
 import java.util.Map;
 
@@ -14,11 +14,21 @@ public class ImageService {
     private static final long MAX_FILE_SIZE =
             5 * 1024 * 1024;
 
-    private final Cloudinary cloudinary;
 
-    public ImageService(Cloudinary cloudinary) {
+    private final Cloudinary cloudinary;
+    private final ImageOptimizationService imageOptimizationService;
+    private final S3ImageStorageService s3ImageStorageService;
+
+    public ImageService(
+            Cloudinary cloudinary,
+            ImageOptimizationService imageOptimizationService,
+            ObjectProvider<S3ImageStorageService> s3ImageStorageService
+    ) {
         this.cloudinary = cloudinary;
+        this.imageOptimizationService = imageOptimizationService;
+        this.s3ImageStorageService = s3ImageStorageService.getIfAvailable();
     }
+
 
     public ImageUploadResult uploadRecipeImage(
             MultipartFile file
@@ -26,7 +36,7 @@ public class ImageService {
 
         return uploadImage(
                 file,
-                "coccia-house/recipes"
+                "recipes"
         );
     }
 
@@ -36,35 +46,33 @@ public class ImageService {
 
         return uploadImage(
                 file,
-                "coccia-house/announcements"
+                "announcements"
         );
     }
+
 
     private ImageUploadResult uploadImage(
             MultipartFile file,
             String folder
     ) throws IOException {
 
+        if (s3ImageStorageService == null) {
+            throw new IllegalStateException(
+                    "Image storage is not configured. Railway S3 credentials are required."
+            );
+        }
+
         validateImage(file);
 
-        Map<?, ?> uploadResult =
-                cloudinary.uploader().upload(
-                        file.getBytes(),
-                        ObjectUtils.asMap(
-                                "folder",
-                                folder
-                        )
-                );
+        byte[] optimizedImage =
+                imageOptimizationService.optimizeImage(file);
 
-        return new ImageUploadResult(
-                uploadResult
-                        .get("secure_url")
-                        .toString(),
-                uploadResult
-                        .get("public_id")
-                        .toString()
+        return s3ImageStorageService.uploadImage(
+                optimizedImage,
+                folder
         );
     }
+
 
     private void validateImage(
             MultipartFile file
@@ -95,15 +103,28 @@ public class ImageService {
         }
     }
 
+
     public void deleteImage(String publicId) throws IOException {
 
         if (publicId == null || publicId.isBlank()) {
             return;
         }
 
-        cloudinary.uploader().destroy(
-                publicId,
-                ObjectUtils.emptyMap()
-        );
+
+        if (publicId.startsWith("images/")) {
+
+            if (s3ImageStorageService == null) {
+                throw new IllegalStateException(
+                        "Image storage is not configured. Railway S3 credentials are required."
+                );
+            }
+
+            s3ImageStorageService.deleteImage(publicId);
+            return;
+        }
+
+
+        // Legacy Cloudinary images are preserved during migration.
     }
+
 }
