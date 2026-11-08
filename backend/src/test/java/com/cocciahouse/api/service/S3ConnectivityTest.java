@@ -2,6 +2,7 @@
 package com.cocciahouse.api.service;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
@@ -19,6 +20,12 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import java.net.URI;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+
+@EnabledIfEnvironmentVariable(named = "AWS_ENDPOINT_URL", matches = ".+")
+@EnabledIfEnvironmentVariable(named = "AWS_DEFAULT_REGION", matches = ".+")
+@EnabledIfEnvironmentVariable(named = "AWS_S3_BUCKET_NAME", matches = ".+")
+@EnabledIfEnvironmentVariable(named = "AWS_ACCESS_KEY_ID", matches = ".+")
+@EnabledIfEnvironmentVariable(named = "AWS_SECRET_ACCESS_KEY", matches = ".+")
 
 class S3ConnectivityTest {
 

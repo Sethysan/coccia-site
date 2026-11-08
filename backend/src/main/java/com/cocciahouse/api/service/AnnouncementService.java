@@ -8,10 +8,14 @@ import com.cocciahouse.api.model.AnnouncementPlacement;
 import com.cocciahouse.api.model.Announcement;
 import com.cocciahouse.api.model.AnnouncementStatus;
 import com.cocciahouse.api.repository.AnnouncementRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
-
+import java.io.IOException;
 import java.time.Instant;
 import java.util.List;
 
@@ -19,12 +23,18 @@ import java.util.List;
 @Transactional
 public class AnnouncementService {
 
+    private static final Logger log =
+            LoggerFactory.getLogger(AnnouncementService.class);
+
     private final AnnouncementRepository announcementRepository;
+    private final ImageService imageService;
 
     public AnnouncementService(
-            AnnouncementRepository announcementRepository
+            AnnouncementRepository announcementRepository,
+            ImageService imageService
     ) {
         this.announcementRepository = announcementRepository;
+        this.imageService = imageService;
     }
 
     public AnnouncementResponse create(
@@ -191,19 +201,38 @@ public class AnnouncementService {
     }
 
     public void deleteDraft(Long id) {
-        Announcement announcement =
-                findAnnouncement(id);
+        Announcement announcement = findAnnouncement(id);
 
-        if (
-                announcement.getStatus()
-                        != AnnouncementStatus.DRAFT
-        ) {
+        if (announcement.getStatus() != AnnouncementStatus.DRAFT) {
             throw new IllegalStateException(
                     "Only draft announcements can be deleted."
             );
         }
 
+        String imagePublicId = announcement.getImagePublicId();
+
         announcementRepository.delete(announcement);
+
+        if (imagePublicId != null && imagePublicId.startsWith("images/")) {
+            TransactionSynchronizationManager.registerSynchronization(
+                    new TransactionSynchronization() {
+                        @Override
+                        public void afterCommit() {
+                            try {
+                                imageService.deleteImage(imagePublicId);
+                            }
+                            catch (IOException | RuntimeException e) {
+                                log.error(
+                                        "Failed to delete S3 image '{}' after announcement {} was deleted.",
+                                        imagePublicId,
+                                        id,
+                                        e
+                                );
+                            }
+                        }
+                    }
+            );
+        }
     }
 
     private Announcement findAnnouncement(Long id) {
