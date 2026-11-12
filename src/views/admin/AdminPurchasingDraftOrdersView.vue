@@ -35,36 +35,66 @@
       <div v-if="expandedOrderId === order.id" class="draft-details">
         <p v-if="order.notes">{{ order.notes }}</p>
 
-        <div v-for="item in order.items" :key="item.id" class="draft-item">
-          <strong>{{ productName(item.vendorProductId) }}</strong>
-          <span>
-            Planned: {{ item.plannedQuantity }} {{ item.orderUnit }}
-          </span>
-          <span>
-            Estimated unit price: {{ formatMoney(item.estimatedUnitPrice) }}
-          </span>
 
-          <label>
-            Confirmed quantity
-            <input v-model="confirmationValues[item.id].quantity" type="number" min="0" step="0.001">
-          </label>
+        <div class="order-review-table">
+          <div class="order-review-heading">
+            <span>Product / Supplier SKU</span>
+            <span>Quantity</span>
+            <span>Est. Cost</span>
+          </div>
 
-          <label>
-            Confirmed unit price ($)
-            <input v-model="confirmationValues[item.id].price" type="number" min="0" step="0.01">
-          </label>
-          <span>
-            Estimated line total:
-            {{ formatMoney(sumLineTotals([item], 'plannedQuantity', 'estimatedUnitPrice')) }}
-          </span>
-          <span>
-            Confirmed line total:
-            {{ formatMoney(sumLineTotals([{
-              quantity: confirmationValues[item.id]?.quantity,
-              price: confirmationValues[item.id]?.price
-            }], 'quantity', 'price')) }}
-          </span>
+          <div v-for="item in order.items" :key="item.id" class="order-review-row">
+            <div class="product-info">
+              <strong>{{ productName(item.vendorProductId) }}</strong>
+
+              <small v-if="supplierSku(item.vendorProductId)">
+                SKU: {{ supplierSku(item.vendorProductId) }}
+              </small>
+            </div>
+
+            <span>
+              {{ item.plannedQuantity }} {{ item.orderUnit }}
+            </span>
+
+            <span class="cost">
+              {{ formatMoney(sumLineTotals(
+                [item],
+                'plannedQuantity',
+                'estimatedUnitPrice'
+              )) }}
+            </span>
+          </div>
         </div>
+
+        <details class="confirmation-adjustments">
+          <summary>Adjust Confirmation Details (optional)</summary>
+
+          <p>
+            Only change these values if the supplier confirms
+            different quantities or prices.
+          </p>
+
+          <div v-for="item in order.items" :key="item.id" class="adjustment-item">
+            <strong>{{ productName(item.vendorProductId) }}</strong>
+
+            <label>
+              Confirmed quantity
+              <input v-model="confirmationValues[item.id].quantity" type="number" min="0" step="1">
+            </label>
+
+            <label>
+              Confirmed unit price ($)
+              <input v-model="confirmationValues[item.id].price" type="number" min="0" step=".01">
+            </label>
+          </div>
+
+          <p>
+            <strong>
+              Adjusted confirmed total:
+              {{ formatMoney(liveConfirmedTotal(order)) }}
+            </strong>
+          </p>
+        </details>
 
         <button type="button" :disabled="confirmingOrderId !== null ||
           deletingOrderId !== null
@@ -75,7 +105,6 @@
               : 'Confirm Phone Order'
           }}
         </button>
-        <p><strong>Live confirmed total: {{ formatMoney(liveConfirmedTotal(order)) }}</strong></p>
       </div>
       <p><strong>Estimated total: {{ formatMoney(estimatedOrderTotal(order)) }}</strong></p>
       <button type="button" :disabled="confirmingOrderId !== null ||
@@ -128,6 +157,14 @@ function productName(offeringId) {
   const offering = offerings.value.find(item => item.id === offeringId)
   return products.value.find(product => product.id === offering?.productId)?.name
     || `Offering #${offeringId}`
+}
+
+function supplierSku(offeringId) {
+  const offering = offerings.value.find(
+    item => item.id === offeringId
+  )
+
+  return offering?.vendorSku?.trim() || ''
 }
 
 function toggleOrder(id) {
@@ -305,5 +342,90 @@ onMounted(async () => {
 
 .error-message {
   color: #ef9a9a;
+}
+
+/* Compact purchase order review */
+
+.order-review-table {
+  display: grid;
+  gap: 0;
+  width: 100%;
+}
+
+.order-review-heading,
+.order-review-row {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(6rem, 1fr) minmax(6rem, 1fr);
+  gap: 0.75rem;
+  align-items: start;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid rgba(190, 145, 65, 0.3);
+}
+
+.order-review-heading {
+  font-weight: 700;
+}
+
+.product-info {
+  display: grid;
+  gap: 0.25rem;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.product-info small {
+  color: #d9c39a;
+}
+
+.cost {
+  text-align: right;
+}
+
+.confirmation-adjustments {
+  border-top: 1px solid rgba(190, 145, 65, 0.3);
+  padding-top: 0.75rem;
+}
+
+.confirmation-adjustments summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.adjustment-item {
+  display: grid;
+  gap: 0.5rem;
+  padding: 0.75rem 0;
+}
+
+.adjustment-item label {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.adjustment-item input {
+  width: 8rem;
+  padding: 0.4rem;
+}
+
+.order-review-heading > :last-child {
+  text-align: right;
+}
+
+.draft-details > button {
+  justify-self: start;
+}
+
+/* Mobile-friendly order layout */
+
+@media (max-width: 600px) {
+
+  .order-review-heading,
+  .order-review-row {
+    grid-template-columns: minmax(0, 1.6fr) minmax(4.5rem, 1fr) minmax(4.5rem, 1fr);
+    gap: 0.4rem;
+    font-size: 0.9rem;
+  }
 }
 </style>
