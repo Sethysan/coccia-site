@@ -166,7 +166,7 @@ public class PurchasingOrderService {
             Long orderId,
             PurchasingOrderConfirmationRequest request
     ) {
-        PurchasingOrder order = orderRepository.findById(orderId)
+        PurchasingOrder order = orderRepository.lockById(orderId)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND, "Purchasing order not found"
                 ));
@@ -228,6 +228,24 @@ public class PurchasingOrderService {
 
         // Do not change supplier catalog prices.
         return getOrder(orderId);
+    }
+
+    @Transactional
+    public void deleteDraft(Long orderId) {
+        PurchasingOrder order = orderRepository.lockById(orderId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Purchasing order not found"
+                ));
+
+        if (!"DRAFT".equals(order.getStatus())) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT, "Only draft orders can be deleted"
+            );
+        }
+
+        itemRepository.deleteAll(itemRepository.findByOrderId(orderId));
+        itemRepository.flush();
+        orderRepository.delete(order);
     }
 
     private PurchasingVendorProduct validateOffering(

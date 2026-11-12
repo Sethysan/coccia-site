@@ -7,19 +7,25 @@ import com.cocciahouse.api.model.AnnouncementPlacement;
 import com.cocciahouse.api.model.AnnouncementStatus;
 import com.cocciahouse.api.model.AnnouncementType;
 import com.cocciahouse.api.repository.AnnouncementRepository;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
+import java.io.IOException;
 import java.time.Instant;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+
 class AnnouncementServiceTest {
 
     private AnnouncementRepository announcementRepository;
+    private ImageService imageService;
     private AnnouncementService announcementService;
 
     @BeforeEach
@@ -27,10 +33,26 @@ class AnnouncementServiceTest {
         announcementRepository =
                 mock(AnnouncementRepository.class);
 
+        imageService =
+                mock(ImageService.class);
+
         announcementService =
                 new AnnouncementService(
-                        announcementRepository
+                        announcementRepository,
+                        imageService
                 );
+    }
+
+    @BeforeEach
+    void startTransactionSynchronization() {
+        TransactionSynchronizationManager.initSynchronization();
+    }
+
+    @AfterEach
+    void clearTransactionSynchronization() {
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.clearSynchronization();
+        }
     }
 
     @Test
@@ -386,4 +408,146 @@ class AnnouncementServiceTest {
                 never()
         ).delete(any());
     }
+
+    @Test
+    void deleteDraftDeletesS3ImageOnlyAfterCommit() throws IOException {
+        Long announcementId = 1L;
+        String imagePublicId = "images/announcements/test-image.webp";
+
+        Announcement announcement = new Announcement();
+        announcement.setStatus(AnnouncementStatus.DRAFT);
+        announcement.setImagePublicId(imagePublicId);
+
+        when(announcementRepository.findById(announcementId))
+                .thenReturn(Optional.of(announcement));
+
+        announcementService.deleteDraft(announcementId);
+
+        // The database deletion is requested.
+        verify(announcementRepository).delete(announcement);
+
+        // S3 deletion must not happen before commit.
+        verify(imageService, never()).deleteImage(anyString());
+
+        // Simulate a successful transaction commit.
+        for (TransactionSynchronization synchronization :
+                TransactionSynchronizationManager.getSynchronizations()) {
+            synchronization.afterCommit();
+        }
+
+        // S3 cleanup happens after commit.
+        verify(imageService).deleteImage(imagePublicId);
+    }
+
+    @Test
+    void deleteDraftDoesNotDeleteS3ImageOnRollback() throws IOException {
+        Long announcementId = 2L;
+        String imagePublicId = "images/announcements/rollback-test.webp";
+
+        Announcement announcement = new Announcement();
+        announcement.setStatus(AnnouncementStatus.DRAFT);
+        announcement.setImagePublicId(imagePublicId);
+
+        when(announcementRepository.findById(announcementId))
+                .thenReturn(Optional.of(announcement));
+
+        announcementService.deleteDraft(announcementId);
+
+        // Simulate a database transaction rollback.
+        for (TransactionSynchronization synchronization :
+                TransactionSynchronizationManager.getSynchronizations()) {
+            synchronization.afterCompletion(
+                    TransactionSynchronization.STATUS_ROLLED_BACK
+            );
+        }
+
+        // The S3 image must remain untouched.
+        verify(imageService, never()).deleteImage(anyString());
+    }
+
+    @Test
+    void deleteDraftDoesNotDeleteLegacyCloudinaryImage() throws IOException {
+        Long announcementId = 3L;
+
+        Announcement announcement = new Announcement();
+        announcement.setStatus(AnnouncementStatus.DRAFT);
+        announcement.setImagePublicId("coccia-house/legacy-image");
+
+        when(announcementRepository.findById(announcementId))
+                .thenReturn(Optional.of(announcement));
+
+        announcementService.deleteDraft(announcementId);
+
+        verify(announcementRepository).delete(announcement);
+
+        // Legacy images should not schedule S3 cleanup.
+        assertTrue(
+                TransactionSynchronizationManager
+                        .getSynchronizations()
+                        .isEmpty()
+        );
+
+        verify(imageService, never()).deleteImage(anyString());
+    }
+
+    @Test
+    void deleteDraftSucceedsWhenS3CleanupFails() throws IOException {
+        Long announcementId = 4L;
+        String imagePublicId = "images/announcements/failure-test.webp";
+
+        Announcement announcement = new Announcement();
+        announcement.setStatus(AnnouncementStatus.DRAFT);
+        announcement.setImagePublicId(imagePublicId);
+
+        when(announcementRepository.findById(announcementId))
+                .thenReturn(Optional.of(announcement));
+
+        doThrow(new IOException("S3 temporarily unavailable"))
+                .when(imageService)
+                .deleteImage(imagePublicId);
+
+        announcementService.deleteDraft(announcementId);
+
+        // Simulate a successful database commit.
+        assertDoesNotThrow(() -> {
+            for (TransactionSynchronization synchronization :
+                    TransactionSynchronizationManager.getSynchronizations()) {
+                synchronization.afterCommit();
+            }
+        });
+
+        verify(announcementRepository).delete(announcement);
+        verify(imageService).deleteImage(imagePublicId);
+    }
+
+    @Test
+    void deleteDraftSucceedsWhenS3ThrowsRuntimeException() throws IOException {
+        Long announcementId = 5L;
+        String imagePublicId = "images/announcements/runtime-failure.webp";
+
+        Announcement announcement = new Announcement();
+        announcement.setStatus(AnnouncementStatus.DRAFT);
+        announcement.setImagePublicId(imagePublicId);
+
+        when(announcementRepository.findById(announcementId))
+                .thenReturn(Optional.of(announcement));
+
+        doThrow(new IllegalStateException("S3 temporarily unavailable"))
+                .when(imageService)
+                .deleteImage(imagePublicId);
+
+        announcementService.deleteDraft(announcementId);
+
+        // Simulate a successful database commit.
+        assertDoesNotThrow(() -> {
+            for (TransactionSynchronization synchronization :
+                    TransactionSynchronizationManager.getSynchronizations()) {
+                synchronization.afterCommit();
+            }
+        });
+
+        verify(announcementRepository).delete(announcement);
+        verify(imageService).deleteImage(imagePublicId);
+    }
+
 }

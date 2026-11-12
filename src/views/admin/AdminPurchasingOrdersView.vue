@@ -18,8 +18,7 @@
         <div class="order-filters">
             <label>
                 Department
-                <select v-model.number="selectedDepartmentId"
-                    @change="changeOrderDepartment">
+                <select v-model.number="selectedDepartmentId" @change="changeOrderDepartment">
                     <option :value="null" disabled>Select Kitchen or Bar</option>
                     <option v-for="department in departments.filter(d => d.active)" :key="department.id"
                         :value="department.id">
@@ -32,6 +31,11 @@
                 Category
                 <select v-model.number="selectedCategoryId" :disabled="selectedDepartmentId == null">
                     <option :value="null">All Categories</option>
+                    <option value="all-beer" v-if="availableCategories.some(category =>
+                        ['Domestic Beer', 'Imported Beer', 'Craft Beer'].includes(category.name)
+                    )">
+                        All Beer
+                    </option>
                     <option v-for="category in availableCategories" :key="category.id" :value="category.id">
                         {{ category.name }}
                     </option>
@@ -83,6 +87,9 @@
 
         <div v-if="!reviewingOrders" class="order-summary">
             <h3>Order Summary</h3>
+            <p class="supplier-subtotal">
+                <strong>Current estimated total: {{ formatMoney(currentOrderTotal) }}</strong>
+            </p>
             <p v-if="selectedProducts.length === 0">
                 No products selected yet.
             </p>
@@ -248,7 +255,7 @@
                 </div>
 
                 <div v-if="reviewingOrders && group.vendorId != null" class="draft-actions">
-                    <button type="button" :disabled="savingVendorId === group.vendorId || hasIncompletePricing(group)"
+                    <button type="button" :disabled="savingVendorId === group.vendorId"
                         @click="saveSupplierDraft(group)">
                         {{ savingVendorId === group.vendorId ? 'Saving...' : 'Save Supplier Draft' }}
                     </button>
@@ -316,11 +323,13 @@
         <div v-if="selectedProducts.length > 0" class="order-grand-total">
 
             <h3>
-
                 Estimated Order Total:
-
-                ${{ estimatedOrderTotal.toFixed(2) }}
-
+                <template v-if="groupedOrders.some(group => hasIncompletePricing(group))">
+                    Incomplete
+                </template>
+                <template v-else>
+                    ${{ estimatedOrderTotal.toFixed(2) }}
+                </template>
             </h3>
 
             <div v-if="estimatedAdditionalFees > 0" class="potential-fees-summary">
@@ -390,6 +399,7 @@ import {
     getPurchasingDepartments,
     getPurchasingCategories
 } from '@/api/purchasingCategoriesApi'
+import { money as formatMoney } from '@/utils/purchasingTotals'
 
 const orderStore = useOrderStore()
 
@@ -472,7 +482,7 @@ async function loadSavedOrders() {
 }
 
 async function saveSupplierDraft(group) {
-    if (group.vendorId == null || hasIncompletePricing(group)) {
+    if (group.vendorId == null) {
         return
     }
 
@@ -577,29 +587,43 @@ const { products, loading, error } = storeToRefs(productStore)
 
 
 const activeProducts = computed(() =>
-  products.value.filter(product =>
-    product.active &&
-    selectedDepartmentId.value != null &&
-    product.departmentId === selectedDepartmentId.value
-  )
+    products.value.filter(product =>
+        product.active &&
+        selectedDepartmentId.value != null &&
+        product.departmentId === selectedDepartmentId.value
+    )
 )
 
 const visibleProducts = computed(() =>
-  activeProducts.value.filter(product =>
-    selectedCategoryId.value == null ||
-    product.categoryId === selectedCategoryId.value
-  )
+    activeProducts.value.filter(product => {
+        if (selectedCategoryId.value == null) {
+            return true
+        }
+
+        if (selectedCategoryId.value === 'all-beer') {
+            const beerCategoryIds = availableCategories.value
+                .filter(category =>
+                    ['Domestic Beer', 'Imported Beer', 'Craft Beer']
+                        .includes(category.name)
+                )
+                .map(category => category.id)
+
+            return beerCategoryIds.includes(product.categoryId)
+        }
+
+        return product.categoryId === selectedCategoryId.value
+    })
 )
 
 const selectedProducts = computed(() =>
-  activeProducts.value
-    .filter(product =>
-      Number(orderQuantities.value[product.id]) > 0
-    )
-    .map(product => ({
-      ...product,
-      quantity: Number(orderQuantities.value[product.id])
-    }))
+    activeProducts.value
+        .filter(product =>
+            Number(orderQuantities.value[product.id]) > 0
+        )
+        .map(product => ({
+            ...product,
+            quantity: Number(orderQuantities.value[product.id])
+        }))
 )
 
 const availableCategories = computed(() =>
@@ -676,6 +700,18 @@ const groupedOrders = computed(() => {
         })
     }
     return Object.values(groups)
+})
+
+const currentOrderTotal = computed(() => {
+    let total = 0
+    for (const group of groupedOrders.value) {
+        for (const product of group.products) {
+            const price = product.offering?.unitPrice
+            if (price == null || !Number.isFinite(Number(price))) return null
+            total += Number(product.quantity) * Number(price)
+        }
+    }
+    return total
 })
 
 function supplierSubtotal(group) {
@@ -818,38 +854,38 @@ function matchingOrderQuantity(group, requiredUnit) {
 const departmentOrderSelections = ref({})
 
 function changeOrderDepartment() {
-  const departmentId = selectedDepartmentId.value
+    const departmentId = selectedDepartmentId.value
 
-  // Each department keeps its own quantities and supplier choices.
-  if (!departmentOrderSelections.value[departmentId]) {
-    departmentOrderSelections.value[departmentId] = {
-      quantities: {},
-      offerings: {}
+    // Each department keeps its own quantities and supplier choices.
+    if (!departmentOrderSelections.value[departmentId]) {
+        departmentOrderSelections.value[departmentId] = {
+            quantities: {},
+            offerings: {}
+        }
     }
-  }
 
-  const selection = departmentOrderSelections.value[departmentId]
+    const selection = departmentOrderSelections.value[departmentId]
 
-  // Restore the selected department's unfinished order.
-  orderQuantities.value = selection.quantities
-  selectedOfferings.value = selection.offerings
+    // Restore the selected department's unfinished order.
+    orderQuantities.value = selection.quantities
+    selectedOfferings.value = selection.offerings
 
-  // Assign preferred suppliers only to products without a selection.
-  for (const product of products.value) {
-    if (
-      product.active &&
-      product.departmentId === departmentId &&
-      !(product.id in selectedOfferings.value)
-    ) {
-      const preferred = preferredOfferingForProduct(product.id)
-      selectedOfferings.value[product.id] = preferred?.id ?? null
+    // Assign preferred suppliers only to products without a selection.
+    for (const product of products.value) {
+        if (
+            product.active &&
+            product.departmentId === departmentId &&
+            !(product.id in selectedOfferings.value)
+        ) {
+            const preferred = preferredOfferingForProduct(product.id)
+            selectedOfferings.value[product.id] = preferred?.id ?? null
+        }
     }
-  }
 
-  selectedCategoryId.value = null
-  reviewingOrders.value = false
-  draftErrors.value = {}
-  draftSuccess.value = {}
+    selectedCategoryId.value = null
+    reviewingOrders.value = false
+    draftErrors.value = {}
+    draftSuccess.value = {}
 }
 
 
@@ -1016,20 +1052,17 @@ onMounted(async () => {
 }
 
 .order-product-list {
-
     display: grid;
-
-    gap: 0.5rem;
-
-    max-width: 700px;
-
+    gap: 0.75rem;
+    width: 100%;
+    min-width: 0;
 }
 
 .order-product {
 
     display: grid;
 
-    grid-template-columns: minmax(0, 1fr) 100px;
+    grid-template-columns: minmax(180px, 1fr) 90px minmax(240px, 1.5fr);
 
     align-items: center;
 
@@ -1149,15 +1182,29 @@ onMounted(async () => {
 .draft-actions {
     margin-top: 1rem;
 }
+
 .order-filters {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
 }
 
 .order-filters label {
-  display: grid;
-  gap: 0.4rem;
-  min-width: 180px;
+    display: grid;
+    gap: 0.4rem;
+    min-width: 180px;
+}
+
+@media (max-width: 700px) {
+    .order-product {
+        grid-template-columns: minmax(0, 1fr) 90px;
+        gap: 0.65rem;
+    }
+
+    .order-product select {
+        grid-column: 1 / -1;
+        width: 100%;
+        min-width: 0;
+    }
 }
 </style>

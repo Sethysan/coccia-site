@@ -3,7 +3,7 @@
         <div class="recipe-summary-image">
             <img
                 v-if="imageUrl"
-                :src="imageUrl"
+                :src="resolveImageUrl(imageUrl)"
                 :alt="imageAlt || name"
             >
 
@@ -38,6 +38,7 @@
 </template>
 
 <script setup>
+import { resolveImageUrl } from '@/utils/resolveImageUrl'
 defineProps({
     name: {
         type: String,

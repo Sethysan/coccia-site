@@ -15,7 +15,7 @@
             {{ announcement.title }}
           </h3>
 
-          <img v-if="announcement.imageUrl" class="news-flyer" :src="announcement.imageUrl" :alt="announcement.imageAlt ||
+          <img v-if="announcement.imageUrl" class="news-flyer" :src="resolveImageUrl(announcement.imageUrl)" :alt="announcement.imageAlt ||
             announcement.title
             " />
 
@@ -50,7 +50,7 @@
           {{ selectedAnnouncement.title }}
         </h2>
 
-        <img v-if="selectedAnnouncement.imageUrl" class="news-reader-image" :src="selectedAnnouncement.imageUrl" :alt="selectedAnnouncement.imageAlt ||
+        <img v-if="selectedAnnouncement.imageUrl" class="news-reader-image" :src="resolveImageUrl(selectedAnnouncement.imageUrl)" :alt="selectedAnnouncement.imageAlt ||
           selectedAnnouncement.title
           " />
 
@@ -81,6 +81,7 @@ import 'swiper/css/navigation'
 import 'swiper/css/pagination'
 
 import { useAnnouncementStore } from '@/stores/announcementStore'
+import { resolveImageUrl } from '@/utils/resolveImageUrl'
 
 const announcementStore = useAnnouncementStore()
 
@@ -199,11 +200,10 @@ onBeforeUnmount(() => {
 
 .news-message p.is-collapsed {
   display: -webkit-box;
-
   overflow: hidden;
-
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 6;
+  line-clamp: 6;
 }
 
 .news-read-more {

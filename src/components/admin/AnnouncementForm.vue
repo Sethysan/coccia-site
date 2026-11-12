@@ -30,7 +30,7 @@
                     }}
                 </span>
 
-                <img :src="imagePreviewUrl" :alt="form.imageAlt ||
+                <img :src="resolveImageUrl(imagePreviewUrl)" :alt="form.imageAlt ||
                     'Current announcement image'
                     " />
             </div>
@@ -177,7 +177,7 @@ import {
     reactive,
     ref
 } from "vue"
-
+import { resolveImageUrl } from '@/utils/resolveImageUrl'
 
 const props = defineProps({
     announcement: {
